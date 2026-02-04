@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
-import { SessionProvider } from 'next-auth/react'
-import Navbar from './components/Navbar'
+import RootLayoutContent from './layout-content'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -16,12 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SessionProvider>
-          <Navbar />
-          <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-            {children}
-          </main>
-        </SessionProvider>
+        <RootLayoutContent>{children}</RootLayoutContent>
       </body>
     </html>
   )
