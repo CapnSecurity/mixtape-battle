@@ -37,11 +37,18 @@ export default function Navbar() {
               <span>🏆</span> Rankings
             </Link>
             <Link
-              href="/songs"
+              href="/invite"
+              className="text-slate-300 hover:text-white transition font-medium flex items-center gap-2"
+            >
+              <span>✉️</span> Invite
+            </Link>
+            <Link
+              href="/songs/browser"
               className="text-slate-300 hover:text-white transition font-medium flex items-center gap-2"
             >
               <span>🎸</span> Songs
             </Link>
+            {/* End of Nav Links */}
           </div>
 
           {/* Auth Section */}
@@ -54,22 +61,27 @@ export default function Navbar() {
                   {session.user?.email}
                 </div>
                 <button
-                  onClick={() => signOut()}
+                  onClick={async () => {
+                    await signOut({ callbackUrl: "/login" });
+                    // Optionally show a toast or feedback here
+                  }}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium transition"
                 >
                   Sign Out
                 </button>
               </div>
             ) : (
-              <Link
-                href="/login"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition"
-              >
-                Sign In
-              </Link>
+              <>
+                <Link
+                  href="/login"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition"
+                >
+                  Sign In
+                </Link>
+                {/* Library link removed as requested */}
+              </>
             )}
           </div>
-        </div>
 
         {/* Mobile Nav */}
         <div className="md:hidden flex gap-4 pb-4 text-slate-300 text-sm border-t border-slate-700 mt-4 pt-4">
@@ -79,9 +91,10 @@ export default function Navbar() {
           <Link href="/results" className="hover:text-white flex items-center gap-1">
             🏆 Rankings
           </Link>
-          <Link href="/songs" className="hover:text-white flex items-center gap-1">
+          <Link href="/songs/browser" className="hover:text-white flex items-center gap-1">
             🎸 Songs
           </Link>
+        </div>
         </div>
       </div>
     </nav>

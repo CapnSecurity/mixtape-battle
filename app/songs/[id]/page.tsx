@@ -51,7 +51,7 @@ export default async function SongPage({ params }: { params: Params }) {
           </p>
 
           <div className="bg-white bg-opacity-20 rounded-lg p-6 text-center">
-            <div className="text-sm text-purple-100 mb-2">ELO Rating</div>
+            <div className="text-sm text-purple-100 mb-2">Battle Score</div>
             <div className="text-5xl font-bold text-white">
               {Math.round(song.elo)}
             </div>

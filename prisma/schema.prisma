@@ -12,6 +12,17 @@ model Song {
   title     String
   artist    String
   elo       Float    @default(1500)
+  
+  // Album & Release Info
+  album     String?
+  releaseDate Int?   // year
+  
+  // Resource Links
+  songsterrGuitarUrl String?
+  songsterrBassUrl String?
+  lyricsUrl String?
+  youtubeUrl String?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -58,6 +69,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  password      String?   // bcrypt hash
   accounts      Account[]
   sessions      Session[]
 }

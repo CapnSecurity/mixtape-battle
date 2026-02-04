@@ -54,116 +54,133 @@ export default function BattlePage() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-white py-12 px-4">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-3">⚔️ Battle</h1>
-          <p className="text-xl text-slate-300">
-            Which song wins? {voteCount > 0 && `(${voteCount} votes cast)`}
+        <div className="text-center mb-16">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-3">Battle</h1>
+          <p className="text-xl text-gray-600 mb-4">
+            Which song wins?
           </p>
+          {voteCount > 0 && (
+            <p className="text-lg text-gray-500">
+              {voteCount} vote{voteCount !== 1 ? 's' : ''} cast
+            </p>
+          )}
         </div>
 
         {/* Loading State */}
         {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block">
-              <div className="animate-spin text-6xl mb-4">🎵</div>
-              <p className="text-slate-300 text-lg font-semibold">
-                Loading next battle...
-              </p>
-            </div>
+          <div className="text-center py-32">
+            <div className="animate-pulse text-6xl mb-4">🎵</div>
+            <p className="text-gray-600 text-lg font-medium">
+              Loading next battle...
+            </p>
           </div>
         )}
 
         {/* Battle Cards */}
         {pair && !loading && (
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-12">
-            {/* Song A */}
-            <button
-              onClick={() => vote(pair.a, pair.b)}
-              className="group text-left hover-lift"
-            >
-              <div className="card-base bg-gradient-to-br from-blue-600 to-blue-800 p-8 h-full flex flex-col justify-between">
-                <div>
-                  <div className="text-7xl mb-6">🎸</div>
-                  <h2 className="text-4xl font-bold text-white mb-2">
-                    {pair.a.title}
-                  </h2>
-                  <p className="text-2xl text-blue-100 mb-6">
-                    {pair.a.artist}
-                  </p>
-                </div>
+          <>
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              {/* Song A */}
+              <button
+                onClick={() => vote(pair.a, pair.b)}
+                className="text-left"
+              >
+                <div className="bg-white border-4 border-gray-300 rounded-xl p-12 hover:border-gray-400 hover:shadow-2xl transition-all duration-300 h-full flex flex-col justify-between cursor-pointer">
+                  <div className="mb-8">
+                    <div className="text-7xl mb-6">🎸</div>
+                    <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                      {pair.a.title}
+                    </h2>
+                    <p className="text-2xl text-gray-600">
+                      {pair.a.artist}
+                    </p>
+                  </div>
 
-                <div className="space-y-4 pt-6 border-t border-blue-400/30">
-                  <div className="bg-blue-900/50 rounded-lg p-4">
-                    <div className="text-sm text-blue-200 mb-1">
-                      Current Rating
-                    </div>
-                    <div className="text-5xl font-bold text-white">
+                  <div className="bg-gray-100 rounded-lg p-6 mb-6">
+                    <p className="text-sm text-gray-600 font-semibold mb-2">
+                      BATTLE SCORE
+                    </p>
+                    <p className="text-6xl font-bold text-gray-900">
                       {Math.round(pair.a.elo)}
-                    </div>
+                    </p>
                   </div>
 
-                  <div className="bg-white text-blue-700 hover:bg-blue-50 font-bold py-3 px-6 rounded-lg transition text-lg text-center group-hover:shadow-lg">
-                    Vote for This Track 👍
+                  <button className="w-full bg-gray-900 text-white font-bold py-4 px-6 rounded-lg hover:bg-gray-800 transition-colors text-lg">
+                    Vote for This Track
+                  </button>
+                </div>
+              </button>
+
+              {/* Song B */}
+              <button
+                onClick={() => vote(pair.b, pair.a)}
+                className="text-left"
+              >
+                <div className="bg-white border-4 border-gray-300 rounded-xl p-12 hover:border-gray-400 hover:shadow-2xl transition-all duration-300 h-full flex flex-col justify-between cursor-pointer">
+                  <div className="mb-8">
+                    <div className="text-7xl mb-6">🎵</div>
+                    <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                      {pair.b.title}
+                    </h2>
+                    <p className="text-2xl text-gray-600">
+                      {pair.b.artist}
+                    </p>
                   </div>
-                </div>
-              </div>
-            </button>
 
-            {/* Song B */}
-            <button
-              onClick={() => vote(pair.b, pair.a)}
-              className="group text-left hover-lift"
-            >
-              <div className="card-base bg-gradient-to-br from-pink-600 to-purple-800 p-8 h-full flex flex-col justify-between">
-                <div>
-                  <div className="text-7xl mb-6">🎵</div>
-                  <h2 className="text-4xl font-bold text-white mb-2">
-                    {pair.b.title}
-                  </h2>
-                  <p className="text-2xl text-pink-100 mb-6">
-                    {pair.b.artist}
-                  </p>
-                </div>
-
-                <div className="space-y-4 pt-6 border-t border-pink-400/30">
-                  <div className="bg-purple-900/50 rounded-lg p-4">
-                    <div className="text-sm text-pink-200 mb-1">
-                      Current Rating
-                    </div>
-                    <div className="text-5xl font-bold text-white">
+                  <div className="bg-gray-100 rounded-lg p-6 mb-6">
+                    <p className="text-sm text-gray-600 font-semibold mb-2">
+                      BATTLE SCORE
+                    </p>
+                    <p className="text-6xl font-bold text-gray-900">
                       {Math.round(pair.b.elo)}
-                    </div>
+                    </p>
                   </div>
 
-                  <div className="bg-white text-pink-700 hover:bg-pink-50 font-bold py-3 px-6 rounded-lg transition text-lg text-center group-hover:shadow-lg">
-                    Vote for This Track 👍
-                  </div>
+                  <button className="w-full bg-gray-900 text-white font-bold py-4 px-6 rounded-lg hover:bg-gray-800 transition-colors text-lg">
+                    Vote for This Track
+                  </button>
                 </div>
-              </div>
-            </button>
-          </div>
+              </button>
+            </div>
+
+            {/* Next Battle Button */}
+            <div className="text-center">
+              <button
+                onClick={() => fetchPair()}
+                className="bg-gray-900 text-white font-bold py-4 px-10 rounded-lg hover:bg-gray-800 transition-colors text-lg"
+              >
+                Next Battle
+              </button>
+            </div>
+          </>
         )}
 
         {/* Footer Links */}
-        <div className="text-center space-y-4">
-          <p className="text-slate-400 text-sm">
-            Not sure which one? Check out the songs to learn the parts.
+        <div className="text-center mt-16 space-y-4">
+          <p className="text-gray-600">
+            Need to learn the parts? Browse the song library.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/songs"
-              className="text-slate-300 hover:text-white transition font-medium"
+              className="text-gray-900 hover:text-gray-700 font-semibold transition"
             >
-              📖 View Song Details
+              📖 Song Library
+            </Link>
+            <Link
+              href="/add-resource"
+              className="text-green-900 hover:text-green-700 font-semibold transition"
+            >
+              ➕ Add Song/Resource
             </Link>
             <Link
               href="/results"
-              className="text-slate-300 hover:text-white transition font-medium"
+              className="text-gray-900 hover:text-gray-700 font-semibold transition"
             >
-              🏆 See Rankings
+              🏆 Rankings
             </Link>
           </div>
         </div>
