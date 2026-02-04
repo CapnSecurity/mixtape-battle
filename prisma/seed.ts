@@ -5,90 +5,7 @@ const prisma = new PrismaClient();
 const songs = [
   { title: "Honey Bee", artist: "Tom Petty" },
   { title: "Death Valley Queen", artist: "Flogging Molly" },
-  { title: "All for You (AI)", artist: "Sister Hazel" }
-];
 
-async function main() {
-  const count = await prisma.song.count();
-  if (count > 0) {
-    console.log(`Songs already exist (${count}). Skipping seed.`);
-    return;
-  }
-
-  for (const s of songs) {
-    await prisma.song.create({ data: s });
-  }
-  console.log(`Seeded ${songs.length} songs.`);
-}
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => prisma.$disconnect());
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
-const songs = [{ title: "Honey Bee", artist: "Tom Petty" }];
-
-async function main() {
-  const count = await prisma.song.count();
-  if (count > 0) {
-    console.log(`Songs already exist (${count}). Skipping seed.`);
-    return;
-  }
-
-  await prisma.song.createMany({ data: songs });
-  console.log(`Seeded ${songs.length} songs.`);
-}
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => prisma.$disconnect());
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
-const songs = [
-  { title: "Honey Bee", artist: "Tom Petty" }
-];
-
-async function main() {
-  const count = await prisma.song.count();
-  if (count > 0) {
-    console.log(`Songs already exist (${count}). Skipping seed.`);
-    return;
-  }
-
-  await prisma.song.createMany({ data: songs });
-  console.log(`Seeded ${songs.length} songs.`);
-}
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => prisma.$disconnect());
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
-
-const songs = [
-  { title: "Honey Bee", artist: "Tom Petty" },
-  { title: "Death Valley Queen", artist: "Flogging Molly" },
-  { title: "All for You (AI)", artist: "Sister Hazel" },
-  { title: "Dust on the Bottle", artist: "David Lee Murphy" },
-  { title: "Blues Run the Game", artist: "Jackson C. Frank" },
-  { title: "Born Under a Bad Sign", artist: "Albert King" },
-  { title: "Proud Mary", artist: "Creedence Clearwater Revival" },
-  { title: "Tulsa Time", artist: "Don Williams" },
-  { title: "Chasing Cars", artist: "Snow Patrol" },
   { title: "Yellow", artist: "Coldplay" },
   { title: "Green River Bass", artist: "Creedence Clearwater Revival" },
   { title: "Something in the Orange (AI)", artist: "Zach Bryan" },
@@ -129,7 +46,9 @@ async function main() {
     return;
   }
 
-  await prisma.song.createMany({ data: songs });
+  for (const song of songs) {
+    await prisma.song.create({ data: song });
+  }
   console.log(`Seeded ${songs.length} songs.`);
 }
 
