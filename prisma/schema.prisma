@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Song {
+  id        Int      @id @default(autoincrement())
+  title     String
+  artist    String
+  elo       Float    @default(1500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BattleVote {
+  id        Int      @id @default(autoincrement())
+  songA     Int
+  songB     Int
+  winner    Int?
+  createdAt DateTime @default(now())
+}
+
