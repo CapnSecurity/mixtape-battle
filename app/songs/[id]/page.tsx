@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
-import { songsterr, ultimateGuitar, youtube, lyrics } from "../../../lib/links";
+import { songsterrBass, ultimateGuitarGuitar, ultimateGuitarBass, youtube, lyrics } from "../../../lib/links";
 import Button from "@/src/components/ui/Button";
 
 type Params = Promise<{ id: string }>;
@@ -64,33 +64,33 @@ export default async function SongPage({ params }: { params: Params }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <a
-              href={songsterr(song.artist, song.title)}
+              href={song.ultimateGuitar || ultimateGuitarGuitar(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"
             >
               <span className="text-2xl">🎸</span>
               <div>
-                <div className="font-bold text-[var(--text)]">Songsterr</div>
-                <div className="text-sm text-[var(--muted)]">Interactive tabs</div>
+                <div className="font-bold text-[var(--text)]">Guitar Tabs</div>
+                <div className="text-sm text-[var(--muted)]">Ultimate Guitar</div>
               </div>
             </a>
 
             <a
-              href={ultimateGuitar(song.artist, song.title)}
+              href={song.songsterr || songsterrBass(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"
             >
-              <span className="text-2xl">🎼</span>
+              <span className="text-2xl">🎸</span>
               <div>
-                <div className="font-bold text-[var(--text)]">Ultimate Guitar</div>
-                <div className="text-sm text-[var(--muted)]">Tabs & chords</div>
+                <div className="font-bold text-[var(--text)]">Bass Tabs</div>
+                <div className="text-sm text-[var(--muted)]">Songsterr</div>
               </div>
             </a>
 
             <a
-              href={lyrics(song.artist, song.title)}
+              href={song.lyrics || lyrics(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"
@@ -103,7 +103,7 @@ export default async function SongPage({ params }: { params: Params }) {
             </a>
 
             <a
-              href={youtube(song.artist, song.title)}
+              href={song.youtube || youtube(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "../../lib/prisma";
-import { songsterr, ultimateGuitar, youtube, lyrics } from "../../lib/links";
+import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics } from "../../lib/links";
 import Button from "@/src/components/ui/Button";
 
 export const dynamic = 'force-dynamic';
@@ -46,7 +46,7 @@ export default async function SongsPage() {
                 {/* Resource Buttons Grid */}
                 <div className="grid grid-cols-2 gap-3">
                   <a
-                    href={songsterr(song.artist, song.title)}
+                    href={ultimateGuitarGuitar(song.artist, song.title)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-4 px-4 rounded-xl text-center transition-colors text-sm border border-[var(--ring)]/20"
@@ -55,7 +55,7 @@ export default async function SongsPage() {
                   </a>
 
                   <a
-                    href={`https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodeURIComponent(song.artist + " " + song.title)}`}
+                    href={songsterrBass(song.artist, song.title)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-4 px-4 rounded-xl text-center transition-colors text-sm border border-[var(--ring)]/20"
