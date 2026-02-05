@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Button from "@/src/components/ui/Button";
+import { eloToStars } from "../../lib/elo";
 
 type Song = { id: number; title: string; artist: string; elo: number };
 
@@ -32,6 +33,18 @@ export default function BattlePage() {
     });
     setVoteCount(voteCount + 1);
     await fetchPair();
+  }
+
+  function Stars({ value }: { value: number }) {
+    const pct = Math.max(0, Math.min(5, value)) / 5 * 100;
+    return (
+      <div className="inline-block text-2xl leading-none">
+        <div className="text-[var(--muted)]">★★★★★</div>
+        <div className="absolute top-0 left-0 overflow-hidden" style={{ width: `${pct}%`, color: 'gold' }}>
+          <div style={{ position: 'relative' }}>★★★★★</div>
+        </div>
+      </div>
+    );
   }
 
   if (status === "unauthenticated") {
@@ -108,6 +121,12 @@ export default function BattlePage() {
                     <p className="text-6xl font-bold text-[var(--text)]">
                       {Math.round(pair.a.elo)}
                     </p>
+                    <div className="mt-2 flex items-center justify-center gap-3">
+                      <Stars value={eloToStars(pair.a.elo)} />
+                      <span className="text-sm text-[var(--muted)]">
+                        {eloToStars(pair.a.elo).toFixed(1)} / 5
+                      </span>
+                    </div>
                   </div>
 
                   <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-3.5 px-6 rounded-xl text-lg">
@@ -140,6 +159,12 @@ export default function BattlePage() {
                     <p className="text-6xl font-bold text-[var(--text)]">
                       {Math.round(pair.b.elo)}
                     </p>
+                    <div className="mt-2 flex items-center justify-center gap-3">
+                      <Stars value={eloToStars(pair.b.elo)} />
+                      <span className="text-sm text-[var(--muted)]">
+                        {eloToStars(pair.b.elo).toFixed(1)} / 5
+                      </span>
+                    </div>
                   </div>
 
                   <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-3.5 px-6 rounded-xl text-lg">
