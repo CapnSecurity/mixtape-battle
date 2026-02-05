@@ -36,3 +36,24 @@ node_modules
 .env
 
 /generated/prisma
+
+# Local backups, certs and restore artifacts
+/backups/
+/certbot/
+/ssl/
+
+# Generated restore/import files and DB dumps
+/restore-*.sql
+/restore-*.js
+/songs-backup.json
+/votes-backup.json
+/verification.sql
+/prisma/dev-from-git.db
+
+# Local helper scripts and cert tasks
+/renew-cert.ps1
+/setup-cert-renewal-task.ps1
+/restore-db.ps1
+/backup-db.ps1
+/extract-db-data.js
+
