@@ -1,0 +1,13 @@
+:root {
+  --bg: #0b0f1d;
+  --surface: #12182b;
+  --surface2: #1b243f;
+  --text: #f5f7ff;
+  --muted: #a7b1cc;
+  --gold: #f7c84b;
+  --pink: #f25ca6;
+  --ring: #7c6cff;
+  --shadow: 0 20px 60px rgba(11, 15, 29, 0.45);
+  --overlay: rgba(11, 15, 29, 0.6);
+  --overlay-strong: rgba(11, 15, 29, 0.9);
+}

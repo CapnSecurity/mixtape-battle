@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Button from "@/src/components/ui/Button";
 
 type Song = { id: number; title: string; artist: string; elo: number };
 
@@ -36,34 +37,34 @@ export default function BattlePage() {
   if (status === "unauthenticated") {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="card-base p-8 text-center max-w-md">
+        <div className="p-8 text-center max-w-md rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)]">
           <div className="text-6xl mb-4">🔐</div>
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-bold text-[var(--text)] mb-4">
             Sign in to Battle
           </h2>
-          <p className="text-slate-300 mb-6">
+          <p className="text-[var(--muted)] mb-6">
             You need to be signed in to participate in song battles and help
             rank your band's music.
           </p>
-          <Link href="/login" className="btn-primary inline-block">
-            Sign In
-          </Link>
+          <Button asChild>
+            <Link href="/login">Sign In</Link>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
+    <div className="min-h-screen bg-[var(--bg)] py-12 px-4 text-[var(--text)]">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-3">Battle</h1>
-          <p className="text-xl text-gray-600 mb-4">
+          <h1 className="text-5xl md:text-6xl font-bold text-[var(--text)] mb-3">Battle</h1>
+          <p className="text-xl text-[var(--muted)] mb-4">
             Which song wins?
           </p>
           {voteCount > 0 && (
-            <p className="text-lg text-gray-500">
+            <p className="text-lg text-[var(--muted)]">
               {voteCount} vote{voteCount !== 1 ? 's' : ''} cast
             </p>
           )}
@@ -73,7 +74,7 @@ export default function BattlePage() {
         {loading && (
           <div className="text-center py-32">
             <div className="animate-pulse text-6xl mb-4">🎵</div>
-            <p className="text-gray-600 text-lg font-medium">
+            <p className="text-[var(--muted)] text-lg font-medium">
               Loading next battle...
             </p>
           </div>
@@ -84,101 +85,100 @@ export default function BattlePage() {
           <>
             <div className="grid md:grid-cols-2 gap-8 mb-12">
               {/* Song A */}
-              <button
+              <Button
+                variant="ghost"
+                className="w-full text-left p-0 border-0 bg-transparent"
                 onClick={() => vote(pair.a, pair.b)}
-                className="text-left"
               >
-                <div className="bg-white border-4 border-gray-300 rounded-xl p-12 hover:border-gray-400 hover:shadow-2xl transition-all duration-300 h-full flex flex-col justify-between cursor-pointer">
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between">
                   <div className="mb-8">
                     <div className="text-7xl mb-6">🎸</div>
-                    <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                    <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
                       {pair.a.title}
                     </h2>
-                    <p className="text-2xl text-gray-600">
+                    <p className="text-2xl text-[var(--muted)]">
                       {pair.a.artist}
                     </p>
                   </div>
 
-                  <div className="bg-gray-100 rounded-lg p-6 mb-6">
-                    <p className="text-sm text-gray-600 font-semibold mb-2">
+                  <div className="bg-[var(--surface2)] rounded-xl p-6 mb-6">
+                    <p className="text-sm text-[var(--muted)] font-semibold mb-2">
                       BATTLE SCORE
                     </p>
-                    <p className="text-6xl font-bold text-gray-900">
+                    <p className="text-6xl font-bold text-[var(--text)]">
                       {Math.round(pair.a.elo)}
                     </p>
                   </div>
 
-                  <button className="w-full bg-gray-900 text-white font-bold py-4 px-6 rounded-lg hover:bg-gray-800 transition-colors text-lg">
+                  <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-3.5 px-6 rounded-xl text-lg">
                     Vote for This Track
-                  </button>
+                  </div>
                 </div>
-              </button>
+              </Button>
 
               {/* Song B */}
-              <button
+              <Button
+                variant="ghost"
+                className="w-full text-left p-0 border-0 bg-transparent"
                 onClick={() => vote(pair.b, pair.a)}
-                className="text-left"
               >
-                <div className="bg-white border-4 border-gray-300 rounded-xl p-12 hover:border-gray-400 hover:shadow-2xl transition-all duration-300 h-full flex flex-col justify-between cursor-pointer">
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between">
                   <div className="mb-8">
                     <div className="text-7xl mb-6">🎵</div>
-                    <h2 className="text-4xl font-bold text-gray-900 mb-3">
+                    <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
                       {pair.b.title}
                     </h2>
-                    <p className="text-2xl text-gray-600">
+                    <p className="text-2xl text-[var(--muted)]">
                       {pair.b.artist}
                     </p>
                   </div>
 
-                  <div className="bg-gray-100 rounded-lg p-6 mb-6">
-                    <p className="text-sm text-gray-600 font-semibold mb-2">
+                  <div className="bg-[var(--surface2)] rounded-xl p-6 mb-6">
+                    <p className="text-sm text-[var(--muted)] font-semibold mb-2">
                       BATTLE SCORE
                     </p>
-                    <p className="text-6xl font-bold text-gray-900">
+                    <p className="text-6xl font-bold text-[var(--text)]">
                       {Math.round(pair.b.elo)}
                     </p>
                   </div>
 
-                  <button className="w-full bg-gray-900 text-white font-bold py-4 px-6 rounded-lg hover:bg-gray-800 transition-colors text-lg">
+                  <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-3.5 px-6 rounded-xl text-lg">
                     Vote for This Track
-                  </button>
+                  </div>
                 </div>
-              </button>
+              </Button>
             </div>
 
             {/* Next Battle Button */}
             <div className="text-center">
-              <button
-                onClick={() => fetchPair()}
-                className="bg-gray-900 text-white font-bold py-4 px-10 rounded-lg hover:bg-gray-800 transition-colors text-lg"
-              >
+              <Button size="lg" onClick={() => fetchPair()}>
                 Next Battle
-              </button>
+              </Button>
             </div>
           </>
         )}
 
         {/* Footer Links */}
         <div className="text-center mt-16 space-y-4">
-          <p className="text-gray-600">
+          <p className="text-[var(--muted)]">
             Need to learn the parts? Browse the song library.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/songs"
-              className="text-gray-900 hover:text-gray-700 font-semibold transition"
+              href="/songs/browser"
+              className="text-[var(--text)] hover:text-[var(--muted)] font-semibold transition"
             >
               📖 Song Library
             </Link>
             <Link
               href="/add-resource"
-              className="text-green-900 hover:text-green-700 font-semibold transition"
+              className="text-[var(--gold)] hover:text-[var(--pink)] font-semibold transition"
             >
               ➕ Add Song/Resource
             </Link>
             <Link
               href="/results"
-              className="text-gray-900 hover:text-gray-700 font-semibold transition"
+              className="text-[var(--text)] hover:text-[var(--muted)] font-semibold transition"
             >
               🏆 Rankings
             </Link>

@@ -35,6 +35,8 @@ export const authOptions = {
             : undefined,
       },
       from: process.env.EMAIL_FROM,
+      // Magic link users should go to settings to set password
+      maxAge: 24 * 60 * 60, // 24 hours
     }),
   ],
   session: { strategy: "jwt" },
@@ -43,9 +45,35 @@ export const authOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      return true;
+    },
+    async redirect({ url, baseUrl, account }) {
+      const urlObj = new URL(url.startsWith('http') ? url : `${baseUrl}${url}`);
+      const callbackUrl = urlObj.searchParams.get('callbackUrl');
+      
+      // If the callback is /login (which magic links use), redirect to settings instead
+      if (callbackUrl && (callbackUrl === '/login' || callbackUrl === `${baseUrl}/login`)) {
+        return `${baseUrl}/settings`;
+      }
+      
+      // If URL is just baseUrl or baseUrl/login, go to settings
+      if (url === baseUrl || url === `${baseUrl}/` || url === `${baseUrl}/login`) {
+        return `${baseUrl}/settings`;
+      }
+      
+      // For other callbacks (credentials with /dashboard)
+      if (url.startsWith(baseUrl)) return url;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      return `${baseUrl}/settings`;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+      }
+      // Track if this was an email provider login
+      if (account?.provider === "email") {
+        token.isEmailProvider = true;
       }
       return token;
     },

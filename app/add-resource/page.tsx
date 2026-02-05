@@ -1,4 +1,8 @@
+"use client";
+
 import React, { useState } from 'react';
+import Input from '@/src/components/ui/Input';
+import Button from '@/src/components/ui/Button';
 
 export default function AddSongResourcePage() {
   const [form, setForm] = useState({
@@ -22,19 +26,19 @@ export default function AddSongResourcePage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow mt-8">
-      <h1 className="text-2xl font-bold mb-4">Add Song / Resource Links</h1>
+    <div className="max-w-xl mx-auto p-6 rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] mt-8">
+      <h1 className="text-2xl font-bold mb-4 text-[var(--text)]">Add Song / Resource Links</h1>
       {submitted ? (
-        <div className="text-green-600 font-semibold">Submitted! (Not yet saved to DB)</div>
+        <div className="text-[var(--gold)] font-semibold">Submitted! (Not yet saved to DB)</div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input name="title" placeholder="Song Title" value={form.title} onChange={handleChange} className="w-full border p-2 rounded" required />
-          <input name="artist" placeholder="Artist" value={form.artist} onChange={handleChange} className="w-full border p-2 rounded" required />
-          <input name="youtubeUrl" placeholder="YouTube Link" value={form.youtubeUrl} onChange={handleChange} className="w-full border p-2 rounded" />
-          <input name="songsterrGuitarUrl" placeholder="Guitar Tab Link" value={form.songsterrGuitarUrl} onChange={handleChange} className="w-full border p-2 rounded" />
-          <input name="songsterrBassUrl" placeholder="Bass Tab Link" value={form.songsterrBassUrl} onChange={handleChange} className="w-full border p-2 rounded" />
-          <input name="lyricsUrl" placeholder="Lyrics Link" value={form.lyricsUrl} onChange={handleChange} className="w-full border p-2 rounded" />
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Submit</button>
+          <Input name="title" placeholder="Song Title" value={form.title} onChange={handleChange} required />
+          <Input name="artist" placeholder="Artist" value={form.artist} onChange={handleChange} required />
+          <Input name="youtubeUrl" placeholder="YouTube Link" value={form.youtubeUrl} onChange={handleChange} />
+          <Input name="songsterrGuitarUrl" placeholder="Guitar Tab Link" value={form.songsterrGuitarUrl} onChange={handleChange} />
+          <Input name="songsterrBassUrl" placeholder="Bass Tab Link" value={form.songsterrBassUrl} onChange={handleChange} />
+          <Input name="lyricsUrl" placeholder="Lyrics Link" value={form.lyricsUrl} onChange={handleChange} />
+          <Button type="submit" className="w-full">Submit</Button>
         </form>
       )}
     </div>

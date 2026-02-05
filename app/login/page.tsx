@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaSignInAlt, FaUserPlus, FaEnvelope, FaLock } from "react-icons/fa";
+import AuthShell from "@/src/components/AuthShell";
+import Button from "@/src/components/ui/Button";
+import Input from "@/src/components/ui/Input";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sent, setSent] = useState(false);
@@ -19,21 +25,51 @@ export default function LoginPage() {
     setError("");
     try {
       if (mode === 'signin') {
-        // Try password sign in first
-        const result = await signIn("credentials", { email, password, redirect: false });
-        if (result?.error) {
+        const result = await signIn("credentials", { 
+          email, 
+          password, 
+          redirect: false, 
+          callbackUrl: "/dashboard" 
+        });
+        if (!result || result?.error) {
           setError("Invalid email or password. Try again or use magic link.");
         } else {
-          // Success, redirect handled by next-auth
+          router.push(result.url || "/dashboard");
         }
       } else {
-        // For now, fallback to magic link for signup
-        const result = await signIn("email", { email, redirect: false });
-        if (result?.error) {
-          setError("Failed to send email. Please try again.");
-        } else {
-          setSent(true);
+        if (!password || password.length < 8) {
+          setError("Please use a password with at least 8 characters.");
+          return;
         }
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (res.status === 409) {
+          setError("An account with that email already exists. Please sign in.");
+          setMode("signin");
+          return;
+        }
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data?.error || "Sign up failed. Please try again.");
+          return;
+        }
+        // Add delay to avoid race conditions in dev
+        await new Promise(resolve => setTimeout(resolve, 200));
+        const result = await signIn("credentials", { 
+          email, 
+          password, 
+          redirect: false, 
+          callbackUrl: "/dashboard" 
+        });
+        if (!result || result?.error) {
+          setError("Sign up succeeded, but sign in failed. Please sign in.");
+          setMode("signin");
+          return;
+        }
+        router.push(result.url || "/dashboard");
       }
     } catch (err) {
       setError("An unexpected error occurred.");
@@ -49,51 +85,52 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="w-full max-w-md">
+    <AuthShell>
+      <div className="w-full max-w-xl">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-16">
           <div className="text-7xl mb-4">🎵</div>
-          <h1 className="text-4xl font-bold text-white mb-2">Mixtape</h1>
-          <p className="text-slate-400 text-lg">
+          <h1 className="text-6xl font-bold text-[var(--text)] mb-3">Mixtape</h1>
+          <p className="text-[var(--muted)] text-xl">
             Band Music Management Platform
           </p>
         </div>
 
         {/* Card */}
-        <div className="card-base p-10 bg-slate-900/80 rounded-2xl shadow-2xl border border-slate-800">
+        <div className="p-10 sm:p-12 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] backdrop-blur-xl">
           {!sent ? (
             <>
-              <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-2">
-                {mode === 'signin' ? <FaSignInAlt className="inline text-blue-400" /> : <FaUserPlus className="inline text-green-400" />}
-                {mode === 'signin' ? 'Sign In' : 'Sign Up'}
-              </h2>
-              <p className="text-slate-400 mb-8 text-base">
-                {mode === 'signin'
-                  ? 'Sign in with your email and password below, or use a magic link if you prefer passwordless login.'
-                  : 'Sign up with your email and password below, or use a magic link for passwordless signup.'}
-              </p>
+              <div className="mb-10">
+                <h2 className="text-3xl font-bold text-[var(--text)] mb-4 flex items-center gap-3">
+                  {mode === 'signin' ? <FaSignInAlt className="text-[var(--gold)] text-2xl" /> : <FaUserPlus className="text-[var(--pink)] text-2xl" />}
+                  {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+                </h2>
+                <p className="text-[var(--muted)] text-base leading-relaxed">
+                  {mode === 'signin'
+                    ? 'Sign in with your email and password below. If you have never signed in before, please enter your email and click "Send Magic Link".'
+                    : 'Sign up with your email and password below, or use a magic link for passwordless signup.'}
+                </p>
+              </div>
 
               <form onSubmit={submit} className="space-y-6">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                    <FaEnvelope className="inline text-blue-300" /> Email Address
+                <div className="space-y-3">
+                  <label htmlFor="email" className="block text-sm font-semibold text-[var(--text)] flex items-center gap-2">
+                    <FaEnvelope className="text-[var(--gold)]" /> Email Address
                   </label>
-                  <input
+                  <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-white placeholder-slate-500 text-base"
                   />
                 </div>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-semibold text-white mb-2 flex items-center gap-2">
-                    <FaLock className="inline text-blue-300" /> Password
+                <div className="space-y-3">
+                  <label htmlFor="password" className="block text-sm font-semibold text-[var(--text)] flex items-center gap-2">
+                    <FaLock className="text-[var(--gold)]" /> Password
                   </label>
-                  <input
+                  <Input
                     id="password"
                     type="password"
                     value={password}
@@ -101,43 +138,38 @@ export default function LoginPage() {
                     placeholder="Password (min 8 chars)"
                     required={mode === 'signup'}
                     minLength={8}
-                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-white placeholder-slate-500 text-base"
                   />
                 </div>
 
                 {error && (
-                  <div className="p-4 bg-red-900/30 border border-red-700 text-red-300 rounded-lg text-sm font-medium">
+                  <div className="p-5 bg-[var(--surface2)] border-2 border-[var(--pink)]/70 text-[var(--pink)] rounded-xl text-sm font-medium leading-relaxed">
                     {error}
                   </div>
                 )}
 
-                <button
+                <Button
                   type="submit"
+                  size="lg"
                   disabled={loading}
-                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-lg transition shadow-lg ${mode === 'signin' ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-green-600 hover:bg-green-500 text-white'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="w-full text-lg font-bold mt-2"
                 >
                   {loading ? (
                     <span>
                       {mode === 'signin' ? 'Signing In...' : 'Signing Up...'}
                     </span>
                   ) : (
-                    <span className="flex items-center gap-2">
-                      {mode === 'signin' ? <FaSignInAlt /> : <FaUserPlus />}
+                    <span className="flex items-center justify-center gap-2">
+                      {mode === 'signin' ? <FaSignInAlt className="text-lg" /> : <FaUserPlus className="text-lg" />}
                       {mode === 'signin' ? 'Sign In' : 'Sign Up'}
                     </span>
                   )}
-                </button>
+                </Button>
               </form>
 
-              <div className="flex flex-col sm:flex-row justify-between gap-3 mt-8">
-                <button
-                  className="text-blue-400 font-medium hover:underline text-base"
-                  onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-                >
-                  {mode === 'signin' ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
-                </button>
-                <button
-                  className="text-blue-400 font-medium hover:underline text-base"
+              <div className="mt-10 space-y-4">
+                <Button
+                  variant="surface"
+                  type="button"
                   onClick={async () => {
                     setLoading(true);
                     setError("");
@@ -154,60 +186,58 @@ export default function LoginPage() {
                       setLoading(false);
                     }
                   }}
+                  className="w-full"
                 >
-                  <FaEnvelope className="inline mr-1" /> Use Magic Link
-                </button>
+                  <FaEnvelope /> Send Magic Link
+                </Button>
               </div>
-              <div className="mt-8 text-slate-400 text-xs text-center">
-                <span className="block mb-1">• Passwords are securely encrypted and never shared.</span>
-                <span className="block">• Magic link sign-in is instant in development (see MailHog below).</span>
+              <div className="mt-8 text-[var(--muted)] text-xs text-center space-y-1">
+                <p>🔒 Passwords are securely encrypted and never shared.</p>
+                <p>⚡ Magic link sign-in is instant in development (see MailHog below).</p>
               </div>
             </>
           ) : (
             <>
               <div className="text-center">
-                <div className="text-6xl mb-4">📧</div>
-                <h2 className="text-3xl font-bold text-white mb-2">
+                <div className="text-7xl mb-6">📧</div>
+                <h2 className="text-4xl font-bold text-[var(--text)] mb-4">
                   Check Your Email
                 </h2>
-                <p className="text-slate-300 mb-6">
+                <p className="text-[var(--muted)] mb-8 text-lg leading-relaxed">
                   We've sent a magic link to{' '}
-                  <strong className="text-white">{email}</strong>. Click it to
+                  <strong className="text-[var(--text)]">{email}</strong>. Click it to
                   sign in.
                 </p>
 
-                <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-5 mb-8 text-left">
-                  <p className="text-blue-300 text-sm">
-                    <strong>⚙️ Development Mode:</strong> Check MailHog at{' '}
+                <div className="bg-[var(--surface2)] border border-[var(--ring)]/30 rounded-xl p-6 mb-8 text-left">
+                  <p className="text-[var(--muted)] text-sm leading-relaxed">
+                    <strong className="text-[var(--text)]">⚙️ Development Mode:</strong> Check MailHog at{' '}
                     <a
                       href="http://localhost:8025"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="underline font-semibold hover:text-blue-200 transition"
+                      className="text-[var(--gold)] underline font-semibold hover:text-[var(--pink)] transition"
                     >
                       localhost:8025
                     </a>
                   </p>
                 </div>
 
-                <button
-                  onClick={handleReset}
-                  className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition"
-                >
+                <Button type="button" variant="surface" size="lg" onClick={handleReset} className="w-full">
                   Try Different Email
-                </button>
+                </Button>
               </div>
             </>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-slate-400 text-sm">
-          <Link href="/" className="hover:text-white transition font-medium">
+          {/* Footer */}
+        <div className="mt-12 text-center text-[var(--muted)] text-sm">
+          <Link href="/" className="inline-flex items-center gap-2 hover:text-[var(--text)] transition font-medium">
             ← Back to Home
           </Link>
         </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -1,11 +1,47 @@
 {
 	"folders": [
 		{
-			"path": "lib"
-		},
-		{
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		// TypeScript performance
+		"typescript.tsserver.maxTsServerMemory": 4096,
+		"typescript.disableAutomaticTypeAcquisition": true,
+		
+		// Exclude file watchers
+		"files.watcherExclude": {
+			"**/.git/objects/**": true,
+			"**/.git/subtree-cache/**": true,
+			"**/node_modules/**": true,
+			"**/.next/**": true,
+			"**/dist/**": true,
+			"**/build/**": true,
+			"**/.turbo/**": true
+		},
+		
+		// Exclude search indexing
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/.next": true,
+			"**/dist": true,
+			"**/build": true,
+			"**/.turbo": true,
+			"**/package-lock.json": true
+		},
+		
+		// Editor performance
+		"editor.quickSuggestions": {
+			"other": true,
+			"comments": false,
+			"strings": false
+		},
+		"editor.suggest.snippetsPreventQuickSuggestions": false,
+		"editor.minimap.enabled": false,
+		"editor.occurrencesHighlight": "off",
+		
+		// Git performance
+		"git.autorefresh": false,
+		"git.autofetch": false
+	}
 }

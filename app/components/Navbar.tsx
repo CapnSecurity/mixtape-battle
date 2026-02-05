@@ -1,22 +1,23 @@
 "use client";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import Button from "@/src/components/ui/Button";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
 
   return (
-    <nav className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur border-b border-slate-700">
+    <nav className="sticky top-0 z-50 bg-[var(--bg)]/90 backdrop-blur border-b border-[var(--ring)]/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0 flex items-center gap-3">
-            <div className="text-2xl font-bold gradient-text">🎵</div>
+            <div className="text-2xl font-bold">🎵</div>
             <div>
-              <span className="text-xl font-bold text-white hidden sm:inline font-serif">
+              <span className="text-xl font-bold text-[var(--text)] hidden sm:inline font-serif">
                 Mixtape
               </span>
-              <div className="text-xs text-slate-400 hidden sm:inline ml-2">
+              <div className="text-xs text-[var(--muted)] hidden sm:inline ml-2">
                 Band Management
               </div>
             </div>
@@ -26,25 +27,25 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-8">
             <Link
               href="/battle"
-              className="text-slate-300 hover:text-white transition font-medium flex items-center gap-2"
+              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
             >
               <span>⚔️</span> Battle
             </Link>
             <Link
               href="/results"
-              className="text-slate-300 hover:text-white transition font-medium flex items-center gap-2"
+              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
             >
               <span>🏆</span> Rankings
             </Link>
             <Link
               href="/invite"
-              className="text-slate-300 hover:text-white transition font-medium flex items-center gap-2"
+              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
             >
               <span>✉️</span> Invite
             </Link>
             <Link
               href="/songs/browser"
-              className="text-slate-300 hover:text-white transition font-medium flex items-center gap-2"
+              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
             >
               <span>🎸</span> Songs
             </Link>
@@ -54,44 +55,37 @@ export default function Navbar() {
           {/* Auth Section */}
           <div className="flex items-center gap-4">
             {status === "loading" ? (
-              <div className="text-slate-400 text-sm">Loading...</div>
+              <div className="text-[var(--muted)] text-sm">Loading...</div>
             ) : session ? (
               <div className="flex items-center gap-4">
-                <div className="text-sm text-slate-300 hidden sm:inline">
+                <div className="text-sm text-[var(--muted)] hidden sm:inline">
                   {session.user?.email}
                 </div>
-                <button
+                <Button
+                  variant="surface"
                   onClick={async () => {
                     await signOut({ callbackUrl: "/login" });
-                    // Optionally show a toast or feedback here
                   }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium transition"
                 >
                   Sign Out
-                </button>
+                </Button>
               </div>
             ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium transition"
-                >
-                  Sign In
-                </Link>
-                {/* Library link removed as requested */}
-              </>
+              <Button asChild>
+                <Link href="/login">Sign In</Link>
+              </Button>
             )}
           </div>
 
         {/* Mobile Nav */}
-        <div className="md:hidden flex gap-4 pb-4 text-slate-300 text-sm border-t border-slate-700 mt-4 pt-4">
-          <Link href="/battle" className="hover:text-white flex items-center gap-1">
+        <div className="md:hidden flex gap-4 pb-4 text-[var(--muted)] text-sm border-t border-[var(--ring)]/20 mt-4 pt-4">
+          <Link href="/battle" className="hover:text-[var(--text)] flex items-center gap-1">
             ⚔️ Battle
           </Link>
-          <Link href="/results" className="hover:text-white flex items-center gap-1">
+          <Link href="/results" className="hover:text-[var(--text)] flex items-center gap-1">
             🏆 Rankings
           </Link>
-          <Link href="/songs/browser" className="hover:text-white flex items-center gap-1">
+          <Link href="/songs/browser" className="hover:text-[var(--text)] flex items-center gap-1">
             🎸 Songs
           </Link>
         </div>

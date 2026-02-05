@@ -10,7 +10,7 @@ export default function RootLayoutContent({
   return (
     <SessionProvider>
       <Navbar />
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+      <main className="min-h-screen bg-[var(--bg)]">
         {children}
       </main>
     </SessionProvider>

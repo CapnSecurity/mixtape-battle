@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { prisma } from "../../lib/prisma";
 import { songsterr, ultimateGuitar, youtube, lyrics } from "../../lib/links";
+import Button from "@/src/components/ui/Button";
 
 export default async function SongsPage() {
   const songs = await prisma.song.findMany({ orderBy: { title: "asc" } });
 
   return (
-    <div className="min-h-screen bg-white py-16 px-4">
+    <div className="min-h-screen bg-[var(--bg)] py-16 px-4 text-[var(--text)]">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-16">
-          <h1 className="text-6xl font-bold text-gray-900 mb-4">Song Library</h1>
-          <p className="text-xl text-gray-600">
+          <h1 className="text-6xl font-bold text-[var(--text)] mb-4">Song Library</h1>
+          <p className="text-xl text-[var(--muted)]">
             {songs.length} songs to learn and battle
           </p>
         </div>
@@ -22,19 +23,19 @@ export default async function SongsPage() {
             {songs.map((song) => (
               <div key={song.id} className="flex flex-col">
                 {/* Main Song Tile */}
-                <div className="bg-white border-2 border-gray-300 rounded-xl p-8 mb-4 hover:border-gray-400 hover:shadow-xl transition-all duration-300 flex-1 flex flex-col justify-between">
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-8 mb-4 hover:bg-[var(--surface2)] transition-all duration-300 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-2xl font-bold text-[var(--text)] mb-2">
                       {song.title}
                     </h3>
-                    <p className="text-lg text-gray-600 mb-6">
+                    <p className="text-lg text-[var(--muted)] mb-6">
                       {song.artist}
                     </p>
                   </div>
                   
-                  <div className="bg-gray-100 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Battle Score</p>
-                    <p className="text-4xl font-bold text-gray-900">
+                  <div className="bg-[var(--surface2)] rounded-xl p-4">
+                    <p className="text-sm text-[var(--muted)] mb-1">Battle Score</p>
+                    <p className="text-4xl font-bold text-[var(--text)]">
                       {Math.round(song.elo)}
                     </p>
                   </div>
@@ -46,7 +47,7 @@ export default async function SongsPage() {
                     href={songsterr(song.artist, song.title)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-4 px-4 rounded-lg text-center transition-colors text-sm"
+                    className="bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-4 px-4 rounded-xl text-center transition-colors text-sm border border-[var(--ring)]/20"
                   >
                     🎸<br />Guitar
                   </a>
@@ -55,7 +56,7 @@ export default async function SongsPage() {
                     href={`https://www.ultimate-guitar.com/search.php?search_type=title&value=${encodeURIComponent(song.artist + " " + song.title)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-4 px-4 rounded-lg text-center transition-colors text-sm"
+                    className="bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-4 px-4 rounded-xl text-center transition-colors text-sm border border-[var(--ring)]/20"
                   >
                     🎜<br />Bass
                   </a>
@@ -64,16 +65,15 @@ export default async function SongsPage() {
                     href={lyrics(song.artist, song.title)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-4 px-4 rounded-lg text-center transition-colors text-sm"
+                    className="bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-4 px-4 rounded-xl text-center transition-colors text-sm border border-[var(--ring)]/20"
                   >
                     📝<br />Lyrics
                   </a>
-
                   <a
                     href={youtube(song.artist, song.title)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-red-100 hover:bg-red-200 text-red-700 font-bold py-4 px-4 rounded-lg text-center transition-colors text-sm"
+                    className="bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-4 px-4 rounded-xl text-center transition-colors text-sm border border-[var(--ring)]/20"
                   >
                     ▶️<br />Video
                   </a>
@@ -82,12 +82,12 @@ export default async function SongsPage() {
             ))}
           </div>
         ) : (
-          <div className="border-2 border-gray-300 rounded-xl p-12 text-center">
+          <div className="border border-[var(--ring)]/20 rounded-2xl p-12 text-center bg-[var(--surface)]/70">
             <div className="text-6xl mb-4">📝</div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-[var(--text)] mb-4">
               No Songs Yet
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className="text-[var(--muted)] text-lg">
               Add your first songs to get started with battling!
             </p>
           </div>
@@ -95,9 +95,9 @@ export default async function SongsPage() {
 
         {/* Footer */}
         <div className="mt-16 text-center">
-          <Link href="/battle" className="bg-gray-900 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-800 transition-colors text-lg inline-block">
-            Start Battle ⚔️
-          </Link>
+          <Button asChild>
+            <Link href="/battle">Start Battle ⚔️</Link>
+          </Button>
         </div>
       </div>
     </div>

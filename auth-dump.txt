@@ -1,0 +1,640 @@
+﻿===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\middleware.ts
+===============================
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+const PUBLIC_PATHS = ["/login"];
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    PUBLIC_PATHS.some((path) => pathname === path)
+  ) {
+    return NextResponse.next();
+  }
+
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token) {
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+};
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\package.json
+===============================
+{
+  "name": "mixtape-battle",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@prisma/client": "4.16.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "bcryptjs": "^3.0.3",
+    "next": "15.1.6",
+    "next-auth": "^4.24.13",
+    "nodemailer": "^7.0.13",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/react": "19.2.10",
+    "autoprefixer": "^10.4.24",
+    "postcss": "^8.5.6",
+    "prisma": "4.16.0",
+    "tailwindcss": "^4.1.18",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.2.2"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  }
+}
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\app\api\auth\signup\route.ts
+===============================
+import { NextResponse } from 'next/server';
+import { prisma } from '../../../../lib/prisma';
+import bcrypt from 'bcryptjs';
+
+export async function POST(req: Request) {
+  const { email, password } = await req.json();
+  if (!email || !password) {
+    return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
+  }
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return NextResponse.json({ error: 'User already exists' }, { status: 409 });
+  }
+  const hash = await bcrypt.hash(password, 12);
+  const user = await prisma.user.create({
+    data: { email, password: hash },
+  });
+  return NextResponse.json({ ok: true, user: { id: user.id, email: user.email } });
+}
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\app\api\auth\[...nextauth]\route.ts
+===============================
+import NextAuth from "next-auth";
+import { authOptions } from "../../../../lib/auth-with-credentials";
+
+const handler = NextAuth(authOptions as any);
+export { handler as GET, handler as POST };
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\app\api\battle\next\route.ts
+===============================
+import { prisma } from "../../../../lib/prisma";
+
+export async function GET() {
+  // Return two random songs biased by similar elo (simple approach)
+  const songs = await prisma.song.findMany({ take: 50, orderBy: { elo: "desc" } });
+  if (songs.length < 2) return new Response(null, { status: 204 });
+
+  // pick a random pivot then find nearest by elo
+  const pivot = songs[Math.floor(Math.random() * songs.length)];
+  let candidate = songs
+    .filter((s) => s.id !== pivot.id)
+    .sort((a, b) => Math.abs(a.elo - pivot.elo) - Math.abs(b.elo - pivot.elo))[0];
+
+  if (!candidate) candidate = songs.find((s) => s.id !== pivot.id)!;
+
+  return new Response(JSON.stringify({ a: pivot, b: candidate }), {
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\app\api\battle\submit\route.ts
+===============================
+import { prisma } from "../../../../lib/prisma";
+import { expectedScore, newRating, kFactor } from "../../../../lib/elo";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const { winnerId, loserId, skipped } = body;
+
+  if (skipped) {
+    await prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: null } });
+    return new Response(JSON.stringify({ ok: true }));
+  }
+
+  const winner = await prisma.song.findUnique({ where: { id: winnerId } });
+  const loser = await prisma.song.findUnique({ where: { id: loserId } });
+  if (!winner || !loser) return new Response(null, { status: 400 });
+
+  const expectedW = expectedScore(winner.elo, loser.elo);
+  const expectedL = expectedScore(loser.elo, winner.elo);
+
+  const kW = kFactor(winner.elo);
+  const kL = kFactor(loser.elo);
+
+  const newW = newRating(winner.elo, expectedW, 1, kW);
+  const newL = newRating(loser.elo, expectedL, 0, kL);
+
+  await prisma.$transaction([
+    prisma.song.update({ where: { id: winner.id }, data: { elo: newW } }),
+    prisma.song.update({ where: { id: loser.id }, data: { elo: newL } }),
+    prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: winnerId } }),
+  ]);
+
+  return new Response(JSON.stringify({ ok: true }));
+}
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\app\api\invite\route.ts
+===============================
+import { NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
+
+export async function POST(req: Request) {
+  const { email } = await req.json();
+  if (!email || typeof email !== 'string') {
+    return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
+  }
+
+  // Configure nodemailer (use your env vars)
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_SERVER_HOST,
+    port: Number(process.env.EMAIL_SERVER_PORT),
+    auth: {
+      user: process.env.EMAIL_SERVER_USER,
+      pass: process.env.EMAIL_SERVER_PASSWORD,
+    },
+  });
+
+  const inviteUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/login`;
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'You are invited to Mixtape Battle',
+    text: `You have been invited to join Mixtape Battle! Click here to sign up: ${inviteUrl}`,
+    html: `<p>You have been invited to join <b>Mixtape Battle</b>!<br/>Click here to sign up: <a href="${inviteUrl}">${inviteUrl}</a></p>`
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: 'Failed to send invite' }, { status: 500 });
+  }
+}
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\app\api\songs\route.ts
+===============================
+import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(request: NextRequest) {
+  try {
+    const songs = await prisma.song.findMany({
+      orderBy: { title: "asc" },
+      select: {
+        id: true,
+        title: true,
+        artist: true,
+        elo: true,
+        album: true,
+        releaseDate: true,
+        songsterrGuitarUrl: true,
+        songsterrBassUrl: true,
+        lyricsUrl: true,
+        youtubeUrl: true,
+      },
+    });
+
+    return NextResponse.json(songs);
+  } catch (error) {
+    console.error("Error fetching songs:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch songs" },
+      { status: 500 }
+    );
+  }
+}
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\app\login\page.tsx
+===============================
+"use client";
+
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FaSignInAlt, FaUserPlus, FaEnvelope, FaLock } from "react-icons/fa";
+import AuthShell from "@/src/components/AuthShell";
+import Button from "@/src/components/ui/Button";
+import Input from "@/src/components/ui/Input";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [mode, setMode] = useState<'signin'|'signup'>('signin');
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      if (mode === 'signin') {
+        // Try password sign in first
+        const result = await signIn("credentials", { email, password, redirect: false });
+        if (result?.error) {
+          setError("Invalid email or password. Try again or use magic link.");
+        } else {
+          router.push("/battle");
+        }
+      } else {
+        if (!password || password.length < 8) {
+          setError("Please use a password with at least 8 characters.");
+          return;
+        }
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        if (res.status === 409) {
+          setError("An account with that email already exists. Please sign in.");
+          setMode("signin");
+          return;
+        }
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data?.error || "Sign up failed. Please try again.");
+          return;
+        }
+        const result = await signIn("credentials", { email, password, redirect: false });
+        if (result?.error) {
+          setError("Sign up succeeded, but sign in failed. Please sign in.");
+          setMode("signin");
+          return;
+        }
+        router.push("/battle");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSent(false);
+    setEmail("");
+    setError("");
+  };
+
+  return (
+    <AuthShell>
+      <div className="w-full max-w-xl">
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <div className="text-6xl mb-3">ðŸŽµ</div>
+          <h1 className="text-5xl font-bold text-[var(--text)] mb-2">Mixtape</h1>
+          <p className="text-[var(--muted)] text-lg">
+            Band Music Management Platform
+          </p>
+        </div>
+
+        {/* Card */}
+        <div className="p-10 rounded-3xl border border-[var(--ring)]/20 bg-[var(--surface)]/85 shadow-[var(--shadow)] backdrop-blur">
+          {!sent ? (
+            <>
+              <h2 className="text-3xl font-bold text-[var(--text)] mb-3 flex items-center gap-2">
+                {mode === 'signin' ? <FaSignInAlt className="inline text-[var(--gold)]" /> : <FaUserPlus className="inline text-[var(--pink)]" />}
+                {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+              </h2>
+              <p className="text-[var(--muted)] mb-8 text-base leading-relaxed">
+                {mode === 'signin'
+                  ? 'Sign in with your email and password below, or use a magic link if you prefer passwordless login.'
+                  : 'Sign up with your email and password below, or use a magic link for passwordless signup.'}
+              </p>
+
+              <form onSubmit={submit} className="space-y-6">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-semibold text-[var(--text)] mb-2 flex items-center gap-2">
+                    <FaEnvelope className="inline text-[var(--gold)]" /> Email Address
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-semibold text-[var(--text)] mb-2 flex items-center gap-2">
+                    <FaLock className="inline text-[var(--gold)]" /> Password
+                  </label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password (min 8 chars)"
+                    required={mode === 'signup'}
+                    minLength={8}
+                  />
+                </div>
+
+                {error && (
+                  <div className="p-4 bg-[var(--surface2)] border border-[var(--pink)]/60 text-[var(--pink)] rounded-xl text-sm font-medium">
+                    {error}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={loading}
+                  className="w-full text-base"
+                >
+                  {loading ? (
+                    <span>
+                      {mode === 'signin' ? 'Signing In...' : 'Signing Up...'}
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      {mode === 'signin' ? <FaSignInAlt /> : <FaUserPlus />}
+                      {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+                    </span>
+                  )}
+                </Button>
+              </form>
+
+              <div className="flex flex-col sm:flex-row justify-between gap-3 mt-8">
+                <Button
+                  variant="ghost"
+                  type="button"
+                  onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                >
+                  {mode === 'signin' ? 'Need an account? Sign Up' : 'Already have an account? Sign In'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  type="button"
+                  onClick={async () => {
+                    setLoading(true);
+                    setError("");
+                    try {
+                      const result = await signIn("email", { email, redirect: false });
+                      if (result?.error) {
+                        setError("Failed to send magic link. Please try again.");
+                      } else {
+                        setSent(true);
+                      }
+                    } catch (err) {
+                      setError("An unexpected error occurred.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  <FaEnvelope className="inline" /> Use Magic Link
+                </Button>
+              </div>
+              <div className="mt-8 text-[var(--muted)] text-xs text-center">
+                <span className="block mb-1">â€¢ Passwords are securely encrypted and never shared.</span>
+                <span className="block">â€¢ Magic link sign-in is instant in development (see MailHog below).</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-center">
+                <div className="text-6xl mb-4">ðŸ“§</div>
+                <h2 className="text-3xl font-bold text-[var(--text)] mb-2">
+                  Check Your Email
+                </h2>
+                <p className="text-[var(--muted)] mb-6">
+                  We've sent a magic link to{' '}
+                  <strong className="text-[var(--text)]">{email}</strong>. Click it to
+                  sign in.
+                </p>
+
+                <div className="bg-[var(--surface2)] border border-[var(--ring)]/30 rounded-xl p-5 mb-8 text-left">
+                  <p className="text-[var(--muted)] text-sm">
+                    <strong>âš™ï¸ Development Mode:</strong> Check MailHog at{' '}
+                    <a
+                      href="http://localhost:8025"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline font-semibold hover:text-[var(--text)] transition"
+                    >
+                      localhost:8025
+                    </a>
+                  </p>
+                </div>
+
+                <Button type="button" variant="surface" onClick={handleReset} className="w-full">
+                  Try Different Email
+                </Button>
+              </div>
+            </>
+            )}
+          </div>
+
+          {/* Footer */}
+        <div className="mt-8 text-center text-[var(--muted)] text-sm">
+          <Link href="/" className="hover:text-[var(--text)] transition font-medium">
+            â† Back to Home
+          </Link>
+        </div>
+      </div>
+    </AuthShell>
+  );
+}
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\lib\auth-with-credentials.ts
+===============================
+import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "./prisma";
+import bcrypt from "bcryptjs";
+import EmailProvider from "next-auth/providers/email";
+
+export const authOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+        const user = await prisma.user.findUnique({ where: { email: credentials.email } });
+        if (!user || !user.password) return null;
+        const valid = await bcrypt.compare(credentials.password, user.password);
+        if (!valid) return null;
+        return { id: user.id, email: user.email };
+      },
+    }),
+    EmailProvider({
+      server: {
+        host: process.env.EMAIL_SERVER_HOST,
+        port: Number(process.env.EMAIL_SERVER_PORT),
+        auth:
+          process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD
+            ? {
+                user: process.env.EMAIL_SERVER_USER,
+                pass: process.env.EMAIL_SERVER_PASSWORD,
+              }
+            : undefined,
+      },
+      from: process.env.EMAIL_FROM,
+    }),
+  ],
+  session: { strategy: "jwt" },
+  pages: {
+    signIn: "/login",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+      }
+      return session;
+    },
+  },
+};
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\lib\auth.ts
+===============================
+import type { NextAuthOptions } from "next-auth";
+import EmailProvider from "next-auth/providers/email";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { prisma } from "./prisma";
+
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    EmailProvider({
+      server: {
+        host: process.env.EMAIL_SERVER_HOST,
+        port: Number(process.env.EMAIL_SERVER_PORT),
+        auth:
+          process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD
+            ? {
+                user: process.env.EMAIL_SERVER_USER,
+                pass: process.env.EMAIL_SERVER_PASSWORD,
+              }
+            : undefined,
+      },
+      from: process.env.EMAIL_FROM,
+    }),
+  ],
+  session: { strategy: "jwt" },
+  pages: {
+    signIn: "/login",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }: any) {
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
+};
+
+
+
+
+===============================
+FILE: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\src\components\AuthShell.tsx
+===============================
+import React from "react";
+
+type AuthShellProps = {
+  children: React.ReactNode;
+};
+
+export default function AuthShell({ children }: AuthShellProps) {
+  return (
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] relative overflow-hidden">
+      <div className="absolute inset-0">
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-2xl scale-110 saturate-150"
+          style={{ backgroundImage: "url(/brand/mixtape-battle.png)" }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,var(--overlay),var(--overlay-strong))]" />
+      </div>
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-16">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+
+
