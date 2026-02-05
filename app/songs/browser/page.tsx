@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import Button from "@/src/components/ui/Button";
+import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics } from "../../../lib/links";
 
 type Song = {
   id: number;
@@ -21,28 +24,75 @@ type Song = {
   ultimateGuitar?: string | null;
 };
 
-export default function SongBrowser() {
+function SongBrowser() {
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const songIdParam = searchParams.get('songId');
   const [songs, setSongs] = useState<Song[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDeleteSong() {
+    if (!selectedSong) return;
+    
+    if (!confirm(`Are you sure you want to delete "${selectedSong.title}" by ${selectedSong.artist}? This cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/songs/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songId: selectedSong.id }),
+      });
+
+      if (res.ok) {
+        // Refresh the song list
+        await fetchSongs();
+      } else {
+        alert('Failed to delete song');
+      }
+    } catch (error) {
+      console.error('Error deleting song:', error);
+      alert('Error deleting song');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const isAdmin = session?.user && (session.user as any).isAdmin;
+
+  async function fetchSongs() {
+    try {
+      const res = await fetch("/api/songs");
+      const data = await res.json();
+      // Sort alphabetically by artist, then by title
+      const sortedData = data.sort((a: Song, b: Song) => {
+        const artistCompare = a.artist.localeCompare(b.artist);
+        if (artistCompare !== 0) return artistCompare;
+        return a.title.localeCompare(b.title);
+      });
+      setSongs(sortedData);
+      
+      // If songId query param exists, select that song; otherwise select first
+      if (songIdParam && sortedData.length > 0) {
+        const targetSong = sortedData.find((s: Song) => s.id === parseInt(songIdParam));
+        setSelectedSong(targetSong || sortedData[0]);
+      } else if (sortedData.length > 0) {
+        setSelectedSong(sortedData[0]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch songs:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchSongs() {
-      try {
-        const res = await fetch("/api/songs");
-        const data = await res.json();
-        setSongs(data);
-        if (data.length > 0) {
-          setSelectedSong(data[0]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch songs:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchSongs();
-  }, []);
+  }, [songIdParam]);
 
   if (loading) {
     return (
@@ -80,7 +130,7 @@ export default function SongBrowser() {
               >
                 {songs.map((song) => (
                   <option key={song.id} value={song.id}>
-                    {song.title} - {song.artist}
+                    {song.artist} - {song.title}
                   </option>
                 ))}
               </select>
@@ -127,60 +177,69 @@ export default function SongBrowser() {
                 {/* Resource Links */}
                 <div className="mt-10">
                   <h3 className="text-2xl font-bold text-[var(--text)] mb-8">📚 Learning Resources</h3>
-                  <div className="mb-6">
+                  <div className="mb-6 flex gap-3">
                     <Button asChild variant="surface">
-                      <Link href="/add-resource">Add Song / Resource Manually</Link>
+                      <Link href="/add-song">➕ Add New Song</Link>
                     </Button>
+                    <Button asChild variant="surface">
+                      <Link href="/add-resource">🔗 Update Links</Link>
+                    </Button>
+                    {isAdmin && (
+                      <Button 
+                        onClick={handleDeleteSong}
+                        disabled={deleting}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        {deleting ? 'Deleting...' : '🗑️ Delete Song'}
+                      </Button>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {selectedSong.songsterr && (
-                      <a
-                        href={selectedSong.songsterr}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
-                      >
-                        <div className="text-3xl mb-2">🎸</div>
-                        Songsterr
-                      </a>
-                    )}
+                    {/* Guitar Tabs - Always show */}
+                    <a
+                      href={selectedSong.ultimateGuitar || ultimateGuitarGuitar(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                    >
+                      <div className="text-3xl mb-2">🎸</div>
+                      Guitar Tabs
+                    </a>
 
-                    {selectedSong.ultimateGuitar && (
-                      <a
-                        href={selectedSong.ultimateGuitar}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
-                      >
-                        <div className="text-3xl mb-2">🎸</div>
-                        Ultimate Guitar
-                      </a>
-                    )}
+                    {/* Bass Tabs - Always show */}
+                    <a
+                      href={selectedSong.songsterr || songsterrBass(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                    >
+                      <div className="text-3xl mb-2">🎸</div>
+                      Bass Tabs
+                    </a>
 
-                    {selectedSong.lyrics && (
-                      <a
-                        href={selectedSong.lyrics}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
-                      >
-                        <div className="text-3xl mb-2">📝</div>
-                        Lyrics
-                      </a>
-                    )}
+                    {/* Lyrics - Always show */}
+                    <a
+                      href={selectedSong.lyrics || lyrics(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                    >
+                      <div className="text-3xl mb-2">📝</div>
+                      Lyrics
+                    </a>
 
-                    {selectedSong.youtube && (
-                      <a
-                        href={selectedSong.youtube}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
-                      >
-                        <div className="text-3xl mb-2">▶️</div>
-                        Video
-                      </a>
-                    )}
+                    {/* YouTube - Always show */}
+                    <a
+                      href={selectedSong.youtube || youtube(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                    >
+                      <div className="text-3xl mb-2">▶️</div>
+                      YouTube Music
+                    </a>
 
+                    {/* Streaming services - only show if available */}
                     {selectedSong.spotify && (
                       <a
                         href={selectedSong.spotify}
@@ -229,19 +288,6 @@ export default function SongBrowser() {
                       </a>
                     )}
                   </div>
-
-                  {!selectedSong.songsterr &&
-                    !selectedSong.ultimateGuitar &&
-                    !selectedSong.lyrics &&
-                    !selectedSong.youtube &&
-                    !selectedSong.spotify &&
-                    !selectedSong.apple &&
-                    !selectedSong.bandcamp &&
-                    !selectedSong.soundcloud && (
-                      <p className="text-[var(--muted)] italic mt-8 text-lg">
-                        No resources available for this song yet.
-                      </p>
-                    )}
                 </div>
               </div>
             </div>
@@ -258,3 +304,17 @@ export default function SongBrowser() {
     </div>
   );
 }
+
+function SongBrowserWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[var(--bg)] py-16 px-4 flex items-center justify-center">
+        <p className="text-[var(--muted)] text-lg">Loading songs...</p>
+      </div>
+    }>
+      <SongBrowser />
+    </Suspense>
+  );
+}
+
+export default SongBrowserWrapper;

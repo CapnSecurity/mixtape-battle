@@ -196,10 +196,10 @@ export default function BattlePage() {
               📖 Song Library
             </Link>
             <Link
-              href="/add-resource"
+              href="/add-song"
               className="text-[var(--gold)] hover:text-[var(--pink)] font-semibold transition"
             >
-              ➕ Add Song/Resource
+              ➕ Add New Song
             </Link>
             <Link
               href="/results"
