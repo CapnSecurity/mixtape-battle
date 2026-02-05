@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "../../lib/prisma";
 import Button from "@/src/components/ui/Button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ResultsPage() {
   const top = await prisma.song.findMany({
     orderBy: { elo: "desc" },

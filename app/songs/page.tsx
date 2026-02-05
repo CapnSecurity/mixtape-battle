@@ -3,6 +3,8 @@ import { prisma } from "../../lib/prisma";
 import { songsterr, ultimateGuitar, youtube, lyrics } from "../../lib/links";
 import Button from "@/src/components/ui/Button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function SongsPage() {
   const songs = await prisma.song.findMany({ orderBy: { title: "asc" } });
 

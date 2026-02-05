@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Song {
@@ -18,10 +18,14 @@ model Song {
   releaseDate Int?   // year
   
   // Resource Links
-  songsterrGuitarUrl String?
-  songsterrBassUrl String?
-  lyricsUrl String?
-  youtubeUrl String?
+  spotify        String?
+  apple          String?
+  youtube        String?
+  bandcamp       String?
+  soundcloud     String?
+  lyrics         String?
+  songsterr      String?
+  ultimateGuitar String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

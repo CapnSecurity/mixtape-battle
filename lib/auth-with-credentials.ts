@@ -14,11 +14,27 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          console.log("[AUTH] Missing email or password");
+          return null;
+        }
+        console.log("[AUTH] Attempting to find user:", credentials.email);
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
-        if (!user || !user.password) return null;
+        if (!user) {
+          console.log("[AUTH] User not found:", credentials.email);
+          return null;
+        }
+        if (!user.password) {
+          console.log("[AUTH] User has no password:", credentials.email);
+          return null;
+        }
+        console.log("[AUTH] Comparing passwords for:", credentials.email);
         const valid = await bcrypt.compare(credentials.password, user.password);
-        if (!valid) return null;
+        if (!valid) {
+          console.log("[AUTH] Invalid password for:", credentials.email);
+          return null;
+        }
+        console.log("[AUTH] Login successful for:", credentials.email);
         return { id: user.id, email: user.email };
       },
     }),
@@ -67,9 +83,10 @@ export const authOptions = {
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       return `${baseUrl}/settings`;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       if (user) {
         token.id = user.id;
+        token.email = user.email;
       }
       // Track if this was an email provider login
       if (account?.provider === "email") {
@@ -78,8 +95,9 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
+      if (session?.user) {
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
       }
       return session;
     },

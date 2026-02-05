@@ -11,10 +11,14 @@ type Song = {
   elo: number;
   album?: string | null;
   releaseDate?: number | null;
-  songsterrGuitarUrl?: string | null;
-  songsterrBassUrl?: string | null;
-  lyricsUrl?: string | null;
-  youtubeUrl?: string | null;
+  spotify?: string | null;
+  apple?: string | null;
+  youtube?: string | null;
+  bandcamp?: string | null;
+  soundcloud?: string | null;
+  lyrics?: string | null;
+  songsterr?: string | null;
+  ultimateGuitar?: string | null;
 };
 
 export default function SongBrowser() {
@@ -129,33 +133,33 @@ export default function SongBrowser() {
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {selectedSong.songsterrGuitarUrl && (
+                    {selectedSong.songsterr && (
                       <a
-                        href={selectedSong.songsterrGuitarUrl}
+                        href={selectedSong.songsterr}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
                       >
                         <div className="text-3xl mb-2">🎸</div>
-                        Guitar Tabs
+                        Songsterr
                       </a>
                     )}
 
-                    {selectedSong.songsterrBassUrl && (
+                    {selectedSong.ultimateGuitar && (
                       <a
-                        href={selectedSong.songsterrBassUrl}
+                        href={selectedSong.ultimateGuitar}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
                       >
-                        <div className="text-3xl mb-2">🎜</div>
-                        Bass Tabs
+                        <div className="text-3xl mb-2">🎸</div>
+                        Ultimate Guitar
                       </a>
                     )}
 
-                    {selectedSong.lyricsUrl && (
+                    {selectedSong.lyrics && (
                       <a
-                        href={selectedSong.lyricsUrl}
+                        href={selectedSong.lyrics}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
@@ -165,9 +169,9 @@ export default function SongBrowser() {
                       </a>
                     )}
 
-                    {selectedSong.youtubeUrl && (
+                    {selectedSong.youtube && (
                       <a
-                        href={selectedSong.youtubeUrl}
+                        href={selectedSong.youtube}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
@@ -176,12 +180,64 @@ export default function SongBrowser() {
                         Video
                       </a>
                     )}
+
+                    {selectedSong.spotify && (
+                      <a
+                        href={selectedSong.spotify}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                      >
+                        <div className="text-3xl mb-2">🎵</div>
+                        Spotify
+                      </a>
+                    )}
+
+                    {selectedSong.apple && (
+                      <a
+                        href={selectedSong.apple}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                      >
+                        <div className="text-3xl mb-2">🍎</div>
+                        Apple Music
+                      </a>
+                    )}
+
+                    {selectedSong.bandcamp && (
+                      <a
+                        href={selectedSong.bandcamp}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                      >
+                        <div className="text-3xl mb-2">🎹</div>
+                        Bandcamp
+                      </a>
+                    )}
+
+                    {selectedSong.soundcloud && (
+                      <a
+                        href={selectedSong.soundcloud}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                      >
+                        <div className="text-3xl mb-2">☁️</div>
+                        SoundCloud
+                      </a>
+                    )}
                   </div>
 
-                  {!selectedSong.songsterrGuitarUrl &&
-                    !selectedSong.songsterrBassUrl &&
-                    !selectedSong.lyricsUrl &&
-                    !selectedSong.youtubeUrl && (
+                  {!selectedSong.songsterr &&
+                    !selectedSong.ultimateGuitar &&
+                    !selectedSong.lyrics &&
+                    !selectedSong.youtube &&
+                    !selectedSong.spotify &&
+                    !selectedSong.apple &&
+                    !selectedSong.bandcamp &&
+                    !selectedSong.soundcloud && (
                       <p className="text-[var(--muted)] italic mt-8 text-lg">
                         No resources available for this song yet.
                       </p>

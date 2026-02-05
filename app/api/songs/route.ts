@@ -12,10 +12,14 @@ export async function GET(request: NextRequest) {
         elo: true,
         album: true,
         releaseDate: true,
-        songsterrGuitarUrl: true,
-        songsterrBassUrl: true,
-        lyricsUrl: true,
-        youtubeUrl: true,
+        spotify: true,
+        apple: true,
+        youtube: true,
+        bandcamp: true,
+        soundcloud: true,
+        lyrics: true,
+        songsterr: true,
+        ultimateGuitar: true,
       },
     });
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const PUBLIC_PATHS = ["/login", "/settings"];
+const PUBLIC_PATHS = ["/login", "/settings", "/battle", "/results", "/songs"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -11,7 +11,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
-    PUBLIC_PATHS.some((path) => pathname === path)
+    PUBLIC_PATHS.some((path) => pathname.startsWith(path))
   ) {
     return NextResponse.next();
   }
