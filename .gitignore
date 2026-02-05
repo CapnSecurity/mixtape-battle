@@ -48,6 +48,15 @@ node_modules
 /songs-backup.json
 /votes-backup.json
 /verification.sql
+/check-*.sql
+/add-*.sql
+/set-*.sql
+/drop-*.sql
+/fix-*.sql
+/init*.sql
+/generate-*.js
+/check-*.js
+prisma/prisma/
 /prisma/dev-from-git.db
 
 # Local helper scripts and cert tasks

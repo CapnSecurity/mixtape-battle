@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Input from "@/src/components/ui/Input";
 import Button from "@/src/components/ui/Button";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
@@ -62,5 +62,13 @@ export default function SignupPage() {
       </form>
       {status === "error" && <div className="text-[var(--pink)] mt-4">Failed to create account.</div>}
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="max-w-lg mx-auto p-8 mt-12 text-center">Loading...</div>}>
+      <SignupForm />
+    </Suspense>
   );
 }
