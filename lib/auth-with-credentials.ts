@@ -35,24 +35,8 @@ export const authOptions = {
           return null;
         }
         console.log("[AUTH] Login successful for:", credentials.email);
-        return { id: user.id, email: user.email };
+        return { id: user.id, email: user.email, isAdmin: user.isAdmin };
       },
-    }),
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: Number(process.env.EMAIL_SERVER_PORT),
-        auth:
-          process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD
-            ? {
-                user: process.env.EMAIL_SERVER_USER,
-                pass: process.env.EMAIL_SERVER_PASSWORD,
-              }
-            : undefined,
-      },
-      from: process.env.EMAIL_FROM,
-      // Magic link users should go to settings to set password
-      maxAge: 24 * 60 * 60, // 24 hours
     }),
   ],
   session: { strategy: "jwt" },
@@ -87,6 +71,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email;
+        token.isAdmin = (user as any).isAdmin || false;
       }
       // Track if this was an email provider login
       if (account?.provider === "email") {
@@ -98,6 +83,7 @@ export const authOptions = {
       if (session?.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
+        (session.user as any).isAdmin = token.isAdmin || false;
       }
       return session;
     },

@@ -32,7 +32,7 @@ export default function LoginPage() {
           callbackUrl: "/dashboard" 
         });
         if (!result || result?.error) {
-          setError("Invalid email or password. Try again or use magic link.");
+          setError("Invalid email or password. Please try again.");
         } else {
           router.push(result.url || "/dashboard");
         }
@@ -98,21 +98,19 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="p-10 sm:p-12 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] backdrop-blur-xl">
-          {!sent ? (
-            <>
-              <div className="mb-10">
-                <h2 className="text-3xl font-bold text-[var(--text)] mb-4 flex items-center gap-3">
-                  {mode === 'signin' ? <FaSignInAlt className="text-[var(--gold)] text-2xl" /> : <FaUserPlus className="text-[var(--pink)] text-2xl" />}
-                  {mode === 'signin' ? 'Sign In' : 'Sign Up'}
-                </h2>
-                <p className="text-[var(--muted)] text-base leading-relaxed">
-                  {mode === 'signin'
-                    ? 'Sign in with your email and password below. If you have never signed in before, please enter your email and click "Send Magic Link".'
-                    : 'Sign up with your email and password below, or use a magic link for passwordless signup.'}
-                </p>
-              </div>
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold text-[var(--text)] mb-4 flex items-center gap-3">
+              {mode === 'signin' ? <FaSignInAlt className="text-[var(--gold)] text-2xl" /> : <FaUserPlus className="text-[var(--pink)] text-2xl" />}
+              {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+            </h2>
+            <p className="text-[var(--muted)] text-base leading-relaxed">
+              {mode === 'signin'
+                ? 'Sign in with your email and password below.'
+                : 'Create an account with your email and a strong password.'}
+            </p>
+          </div>
 
-              <form onSubmit={submit} className="space-y-6">
+          <form onSubmit={submit} className="space-y-6">
                 <div className="space-y-3">
                   <label htmlFor="email" className="block text-sm font-semibold text-[var(--text)] flex items-center gap-2">
                     <FaEnvelope className="text-[var(--gold)]" /> Email Address
@@ -166,69 +164,9 @@ export default function LoginPage() {
                 </Button>
               </form>
 
-              <div className="mt-10 space-y-4">
-                <Button
-                  variant="surface"
-                  type="button"
-                  onClick={async () => {
-                    setLoading(true);
-                    setError("");
-                    try {
-                      const result = await signIn("email", { email, redirect: false });
-                      if (result?.error) {
-                        setError("Failed to send magic link. Please try again.");
-                      } else {
-                        setSent(true);
-                      }
-                    } catch (err) {
-                      setError("An unexpected error occurred.");
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="w-full"
-                >
-                  <FaEnvelope /> Send Magic Link
-                </Button>
-              </div>
               <div className="mt-8 text-[var(--muted)] text-xs text-center space-y-1">
                 <p>🔒 Passwords are securely encrypted and never shared.</p>
-                <p>⚡ Magic link sign-in is instant in development (see MailHog below).</p>
               </div>
-            </>
-          ) : (
-            <>
-              <div className="text-center">
-                <div className="text-7xl mb-6">📧</div>
-                <h2 className="text-4xl font-bold text-[var(--text)] mb-4">
-                  Check Your Email
-                </h2>
-                <p className="text-[var(--muted)] mb-8 text-lg leading-relaxed">
-                  We've sent a magic link to{' '}
-                  <strong className="text-[var(--text)]">{email}</strong>. Click it to
-                  sign in.
-                </p>
-
-                <div className="bg-[var(--surface2)] border border-[var(--ring)]/30 rounded-xl p-6 mb-8 text-left">
-                  <p className="text-[var(--muted)] text-sm leading-relaxed">
-                    <strong className="text-[var(--text)]">⚙️ Development Mode:</strong> Check MailHog at{' '}
-                    <a
-                      href="http://localhost:8025"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--gold)] underline font-semibold hover:text-[var(--pink)] transition"
-                    >
-                      localhost:8025
-                    </a>
-                  </p>
-                </div>
-
-                <Button type="button" variant="surface" size="lg" onClick={handleReset} className="w-full">
-                  Try Different Email
-                </Button>
-              </div>
-            </>
-            )}
           </div>
 
           {/* Footer */}
