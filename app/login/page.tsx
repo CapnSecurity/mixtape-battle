@@ -34,7 +34,8 @@ export default function LoginPage() {
         if (!result || result?.error) {
           setError("Invalid email or password. Please try again.");
         } else {
-          router.push(result.url || "/dashboard");
+          // Force full page reload to pick up session cookie
+          window.location.href = result.url || "/dashboard";
         }
       } else {
         if (!password || password.length < 8) {

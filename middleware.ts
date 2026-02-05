@@ -20,17 +20,25 @@ export async function middleware(req: NextRequest) {
 
   // Special: /invite is admin-only
   if (pathname.startsWith("/invite")) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    console.log("[MIDDLEWARE] All cookies:", req.cookies.getAll());
+    console.log("[MIDDLEWARE] Cookie header:", req.headers.get('cookie'));
+    const token = await getToken({ 
+      req, 
+      secret: process.env.NEXTAUTH_SECRET
+    });
+    console.log("[MIDDLEWARE] /invite access attempt. Token:", JSON.stringify(token));
     if (!token || !token.email) {
+      console.log("[MIDDLEWARE] No token or email, redirecting to login");
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
       return NextResponse.redirect(loginUrl);
     }
-    // Fetch user from DB to check isAdmin (token may not have it)
-    // Use a simple fetch to /api/me or similar, or (for now) allow only your email
-    // TODO: Replace with DB lookup if needed
+    // Check if user is admin using token.isAdmin or email whitelist
     const adminEmails = ["tim@levesques.net"];
-    if (!adminEmails.includes(token.email)) {
+    const isAdmin = token.isAdmin === true || adminEmails.includes(token.email as string);
+    console.log("[MIDDLEWARE] isAdmin:", isAdmin, "email:", token.email);
+    if (!isAdmin) {
+      console.log("[MIDDLEWARE] User not admin, redirecting to login");
       const deniedUrl = req.nextUrl.clone();
       deniedUrl.pathname = "/login";
       return NextResponse.redirect(deniedUrl);
@@ -38,7 +46,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({ 
+    req, 
+    secret: process.env.NEXTAUTH_SECRET
+  });
   if (!token) {
     const loginUrl = req.nextUrl.clone();
     loginUrl.pathname = "/login";

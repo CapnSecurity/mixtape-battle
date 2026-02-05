@@ -1,11 +1,8 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
-import EmailProvider from "next-auth/providers/email";
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -46,6 +43,7 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async signIn({ user, account }) {
+      console.log("[SIGNIN] User signed in:", user.email);
       return true;
     },
     async redirect({ url, baseUrl, account }) {
@@ -69,10 +67,12 @@ export const authOptions = {
     },
     async jwt({ token, user, account, trigger }) {
       if (user) {
+        console.log("[JWT] Creating token for user:", user.email, "isAdmin:", (user as any).isAdmin);
         token.id = user.id;
         token.email = user.email;
         token.isAdmin = (user as any).isAdmin || false;
       }
+      console.log("[JWT] Final token:", JSON.stringify({ id: token.id, email: token.email, isAdmin: token.isAdmin }));
       // Track if this was an email provider login
       if (account?.provider === "email") {
         token.isEmailProvider = true;
@@ -80,11 +80,13 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
+      console.log("[SESSION] Building session. Token:", JSON.stringify(token));
       if (session?.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         (session.user as any).isAdmin = token.isAdmin || false;
       }
+      console.log("[SESSION] Final session:", JSON.stringify(session));
       return session;
     },
   },
