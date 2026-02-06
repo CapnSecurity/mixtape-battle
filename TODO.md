@@ -33,10 +33,25 @@
   - 5-second cooldown between votes
   - 3 votes max per song pairing
 
-### Security (Lower Priority)
-- [ ] CSRF protection audit
+### Security - Medium Priority
+- [ ] **Security Headers Enhancement**
+  - Add Content-Security-Policy (CSP) header
+  - Add Referrer-Policy header
+  - Add Permissions-Policy header
+  - Test with https://securityheaders.com/
+
+- [ ] **CSRF Protection**
+  - Review NextAuth CSRF implementation
+  - Add CSRF tokens to critical forms
+  - Audit API endpoints for CSRF vulnerabilities
+
+### Security - Lower Priority
 - [ ] Session token rotation
-- [ ] API input validation improvements
+- [ ] Fail2Ban configuration (brute force protection)
+- [ ] Database connection SSL/TLS
+- [ ] Docker rootless mode
+- [ ] Regular security scanning automation
+- [ ] Security incident response procedures documentation
 
 ### Infrastructure
 - [ ] Consider Redis for distributed rate limiting (if scaling)
