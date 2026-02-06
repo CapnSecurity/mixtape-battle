@@ -6,35 +6,43 @@ import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 
 export async function POST(req: Request) {
-  // Check if user is admin
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !(session.user as any).isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  try {
+    console.log("[SEND-RESET] Request received");
+    // Check if user is admin
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !(session.user as any).isAdmin) {
+      console.log("[SEND-RESET] Unauthorized - not admin");
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const { email } = await req.json();
-  if (!email || typeof email !== 'string') {
-    return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
-  }
+    const { email } = await req.json();
+    console.log("[SEND-RESET] Sending reset to:", email);
+    if (!email || typeof email !== 'string') {
+      console.log("[SEND-RESET] Invalid email format");
+      return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
+    }
 
-  // Check if user exists
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 });
-  }
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      console.log("[SEND-RESET] User not found:", email);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
-  // Generate secure token
-  const token = randomBytes(32).toString('hex');
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+    // Generate secure token
+    console.log("[SEND-RESET] Generating token");
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
 
-  // Store password reset token in DB
-  await prisma.passwordReset.create({
-    data: {
-      email,
-      token,
-      expiresAt,
-    },
-  });
+    // Store password reset token in DB
+    console.log("[SEND-RESET] Storing token in database");
+    await prisma.passwordReset.create({
+      data: {
+        email,
+        token,
+        expiresAt,
+      },
+    });
 
   // Email password reset link
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
@@ -71,12 +79,16 @@ export async function POST(req: Request) {
     `
   };
 
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('[PASSWORD RESET] Email sent successfully to:', email);
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    console.error('[PASSWORD RESET] Error sending email:', e);
-    return NextResponse.json({ error: 'Failed to send password reset email' }, { status: 500 });
+  console.log("[SEND-RESET] Sending email to:", email);
+  await transporter.sendMail(mailOptions);
+  console.log('[SEND-RESET] Email sent successfully');
+  return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    console.error('[SEND-RESET] ERROR:', error);
+    console.error('[SEND-RESET] Error stack:', error?.stack);
+    return NextResponse.json(
+      { error: 'Failed to send password reset email: ' + (error?.message || 'Unknown error') },
+      { status: 500 }
+    );
   }
 }

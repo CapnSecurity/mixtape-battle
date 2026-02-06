@@ -16,6 +16,8 @@ export const authOptions = {
           return null;
         }
         console.log("[AUTH] Attempting to find user:", credentials.email);
+        console.log("[AUTH] Password provided length:", credentials.password?.length);
+        
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
         if (!user) {
           console.log("[AUTH] User not found:", credentials.email);
@@ -25,8 +27,13 @@ export const authOptions = {
           console.log("[AUTH] User has no password:", credentials.email);
           return null;
         }
+        console.log("[AUTH] User found, password hash exists (length:", user.password?.length, ")");
+        console.log("[AUTH] Password hash starts with:", user.password?.substring(0, 7));
         console.log("[AUTH] Comparing passwords for:", credentials.email);
+        
         const valid = await bcrypt.compare(credentials.password, user.password);
+        console.log("[AUTH] Password comparison result:", valid);
+        
         if (!valid) {
           console.log("[AUTH] Invalid password for:", credentials.email);
           return null;
