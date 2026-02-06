@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { expectedScore, newRating, kFactor } from "../../../../lib/elo";
 import { rateLimiters } from "@/lib/rate-limit";
+import { sanitizeError, logError } from "@/lib/error-handler";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,10 +45,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error: any) {
-    console.error("[BATTLE] ERROR:", error);
-    console.error("[BATTLE] Error stack:", error?.stack);
+    logError('[BATTLE]', error);
     return NextResponse.json(
-      { error: 'Failed to submit battle vote: ' + (error?.message || 'Unknown error') },
+      { error: sanitizeError(error, 'Failed to submit battle vote') },
       { status: 500 }
     );
   }

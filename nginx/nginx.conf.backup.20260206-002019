@@ -36,7 +36,7 @@ http {
         # SSL configuration
         ssl_certificate /etc/letsencrypt/live/mixtape.levesques.net/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/mixtape.levesques.net/privkey.pem;
-
+        
         # SSL security settings
         ssl_protocols TLSv1.2 TLSv1.3;
         ssl_ciphers HIGH:!aNULL:!MD5;
@@ -53,33 +53,10 @@ http {
         # Client body size limit
         client_max_body_size 10M;
 
-        # ============================================
-        # MAINTENANCE MODE
-        # ============================================
-        # Check if maintenance flag file exists
-        set $maintenance 0;
-        if (-f /usr/share/nginx/html/.maintenance) {
-            set $maintenance 1;
-        }
-        
-        # Return 503 if maintenance mode is active
-        if ($maintenance = 1) {
-            return 503;
-        }
-        
-        # Custom maintenance page for 503 errors
-        error_page 503 @maintenance;
-        location @maintenance {
-            root /usr/share/nginx/html;
-            rewrite ^(.*)$ /maintenance.html break;
-            internal;
-        }
-        # ============================================
-
         # Proxy settings
         location / {
             limit_req zone=general burst=20 nodelay;
-
+            
             proxy_pass http://app;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -89,7 +66,7 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_cache_bypass $http_upgrade;
-
+            
             # Timeouts
             proxy_connect_timeout 60s;
             proxy_send_timeout 60s;
@@ -99,7 +76,7 @@ http {
         # Rate limit auth endpoints (relaxed to support multiple auth requests)
         location /api/auth/ {
             limit_req zone=auth burst=10 nodelay;
-
+            
             proxy_pass http://app;
             proxy_http_version 1.1;
             proxy_set_header Host $host;

@@ -5,6 +5,7 @@ import { prisma } from "../../../../lib/prisma";
 import bcrypt from "bcryptjs";
 import { Session } from "next-auth";
 import { validatePassword } from "@/lib/password-validation";
+import { sanitizeError, logError, ErrorMessages } from "@/lib/error-handler";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,17 +46,17 @@ export async function POST(req: NextRequest) {
 
       if (!passwordReset) {
         console.log("[SET-PASSWORD] Invalid reset token");
-        return NextResponse.json({ error: "Invalid reset token" }, { status: 400 });
+        return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
       }
 
       if (passwordReset.expiresAt < new Date()) {
         console.log("[SET-PASSWORD] Reset token expired");
-        return NextResponse.json({ error: "Reset token expired" }, { status: 400 });
+        return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
       }
 
       if (passwordReset.usedAt) {
         console.log("[SET-PASSWORD] Reset token already used");
-        return NextResponse.json({ error: "Reset token already used" }, { status: 400 });
+        return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
       }
 
       userEmail = passwordReset.email;
@@ -92,11 +93,9 @@ export async function POST(req: NextRequest) {
     console.log("[SET-PASSWORD] Success for:", userEmail);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("[SET-PASSWORD] ERROR:", error);
-    console.error("[SET-PASSWORD] Error stack:", error?.stack);
-    console.error("[SET-PASSWORD] Error message:", error?.message);
+    logError('[SET-PASSWORD]', error);
     return NextResponse.json(
-      { error: "Failed to set password: " + (error?.message || "Unknown error") },
+      { error: sanitizeError(error, ErrorMessages.PASSWORD_CHANGE_FAILED) },
       { status: 500 }
     );
   }

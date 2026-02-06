@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 import { rateLimiters } from '@/lib/rate-limit';
+import { sanitizeError, logError, ErrorMessages } from '@/lib/error-handler';
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,7 +36,11 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       console.log("[SEND-RESET] User not found:", email);
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      // Return success anyway to prevent account enumeration
+      // Timing attack mitigation: still generate token and do work
+      const dummyToken = randomBytes(32).toString('hex');
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 100 + 50)); // Random delay 50-150ms
+      return NextResponse.json({ ok: true });
     }
 
     // Generate secure token
@@ -93,10 +98,9 @@ export async function POST(req: NextRequest) {
   console.log('[SEND-RESET] Email sent successfully');
   return NextResponse.json({ ok: true });
   } catch (error: any) {
-    console.error('[SEND-RESET] ERROR:', error);
-    console.error('[SEND-RESET] Error stack:', error?.stack);
+    logError('[SEND-RESET]', error);
     return NextResponse.json(
-      { error: 'Failed to send password reset email: ' + (error?.message || 'Unknown error') },
+      { error: sanitizeError(error, 'Failed to send password reset email') },
       { status: 500 }
     );
   }

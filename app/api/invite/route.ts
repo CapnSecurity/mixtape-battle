@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 import { rateLimiters } from '@/lib/rate-limit';
+import { sanitizeError, logError } from '@/lib/error-handler';
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,10 +77,9 @@ export async function POST(req: NextRequest) {
     console.log('[INVITE] Rejected:', info.rejected);
     return NextResponse.json({ ok: true });
   } catch (error: any) {
-    console.error('[INVITE] ERROR:', error);
-    console.error('[INVITE] Error stack:', error?.stack);
+    logError('[INVITE]', error);
     return NextResponse.json(
-      { error: 'Failed to send invite: ' + (error?.message || 'Unknown error') },
+      { error: sanitizeError(error, 'Failed to send invite') },
       { status: 500 }
     );
   }

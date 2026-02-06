@@ -4,6 +4,7 @@ import { Session } from "next-auth";
 import { authOptions } from "@/lib/auth-with-credentials";
 import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
+import { sanitizeError, logError } from "@/lib/error-handler";
 
 export async function POST(req: NextRequest) {
   try {
@@ -82,10 +83,9 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[toggle-admin] Error:', error);
+    logError('[toggle-admin]', error);
     return NextResponse.json({ 
-      error: "Failed to toggle admin status",
-      details: error.message 
+      error: sanitizeError(error, "Failed to toggle admin status")
     }, { status: 500 });
   }
 }

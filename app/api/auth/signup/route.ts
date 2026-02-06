@@ -3,6 +3,7 @@ import { prisma } from '../../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 import { rateLimiters } from '@/lib/rate-limit';
 import { validatePassword } from '@/lib/password-validation';
+import { sanitizeError, logError, ErrorMessages } from '@/lib/error-handler';
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,7 +35,8 @@ export async function POST(req: NextRequest) {
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       console.log("[SIGNUP] User already exists:", email);
-      return NextResponse.json({ error: 'User already exists' }, { status: 409 });
+      // Use generic message to prevent account enumeration
+      return NextResponse.json({ error: 'Unable to create account. Email may already be registered.' }, { status: 400 });
     }
     
     console.log("[SIGNUP] Creating user:", email);
@@ -46,10 +48,9 @@ export async function POST(req: NextRequest) {
     console.log("[SIGNUP] User created successfully:", email);
     return NextResponse.json({ ok: true, user: { id: user.id, email: user.email } });
   } catch (error: any) {
-    console.error("[SIGNUP] ERROR:", error);
-    console.error("[SIGNUP] Error stack:", error?.stack);
+    logError('[SIGNUP]', error);
     return NextResponse.json(
-      { error: 'Failed to create account: ' + (error?.message || 'Unknown error') },
+      { error: sanitizeError(error, ErrorMessages.ACCOUNT_ERROR) },
       { status: 500 }
     );
   }
