@@ -6,8 +6,8 @@
 - [x] Password policy enforcement (v0.3.1)
 - [x] Session security hardening (v0.3.1)
 - [x] Admin role management (v0.3.1)
-- [ ] Account enumeration prevention (5 min)
-- [ ] Error message sanitization (15 min)
+- [x] Account enumeration prevention (v0.3.2)
+- [x] Error message sanitization (v0.3.2)
 - [ ] Input validation & XSS protection (30 min)
 - [ ] Email verification (45 min)
 
@@ -42,6 +42,14 @@
 - [ ] Automated security scanning
 
 ## Completed ✅
+
+### Version 0.3.2 (February 6, 2026)
+- ✅ Account enumeration prevention (signup, password reset)
+- ✅ Error message sanitization (6 API routes)
+- ✅ Error handling utility library
+- ✅ Nginx-based maintenance mode
+- ✅ Maintenance mode toggle scripts (PowerShell + Bash)
+- ✅ Custom branded maintenance page
 
 ### Version 0.3.1 (February 6, 2026)
 - ✅ Admin role toggle functionality
