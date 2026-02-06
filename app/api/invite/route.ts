@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
 
     // Check if user is admin
     const session = await getServerSession(authOptions as any);
-    if (!session?.user || !(session.user as any).isAdmin) {
+    const user = (session as any)?.user as { isAdmin?: boolean } | undefined;
+    if (!user?.isAdmin) {
       console.log('[INVITE] Unauthorized - not admin');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
