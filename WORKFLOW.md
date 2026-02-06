@@ -15,11 +15,14 @@ main                    ← Production-ready code (always deployable)
 
 ## Current State
 
-**Active Branch:** `release/v0.3.0` (currently serving as main)  
-**Latest Version:** `v0.3.1`  
-**Production:** Running on Docker at localhost:3000
+**Active Branches:**
+- `main` - Production-ready code (migrated from release/v0.3.0 on 2025-01-04)
+- `develop` - Integration branch for features
 
-**TODO:** Migrate to proper `main` + `develop` structure
+**Latest Version:** `v0.3.3`  
+**Production:** Running on Docker at https://mixtape.levesques.net
+
+**Migration Completed:** ✅ Migrated to `main` + `develop` structure on 2025-01-04
 
 ---
 
