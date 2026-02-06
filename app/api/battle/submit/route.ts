@@ -31,9 +31,29 @@ export async function POST(req: NextRequest) {
       return csrfErrorResponse();
     }
     const { winnerId, loserId, skipped } = body;
+    const userId = session.user.id as string;
+    const normalizedPair = (aId: number, bId: number) => (aId < bId ? [aId, bId] : [bId, aId]);
+    const [songAId, songBId] = normalizedPair(winnerId, loserId);
 
     if (skipped) {
-      await prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: null } });
+      await prisma.$transaction([
+        prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: null } }),
+        prisma.battlePairingHistory.upsert({
+          where: { userId_songAId_songBId: { userId, songAId, songBId } },
+          create: { userId, songAId, songBId },
+          update: { createdAt: new Date() },
+        }),
+        prisma.battleSkip.upsert({
+          where: { userId_songId: { userId, songId: winnerId } },
+          create: { userId, songId: winnerId },
+          update: { lastSkippedAt: new Date() },
+        }),
+        prisma.battleSkip.upsert({
+          where: { userId_songId: { userId, songId: loserId } },
+          create: { userId, songId: loserId },
+          update: { lastSkippedAt: new Date() },
+        }),
+      ]);
       return NextResponse.json({ ok: true });
     }
 
@@ -57,6 +77,11 @@ export async function POST(req: NextRequest) {
       prisma.song.update({ where: { id: winner.id }, data: { elo: newW } }),
       prisma.song.update({ where: { id: loser.id }, data: { elo: newL } }),
       prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: winnerId } }),
+      prisma.battlePairingHistory.upsert({
+        where: { userId_songAId_songBId: { userId, songAId, songBId } },
+        create: { userId, songAId, songBId },
+        update: { createdAt: new Date() },
+      }),
     ]);
 
     return NextResponse.json({ ok: true });

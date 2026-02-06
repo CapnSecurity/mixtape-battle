@@ -48,6 +48,25 @@ export default function BattlePage() {
     await fetchPair();
   }
 
+  async function skip(a: Song, b: Song) {
+    setLoading(true);
+    if (!csrfToken) {
+      setLoading(false);
+      alert("Security token not ready. Please try again.");
+      return;
+    }
+
+    await fetch(
+      "/api/battle/submit",
+      withCsrfToken(csrfToken, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ winnerId: a.id, loserId: b.id, skipped: true }),
+      })
+    );
+    await fetchPair();
+  }
+
   function Stars({ value }: { value: number }) {
     const pct = Math.max(0, Math.min(5, value)) / 5 * 100;
     return (
@@ -201,9 +220,18 @@ export default function BattlePage() {
 
             {/* Next Battle Button */}
             <div className="text-center">
-              <Button size="lg" onClick={() => fetchPair()}>
-                Next Battle
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" onClick={() => fetchPair()}>
+                  Next Battle
+                </Button>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  onClick={() => pair && skip(pair.a, pair.b)}
+                >
+                  Skip This Pair
+                </Button>
+              </div>
             </div>
           </>
         )}
