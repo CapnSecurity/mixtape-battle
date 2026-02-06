@@ -3,6 +3,11 @@ import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions = {
+  session: { 
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60, // 7 days (in seconds)
+    updateAge: 24 * 60 * 60, // Update session every 24 hours
+  },
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -43,11 +48,6 @@ export const authOptions = {
       },
     }),
   ],
-  session: { 
-    strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60, // 7 days (in seconds)
-    updateAge: 24 * 60 * 60, // Update session every 24 hours
-  },
   pages: {
     signIn: "/login",
   },
@@ -88,13 +88,24 @@ export const authOptions = {
       return `${baseUrl}/settings`;
     },
     async jwt({ token, user, account, trigger }) {
+      const now = Math.floor(Date.now() / 1000);
+      const maxAge = 7 * 24 * 60 * 60;
+      const updateAge = 24 * 60 * 60;
+
       if (user) {
         console.log("[JWT] Creating token for user:", user.email, "isAdmin:", (user as any).isAdmin);
         token.id = user.id;
         token.email = user.email;
         token.isAdmin = (user as any).isAdmin || false;
         // Set token expiration (7 days from now)
-        token.exp = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
+        token.iat = now;
+        token.exp = now + maxAge;
+      } else {
+        const tokenIat = typeof token.iat === "number" ? token.iat : undefined;
+        if (!tokenIat || now - tokenIat > updateAge) {
+          token.iat = now;
+          token.exp = now + maxAge;
+        }
       }
       console.log("[JWT] Final token:", JSON.stringify({ id: token.id, email: token.email, isAdmin: token.isAdmin, exp: token.exp }));
       // Track if this was an email provider login

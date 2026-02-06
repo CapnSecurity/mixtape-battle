@@ -46,7 +46,7 @@
   - Audit API endpoints for CSRF vulnerabilities
 
 ### Security - Lower Priority
-- [ ] Session token rotation
+- [x] Session token rotation ✅ (v0.3.6)
 - [ ] Fail2Ban configuration (brute force protection)
 - [ ] Database connection SSL/TLS
 - [ ] Docker rootless mode
@@ -64,6 +64,9 @@
 - [ ] Automated security scanning
 
 ## Completed ✅
+
+### Version 0.3.6 (February 6, 2026)
+- ✅ Session token rotation (JWT `iat`/`exp` refresh on `updateAge`)
 
 ### Version 0.3.5 (February 6, 2026)
 - ✅ CSRF protection for critical POST/DELETE actions

@@ -447,11 +447,42 @@ findtime = 600
 bantime = 3600
 ```
 
+```bash
+# Enable and start
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+
+# Verify service status
+sudo systemctl status fail2ban
+sudo fail2ban-client status
+sudo fail2ban-client status nginx-limit-req
+```
+
+**Testing Fail2Ban (safe approach):**
+1. Temporarily lower thresholds in `jail.local` (e.g., `maxretry = 3`, `findtime = 60`, `bantime = 600`).
+2. Reload Fail2Ban:
+  ```bash
+  sudo systemctl restart fail2ban
+  ```
+3. Trigger rate-limit bans by hitting the site repeatedly from one IP.
+4. Confirm the ban:
+  ```bash
+  sudo fail2ban-client status nginx-limit-req
+  ```
+5. Unban your IP after testing:
+  ```bash
+  sudo fail2ban-client set nginx-limit-req unbanip <YOUR_IP>
+  ```
+
 ### 5.3 Database Security
 - Use strong passwords (32+ characters)
 - Database not exposed to internet (Docker internal network only)
 - Regular backups to encrypted storage
 - Enable PostgreSQL SSL/TLS for connections
+
+### 5.3.1 Session Token Rotation
+- Session tokens rotate every 24 hours (`updateAge`) with a 7-day max lifetime.
+- No action required for users; rotation is automatic on active sessions.
 
 ### 5.4 Docker Security
 ```bash
