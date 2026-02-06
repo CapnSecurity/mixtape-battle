@@ -5,9 +5,9 @@ import Button from "@/src/components/ui/Button";
 export const dynamic = 'force-dynamic';
 
 export default async function ResultsPage() {
-  const top = await prisma.song.findMany({
+  // Get ALL songs ordered by ELO (descending)
+  const allSongs = await prisma.song.findMany({
     orderBy: { elo: "desc" },
-    take: 20,
   });
 
   return (
@@ -17,12 +17,12 @@ export default async function ResultsPage() {
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-3">🏆 Rankings</h1>
           <p className="text-xl text-[var(--muted)]">
-            Top {top.length} songs by battle score
+            {allSongs.length} {allSongs.length === 1 ? 'song' : 'songs'} ranked by battle score
           </p>
         </div>
 
         {/* Rankings Table */}
-        {top.length > 0 ? (
+        {allSongs.length > 0 ? (
           <div className="rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -43,16 +43,34 @@ export default async function ResultsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--ring)]/20">
-                  {top.map((song, index) => {
+                  {allSongs.map((song, index) => {
+                    // Medal emojis for top 3
                     const medalEmoji =
-                      index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "  ";
+                      index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "";
+                    
+                    // Badge for top 10
+                    const isTopTen = index < 10;
+                    const badgeColor = 
+                      index === 0 ? "bg-[#FFD700]" :  // Gold
+                      index === 1 ? "bg-[#C0C0C0]" :  // Silver
+                      index === 2 ? "bg-[#CD7F32]" :  // Bronze
+                      "bg-gradient-to-r from-[var(--gold)] to-[var(--pink)]"; // Top 10
+
                     return (
                       <tr
                         key={song.id}
-                        className="hover:bg-[var(--surface2)]/60 transition group"
+                        className={`hover:bg-[var(--surface2)]/60 transition group ${isTopTen ? 'bg-[var(--surface2)]/30' : ''}`}
                       >
                         <td className="px-6 py-4 text-lg font-bold text-[var(--text)] group-hover:text-[var(--gold)]">
-                          {medalEmoji} #{index + 1}
+                          <div className="flex items-center gap-2">
+                            {medalEmoji && <span className="text-2xl">{medalEmoji}</span>}
+                            <span>#{index + 1}</span>
+                            {isTopTen && !medalEmoji && (
+                              <span className={`${badgeColor} text-white text-xs font-bold px-2 py-1 rounded-full`}>
+                                TOP 10
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <Link
@@ -66,7 +84,7 @@ export default async function ResultsPage() {
                           {song.artist}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <span className="inline-block bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold px-4 py-2 rounded-lg">
+                          <span className={`inline-block ${isTopTen ? 'bg-[linear-gradient(135deg,var(--gold),var(--pink))]' : 'bg-[var(--surface2)]'} text-[var(--bg)] font-bold px-4 py-2 rounded-lg`}>
                             {Math.round(song.elo)}
                           </span>
                         </td>

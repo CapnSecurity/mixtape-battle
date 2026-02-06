@@ -4,6 +4,8 @@ import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics } from "../../../../lib/links";
 import { fetchSongMetadata } from "../../../../lib/musicbrainz";
+import { validateSongInput } from "../../../../lib/input-sanitization";
+import { sanitizeError, logError } from "../../../../lib/error-handler";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,15 +16,24 @@ export async function POST(req: NextRequest) {
 
     const { artist, title, album, releaseDate } = await req.json();
     
-    if (!artist || !title) {
-      return NextResponse.json({ error: "Artist and title are required" }, { status: 400 });
+    // Validate and sanitize all input
+    const validation = validateSongInput({ title, artist, album, releaseDate });
+    
+    if (!validation.isValid) {
+      console.log("[ADD SONG] Validation failed:", validation.errors);
+      return NextResponse.json({ 
+        error: 'Invalid song data',
+        details: validation.errors 
+      }, { status: 400 });
     }
+
+    const { title: sanitizedTitle, artist: sanitizedArtist, album: sanitizedAlbum, releaseDate: sanitizedYear } = validation.sanitized;
 
     // Check if song already exists
     const existingSong = await prisma.song.findFirst({
       where: {
-        artist: artist.trim(),
-        title: title.trim(),
+        artist: sanitizedArtist,
+        title: sanitizedTitle,
       },
     });
 
@@ -31,12 +42,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch metadata from MusicBrainz if album/release date not provided
-    let finalAlbum = album?.trim() || null;
-    let finalReleaseDate = releaseDate ? parseInt(releaseDate) : null;
+    let finalAlbum = sanitizedAlbum || null;
+    let finalReleaseDate = sanitizedYear;
     
     if (!finalAlbum || !finalReleaseDate) {
-      console.log(`[ADD SONG] Fetching metadata from MusicBrainz for: ${artist} - ${title}`);
-      const metadata = await fetchSongMetadata(artist, title);
+      console.log(`[ADD SONG] Fetching metadata from MusicBrainz for: ${sanitizedArtist} - ${sanitizedTitle}`);
+      const metadata = await fetchSongMetadata(sanitizedArtist, sanitizedTitle);
       
       if (metadata) {
         console.log(`[ADD SONG] MusicBrainz found: album="${metadata.album}", year=${metadata.releaseDate}, confidence=${metadata.confidence}`);
@@ -53,17 +64,17 @@ export async function POST(req: NextRequest) {
 
     // Generate resource URLs using our search functions
     const generatedUrls = {
-      songsterr: songsterrBass(artist, title),
-      ultimateGuitar: ultimateGuitarGuitar(artist, title),
-      youtube: youtube(artist, title),
-      lyrics: lyrics(artist, title),
+      songsterr: songsterrBass(sanitizedArtist, sanitizedTitle),
+      ultimateGuitar: ultimateGuitarGuitar(sanitizedArtist, sanitizedTitle),
+      youtube: youtube(sanitizedArtist, sanitizedTitle),
+      lyrics: lyrics(sanitizedArtist, sanitizedTitle),
     };
 
     // Create the song with default ELO of 1500
     const song = await prisma.song.create({
       data: {
-        artist: artist.trim(),
-        title: title.trim(),
+        artist: sanitizedArtist,
+        title: sanitizedTitle,
         album: finalAlbum,
         releaseDate: finalReleaseDate,
         elo: 1500,
@@ -78,15 +89,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       song,
-      message: `Successfully added "${title}" by ${artist}`,
+      message: `Successfully added "${sanitizedTitle}" by ${sanitizedArtist}`,
       metadata: {
         album: finalAlbum,
         releaseDate: finalReleaseDate,
-        source: (album || releaseDate) ? 'user' : 'musicbrainz',
+        source: (sanitizedAlbum || sanitizedYear) ? 'user' : 'musicbrainz',
       }
     });
   } catch (error) {
-    console.error("[ADD SONG ERROR]", error);
-    return NextResponse.json({ error: "Failed to add song" }, { status: 500 });
+    logError('[ADD SONG]', error);
+    return NextResponse.json({ 
+      error: sanitizeError(error, 'Failed to add song') 
+    }, { status: 500 });
   }
 }
