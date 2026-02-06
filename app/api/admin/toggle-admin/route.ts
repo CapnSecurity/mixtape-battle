@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { Session } from "next-auth";
+import { authOptions } from "@/lib/auth-with-credentials";
 import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
     // Rate limiting
-    const rateLimitResponse = await rateLimiters.admin(req);
-    if (rateLimitResponse) {
+    const rateLimitResult = await rateLimiters.admin(req);
+    if (!rateLimitResult.success) {
       console.log('[toggle-admin] Rate limit exceeded');
-      return rateLimitResponse;
+      return rateLimitResult.response;
     }
 
     console.log('[toggle-admin] Processing admin toggle request');
     
     // Check authentication and admin status
-    const session = await getServerSession(authOptions);
+    const session = (await getServerSession(authOptions as any)) as Session | null;
     
     if (!session?.user?.email) {
       console.log('[toggle-admin] Unauthorized - no session');
