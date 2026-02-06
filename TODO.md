@@ -18,9 +18,18 @@
 - [x] Clean up old release branches ✅
 - [x] Update WORKFLOW.md documentation ✅
 
-## Backlog
+## Backlog (Prioritized)
 
-### Features
+### High Impact / Short Time
+- [ ] Docker rootless mode
+- [ ] Add monitoring/logging service
+- [ ] Set up CI/CD pipeline
+
+### Medium Impact / Short Time
+- [ ] Add integration tests
+- [ ] Database connection SSL/TLS (deprioritized for Docker-only network)
+
+### Medium Impact / Longer Time
 - [ ] **Battle System Revamp**
   - User settings for battle preferences (genre, decade, etc.)
   - Weighted random selection based on preferences
@@ -28,40 +37,14 @@
   - Battle history tracking
   - Skip functionality with cooldown
 
+### Low Impact / Longer Time
 - [ ] Battle vote limits (when user base grows)
   - 100 votes per day per user
   - 5-second cooldown between votes
   - 3 votes max per song pairing
 
-### Security - Medium Priority
-- [x] **Security Headers Enhancement** ✅ (v0.3.4)
-  - Content-Security-Policy (CSP) header
-  - Referrer-Policy header
-  - Permissions-Policy header
-  - Tested with https://securityheaders.com/
-
-- [x] **CSRF Protection** ✅ (v0.3.5)
-  - Review NextAuth CSRF implementation
-  - Add CSRF tokens to critical forms
-  - Audit API endpoints for CSRF vulnerabilities
-
-### Security - Lower Priority
-- [x] Session token rotation ✅ (v0.3.6)
-- [x] IPBan configuration (Windows brute force protection)
-- [ ] Database connection SSL/TLS (deprioritized for Docker-only network)
-- [ ] Docker rootless mode
-- [x] Regular security scanning automation
-- [x] Security incident response procedures documentation
-
-### Infrastructure
-- [ ] Consider Redis for distributed rate limiting (if scaling)
-- [ ] Add monitoring/logging service
-- [ ] Set up automated backups
-
-### Testing
-- [ ] Add integration tests
-- [ ] Set up CI/CD pipeline
-- [ ] Automated security scanning
+### Cloud Planning
+- [ ] Plan migration to cloud hosting (Render)
 
 ## Completed ✅
 
