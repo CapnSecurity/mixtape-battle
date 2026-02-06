@@ -43,11 +43,26 @@ export const authOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { 
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60, // 7 days (in seconds)
+    updateAge: 24 * 60 * 60, // Update session every 24 hours
+  },
   pages: {
     signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   callbacks: {
     async signIn({ user, account }) {
       console.log("[SIGNIN] User signed in:", user.email);
@@ -78,8 +93,10 @@ export const authOptions = {
         token.id = user.id;
         token.email = user.email;
         token.isAdmin = (user as any).isAdmin || false;
+        // Set token expiration (7 days from now)
+        token.exp = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
       }
-      console.log("[JWT] Final token:", JSON.stringify({ id: token.id, email: token.email, isAdmin: token.isAdmin }));
+      console.log("[JWT] Final token:", JSON.stringify({ id: token.id, email: token.email, isAdmin: token.isAdmin, exp: token.exp }));
       // Track if this was an email provider login
       if (account?.provider === "email") {
         token.isEmailProvider = true;
