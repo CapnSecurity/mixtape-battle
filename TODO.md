@@ -47,7 +47,7 @@
 
 ### Security - Lower Priority
 - [x] Session token rotation ✅ (v0.3.6)
-- [ ] Fail2Ban configuration (brute force protection)
+- [x] IPBan configuration (Windows brute force protection)
 - [ ] Database connection SSL/TLS
 - [ ] Docker rootless mode
 - [ ] Regular security scanning automation

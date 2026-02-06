@@ -424,54 +424,41 @@ sudo ufw allow 587/tcp
 sudo ufw enable
 ```
 
-### 5.2 Fail2Ban (Brute Force Protection)
+### 5.2 IPBan (Windows Brute Force Protection)
+Fail2Ban is Linux-only. Since production is hosted on Windows, use IPBan instead.
+
+**Install IPBan (run in PowerShell as Administrator):**
+```powershell
+$ProgressPreference = 'SilentlyContinue';
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
+iex "& { $((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DigitalRuby/IPBan/master/IPBanCore/Windows/Scripts/install_latest.ps1')) } -startupType 'delayed-auto' -silent $True -autostart $True"
+```
+
+**Ensure Nginx logs are accessible on host:**
 ```bash
-sudo apt install fail2ban
-
-# Create jail for nginx
-sudo nano /etc/fail2ban/jail.local
+# In docker-compose.production.yml
+# nginx service mounts logs to: ./nginx-logs:/var/log/nginx
 ```
 
-```ini
-[nginx-http-auth]
-enabled = true
-port = http,https
-logpath = /var/log/nginx/error.log
+**Configure IPBan to read Nginx logs:**
+1. Open `C:\Program Files\IPBan\ipban.config` (or `C:\ProgramData\IPBan\ipban.config`).
+2. Add a `LogFilesToParse` entry to scan `nginx-logs\access.log` for failed auth attempts.
 
-[nginx-limit-req]
-enabled = true
-port = http,https
-logpath = /var/log/nginx/error.log
-maxretry = 10
-findtime = 600
-bantime = 3600
-```
-
-```bash
-# Enable and start
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-
-# Verify service status
-sudo systemctl status fail2ban
-sudo fail2ban-client status
-sudo fail2ban-client status nginx-limit-req
-```
-
-**Testing Fail2Ban (safe approach):**
-1. Temporarily lower thresholds in `jail.local` (e.g., `maxretry = 3`, `findtime = 60`, `bantime = 600`).
-2. Reload Fail2Ban:
-  ```bash
-  sudo systemctl restart fail2ban
+**Testing IPBan (safe approach):**
+1. Temporarily set `FailedLoginAttemptsBeforeBan` to 3 in `ipban.config`.
+2. Restart the service:
+  ```powershell
+  Restart-Service ipban
   ```
-3. Trigger rate-limit bans by hitting the site repeatedly from one IP.
-4. Confirm the ban:
-  ```bash
-  sudo fail2ban-client status nginx-limit-req
+3. Trigger failed auth attempts (e.g., bad logins to `/login`).
+4. Confirm blocked IPs:
+  ```powershell
+  Get-NetFirewallRule -DisplayName "IPBan*" | Select-Object -First 5
   ```
-5. Unban your IP after testing:
-  ```bash
-  sudo fail2ban-client set nginx-limit-req unbanip <YOUR_IP>
+5. Unban your IP:
+  ```powershell
+  Get-Content "C:\Program Files\IPBan\unban.txt" | Out-Null
+  Add-Content "C:\Program Files\IPBan\unban.txt" "<YOUR_IP>"
   ```
 
 ### 5.3 Database Security
