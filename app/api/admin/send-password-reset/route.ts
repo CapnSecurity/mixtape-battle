@@ -1,13 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
+import { rateLimiters } from '@/lib/rate-limit';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     console.log("[SEND-RESET] Request received");
+    
+    // Rate limit check - prevent password reset spam
+    const rateLimitResult = await rateLimiters.passwordReset(req);
+    if (!rateLimitResult.success) {
+      console.log("[SEND-RESET] Rate limit exceeded");
+      return rateLimitResult.response;
+    }
+    
     // Check if user is admin
     const session = await getServerSession(authOptions);
     if (!session?.user || !(session.user as any).isAdmin) {

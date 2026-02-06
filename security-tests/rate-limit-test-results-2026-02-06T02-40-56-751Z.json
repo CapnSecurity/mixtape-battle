@@ -1,0 +1,230 @@
+{
+  "timestamp": "2026-02-06T02:40:52.066Z",
+  "tests": [
+    {
+      "name": "Auth Endpoint Rate Limit",
+      "endpoint": "/api/auth/signin",
+      "expectedLimit": 5,
+      "attempts": [
+        {
+          "attemptNumber": 1,
+          "status": 400,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:52.109Z"
+        },
+        {
+          "attemptNumber": 2,
+          "status": 400,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:52.226Z"
+        },
+        {
+          "attemptNumber": 3,
+          "status": 400,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:52.334Z"
+        },
+        {
+          "attemptNumber": 4,
+          "status": 400,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:52.452Z"
+        },
+        {
+          "attemptNumber": 5,
+          "status": 400,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:52.563Z"
+        },
+        {
+          "attemptNumber": 6,
+          "status": 429,
+          "headers": {
+            "retryAfter": "60",
+            "rateLimit": "5",
+            "rateLimitRemaining": "0"
+          },
+          "body": {
+            "error": "Too many login attempts. Please wait a minute before trying again.",
+            "retryAfter": 60
+          },
+          "timestamp": "2026-02-06T02:40:52.676Z"
+        }
+      ],
+      "rateLimitTriggeredAt": 6,
+      "passed": true
+    },
+    {
+      "name": "Signup Endpoint Rate Limit",
+      "endpoint": "/api/auth/signup",
+      "expectedLimit": 5,
+      "attempts": [
+        {
+          "attemptNumber": 1,
+          "status": 429,
+          "headers": {
+            "retryAfter": "58",
+            "rateLimit": "5",
+            "rateLimitRemaining": "0"
+          },
+          "body": {
+            "error": "Too many login attempts. Please wait a minute before trying again.",
+            "retryAfter": 58
+          },
+          "timestamp": "2026-02-06T02:40:54.687Z"
+        }
+      ],
+      "rateLimitTriggeredAt": 1,
+      "passed": true
+    },
+    {
+      "name": "Battle API Rate Limit",
+      "endpoint": "/api/battle/next",
+      "expectedLimit": 100,
+      "attempts": [
+        {
+          "attemptNumber": 1,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.700Z"
+        },
+        {
+          "attemptNumber": 2,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.705Z"
+        },
+        {
+          "attemptNumber": 3,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.711Z"
+        },
+        {
+          "attemptNumber": 4,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.720Z"
+        },
+        {
+          "attemptNumber": 5,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.725Z"
+        },
+        {
+          "attemptNumber": 6,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.731Z"
+        },
+        {
+          "attemptNumber": 7,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.735Z"
+        },
+        {
+          "attemptNumber": 8,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.740Z"
+        },
+        {
+          "attemptNumber": 9,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.745Z"
+        },
+        {
+          "attemptNumber": 10,
+          "status": 200,
+          "headers": {
+            "retryAfter": null,
+            "rateLimit": null,
+            "rateLimitRemaining": null
+          },
+          "body": {},
+          "timestamp": "2026-02-06T02:40:56.751Z"
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "passRate": "100.0%"
+  }
+}

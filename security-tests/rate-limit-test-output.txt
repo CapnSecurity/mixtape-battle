@@ -1,0 +1,63 @@
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ         RATE LIMIT PENETRATION TEST SUITE                Γòæ
+Γòæ         Testing Security Controls                         Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+≡ƒôà Test started: 2026-02-06T02:40:52.066Z
+≡ƒÄ» Target: http://localhost:3000
+
+
+≡ƒöÉ Testing Auth Endpoint Rate Limit (Expected: 5 attempts/min)...
+
+Attempt 1/7...
+  Γ£à Request allowed (status: 400)
+Attempt 2/7...
+  Γ£à Request allowed (status: 400)
+Attempt 3/7...
+  Γ£à Request allowed (status: 400)
+Attempt 4/7...
+  Γ£à Request allowed (status: 400)
+Attempt 5/7...
+  Γ£à Request allowed (status: 400)
+Attempt 6/7...
+  Γ¥î RATE LIMITED (status: 429)
+  ΓÅ▒∩╕Å  Retry-After: 60s
+  ≡ƒôè Message: Too many login attempts. Please wait a minute before trying again.
+
+Γ£à PASS: Rate limit triggered at attempt 6
+
+
+≡ƒô¥ Testing Signup Endpoint Rate Limit (Expected: 5 attempts/min)...
+
+Attempt 1/7...
+  Γ¥î RATE LIMITED (status: 429)
+  ΓÅ▒∩╕Å  Retry-After: 58s
+  ≡ƒôè Message: Too many login attempts. Please wait a minute before trying again.
+
+Γ£à PASS: Rate limit triggered at attempt 1
+
+
+ΓÜö∩╕Å  Testing Battle API Rate Limit (Expected: 100 attempts/min)...
+
+   (Testing first 10 requests for speed, should all pass)
+
+Attempts 1-5...
+Attempts 6-10...
+  Γ£à All 10 requests allowed (limit appears correctly set > 10)
+
+Γ£à PASS: Battle endpoint rate limit working
+
+
+ΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù
+Γòæ                     TEST SUMMARY                          Γòæ
+ΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥
+
+Total Tests:  3
+Passed:       3 Γ£à
+Failed:       0 
+Pass Rate:    100.0%
+
+≡ƒÄë All rate limiting tests PASSED! Security controls working correctly.
+
+≡ƒôä Full results saved to: C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\security-tests\rate-limit-test-results-2026-02-06T02-40-56-751Z.json
+
