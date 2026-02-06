@@ -9,7 +9,7 @@
 - [x] Account enumeration prevention (v0.3.2)
 - [x] Error message sanitization (v0.3.2)
 - [ ] Input validation & XSS protection (30 min)
-- [ ] Email verification (45 min)
+- [x] ~~Email verification~~ (Not needed - invite system already verifies emails)
 
 ### Git Workflow Migration
 - [ ] Migrate `release/v0.3.0` to `main` branch

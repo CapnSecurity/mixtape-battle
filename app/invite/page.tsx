@@ -48,9 +48,41 @@ export default function InvitePage() {
   if (status === 'loading') return null;
   if (!session || !session.user || !(session.user as any).isAdmin) {
     return (
-      <div className="max-w-lg mx-auto p-8 mt-12 rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] text-center">
-        <h1 className="text-3xl font-bold mb-6 text-[var(--text)]">Access Denied</h1>
-        <p className="text-[var(--muted)]">You must be an admin to invite users.</p>
+      <div className="max-w-lg mx-auto p-8 mt-12 rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)]">
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4">🔒</div>
+          <h1 className="text-3xl font-bold mb-3 text-[var(--text)]">Admin Access Required</h1>
+          <p className="text-[var(--muted)] mb-6">
+            Only administrators can access the user management page.
+          </p>
+        </div>
+        
+        <div className="space-y-3">
+          <a 
+            href="/battle" 
+            className="block w-full py-3 px-4 rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-semibold text-center hover:opacity-90 transition-opacity"
+          >
+            🎵 Go to Battle Page
+          </a>
+          <a 
+            href="/songs" 
+            className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
+          >
+            🎸 Browse Songs
+          </a>
+          <a 
+            href="/results" 
+            className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
+          >
+            🏆 View Results
+          </a>
+          <a 
+            href="/settings" 
+            className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
+          >
+            ⚙️ Settings
+          </a>
+        </div>
       </div>
     );
   }

@@ -21,31 +21,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Special: /invite is admin-only
+  // /invite page handles its own admin check and shows friendly message
+  // Just ensure user is authenticated
   if (pathname.startsWith("/invite")) {
-    console.log("[MIDDLEWARE] All cookies:", req.cookies.getAll());
-    console.log("[MIDDLEWARE] Cookie header:", req.headers.get('cookie'));
     const token = await getToken({ 
       req, 
       secret: process.env.NEXTAUTH_SECRET
     });
-    console.log("[MIDDLEWARE] /invite access attempt. Token:", JSON.stringify(token));
     if (!token || !token.email) {
-      console.log("[MIDDLEWARE] No token or email, redirecting to login");
+      console.log("[MIDDLEWARE] /invite - not authenticated, redirecting to login");
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
       return NextResponse.redirect(loginUrl);
     }
-    // Check if user is admin using token.isAdmin or email whitelist
-    const adminEmails = ["tim@levesques.net"];
-    const isAdmin = token.isAdmin === true || adminEmails.includes(token.email as string);
-    console.log("[MIDDLEWARE] isAdmin:", isAdmin, "email:", token.email);
-    if (!isAdmin) {
-      console.log("[MIDDLEWARE] User not admin, redirecting to login");
-      const deniedUrl = req.nextUrl.clone();
-      deniedUrl.pathname = "/login";
-      return NextResponse.redirect(deniedUrl);
-    }
+    // Let the page handle admin check and show friendly message
     return NextResponse.next();
   }
 
