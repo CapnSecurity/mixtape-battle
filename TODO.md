@@ -48,10 +48,10 @@
 ### Security - Lower Priority
 - [x] Session token rotation ✅ (v0.3.6)
 - [x] IPBan configuration (Windows brute force protection)
-- [ ] Database connection SSL/TLS
+- [ ] Database connection SSL/TLS (deprioritized for Docker-only network)
 - [ ] Docker rootless mode
-- [ ] Regular security scanning automation
-- [ ] Security incident response procedures documentation
+- [x] Regular security scanning automation
+- [x] Security incident response procedures documentation
 
 ### Infrastructure
 - [ ] Consider Redis for distributed rate limiting (if scaling)
