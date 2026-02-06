@@ -12,15 +12,22 @@
 - [x] ~~Email verification~~ (Not needed - invite system already verifies emails)
 
 ### Git Workflow Migration
-- [ ] Migrate `release/v0.3.0` to `main` branch
-- [ ] Create `develop` branch
-- [ ] Set GitHub default branch to `main`
-- [ ] Clean up old release branches
-- [ ] Update deployment scripts to use `main`
+- [x] Migrate `release/v0.3.0` to `main` branch ✅
+- [x] Create `develop` branch ✅
+- [x] Set GitHub default branch to `main` ✅
+- [x] Clean up old release branches ✅
+- [x] Update WORKFLOW.md documentation ✅
 
 ## Backlog
 
 ### Features
+- [ ] **Battle System Revamp**
+  - User settings for battle preferences (genre, decade, etc.)
+  - Weighted random selection based on preferences
+  - Smart pairing algorithm (avoid repeat battles)
+  - Battle history tracking
+  - Skip functionality with cooldown
+
 - [ ] Battle vote limits (when user base grows)
   - 100 votes per day per user
   - 5-second cooldown between votes
