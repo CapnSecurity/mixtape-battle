@@ -1,8 +1,9 @@
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   session: { 
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60, // 7 days (in seconds)
