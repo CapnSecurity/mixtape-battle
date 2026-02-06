@@ -118,9 +118,14 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       console.log("[SESSION] Building session. Token:", JSON.stringify(token));
       if (session?.user) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        (session.user as any).isAdmin = token.isAdmin || false;
+        const sessionUser = session.user as {
+          id?: string;
+          email?: string;
+          isAdmin?: boolean;
+        };
+        sessionUser.id = token.id as string;
+        sessionUser.email = token.email as string;
+        sessionUser.isAdmin = (token as any).isAdmin || false;
       }
       console.log("[SESSION] Final session:", JSON.stringify(session));
       return session;
