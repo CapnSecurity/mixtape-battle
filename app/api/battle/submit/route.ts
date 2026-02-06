@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
       return csrfErrorResponse();
     }
     const { winnerId, loserId, skipped } = body;
-    const userId = session.user.id as string;
+    const userId = (session.user as { id?: string } | undefined)?.id;
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const normalizedPair = (aId: number, bId: number) => (aId < bId ? [aId, bId] : [bId, aId]);
     const [songAId, songBId] = normalizedPair(winnerId, loserId);
 

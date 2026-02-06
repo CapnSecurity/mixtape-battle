@@ -31,7 +31,7 @@ function pickWeighted<T>(items: T[], weightFor: (item: T) => number) {
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const userId = (session?.user as { id?: string } | undefined)?.id;
 
   const songs = await prisma.song.findMany({ take: 200, orderBy: { elo: "desc" } });
   if (songs.length < 2) return new Response(null, { status: 204 });
