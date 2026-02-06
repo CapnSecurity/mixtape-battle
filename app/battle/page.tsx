@@ -13,11 +13,13 @@ export default function BattlePage() {
   const [pair, setPair] = useState<{ a: Song; b: Song } | null>(null);
   const [loading, setLoading] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
-  const { token: csrfToken } = useCsrfToken();
+  const { token: csrfToken, loading: csrfLoading } = useCsrfToken();
 
   useEffect(() => {
-    fetchPair();
-  }, []);
+    if (status === "authenticated") {
+      fetchPair();
+    }
+  }, [status]);
 
   async function fetchPair() {
     setLoading(true);
@@ -53,6 +55,18 @@ export default function BattlePage() {
         <div className="text-[var(--muted)]">★★★★★</div>
         <div className="absolute top-0 left-0 overflow-hidden" style={{ width: `${pct}%`, color: 'gold' }}>
           <div style={{ position: 'relative' }}>★★★★★</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "loading" || csrfLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="p-8 text-center max-w-md rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)]">
+          <div className="text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold text-[var(--text)] mb-2">Loading Battle</h2>
+          <p className="text-[var(--muted)]">Preparing your session...</p>
         </div>
       </div>
     );
