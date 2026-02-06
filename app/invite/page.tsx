@@ -21,6 +21,7 @@ export default function InvitePage() {
   const [deleteError, setDeleteError] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [resetStatus, setResetStatus] = useState<{ [email: string]: 'idle'|'sending'|'sent'|'error' }>({});
 
   useEffect(() => {
     if (session?.user && (session.user as any).isAdmin) {
@@ -92,6 +93,30 @@ export default function InvitePage() {
     }
   }
 
+  async function handleSendPasswordReset(email: string) {
+    setResetStatus(prev => ({ ...prev, [email]: 'sending' }));
+    
+    try {
+      const res = await fetch('/api/admin/send-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (res.ok) {
+        setResetStatus(prev => ({ ...prev, [email]: 'sent' }));
+        setTimeout(() => {
+          setResetStatus(prev => ({ ...prev, [email]: 'idle' }));
+        }, 3000);
+      } else {
+        setResetStatus(prev => ({ ...prev, [email]: 'error' }));
+      }
+    } catch (error) {
+      console.error('Failed to send password reset:', error);
+      setResetStatus(prev => ({ ...prev, [email]: 'error' }));
+    }
+  }
+
   return (
     <div className="max-w-lg mx-auto p-8 mt-12 space-y-8">
       {/* Invite User Section */}
@@ -130,17 +155,29 @@ export default function InvitePage() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  onClick={() => setDeleteEmail(user.email)}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface2)] hover:bg-[var(--surface)] cursor-pointer transition border border-[var(--ring)]/10"
+                  className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface2)] border border-[var(--ring)]/10"
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 cursor-pointer" onClick={() => setDeleteEmail(user.email)}>
                     <div className="text-sm text-[var(--text)] font-medium">{user.email}</div>
                   </div>
-                  {user.isAdmin && (
-                    <span className="ml-2 px-2 py-1 text-xs font-semibold rounded bg-[var(--gold)]/20 text-[var(--gold)]">
-                      ADMIN
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {user.isAdmin && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded bg-[var(--gold)]/20 text-[var(--gold)]">
+                        ADMIN
+                      </span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSendPasswordReset(user.email)}
+                      disabled={resetStatus[user.email] === 'sending'}
+                      className="text-xs"
+                    >
+                      {resetStatus[user.email] === 'sending' && '⏳'}
+                      {resetStatus[user.email] === 'sent' && '✓'}
+                      {resetStatus[user.email] === 'error' && '✗'}
+                      {(!resetStatus[user.email] || resetStatus[user.email] === 'idle') && '🔑 Reset'}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

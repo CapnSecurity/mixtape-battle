@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/settings", "/battle", "/results", "/songs"];
-
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  console.log("[MIDDLEWARE] Request to:", pathname);
 
   // Allow public paths
   if (
@@ -14,8 +13,11 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/api/invite") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
-    PUBLIC_PATHS.some((path) => pathname.startsWith(path))
+    pathname === "/" ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup")
   ) {
+    console.log("[MIDDLEWARE] Public path, allowing:", pathname);
     return NextResponse.next();
   }
 
@@ -47,16 +49,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  console.log("[MIDDLEWARE] Protected path, checking auth:", pathname);
   const token = await getToken({ 
     req, 
     secret: process.env.NEXTAUTH_SECRET
   });
+  console.log("[MIDDLEWARE] Token:", token ? "exists" : "null");
   if (!token) {
+    console.log("[MIDDLEWARE] No token, redirecting to login");
     const loginUrl = req.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
   }
 
+  console.log("[MIDDLEWARE] Authenticated, allowing access");
   return NextResponse.next();
 }
 

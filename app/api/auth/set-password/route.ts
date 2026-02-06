@@ -6,13 +6,7 @@ import bcrypt from "bcryptjs";
 import { Session } from "next-auth";
 
 export async function POST(req: NextRequest) {
-  const session = (await getServerSession(authOptions as any)) as Session | null;
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { password } = await req.json();
+  const { password, resetToken } = await req.json();
 
   if (!password || password.length < 8) {
     return NextResponse.json(
@@ -21,11 +15,49 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  let userEmail: string;
+
+  // Handle password reset via token
+  if (resetToken) {
+    const passwordReset = await prisma.passwordReset.findUnique({
+      where: { token: resetToken },
+    });
+
+    if (!passwordReset) {
+      return NextResponse.json({ error: "Invalid reset token" }, { status: 400 });
+    }
+
+    if (passwordReset.expiresAt < new Date()) {
+      return NextResponse.json({ error: "Reset token expired" }, { status: 400 });
+    }
+
+    if (passwordReset.usedAt) {
+      return NextResponse.json({ error: "Reset token already used" }, { status: 400 });
+    }
+
+    userEmail = passwordReset.email;
+
+    // Mark token as used
+    await prisma.passwordReset.update({
+      where: { token: resetToken },
+      data: { usedAt: new Date() },
+    });
+  } else {
+    // Handle password set via authenticated session
+    const session = (await getServerSession(authOptions as any)) as Session | null;
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    userEmail = session.user.email;
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await prisma.user.update({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       data: { password: hashedPassword },
     });
 
