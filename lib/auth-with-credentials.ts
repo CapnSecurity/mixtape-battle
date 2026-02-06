@@ -69,7 +69,7 @@ export const authOptions: NextAuthOptions = {
       console.log("[SIGNIN] User signed in:", user.email);
       return true;
     },
-    async redirect({ url, baseUrl, account }) {
+    async redirect({ url, baseUrl }) {
       const urlObj = new URL(url.startsWith('http') ? url : `${baseUrl}${url}`);
       const callbackUrl = urlObj.searchParams.get('callbackUrl');
       
