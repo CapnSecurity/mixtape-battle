@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
 import Link from 'next/link';
+import { useCsrfToken, withCsrfToken } from '@/lib/use-csrf';
 
 export default function AddSongPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function AddSongPage() {
   });
   const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const { token: csrfToken } = useCsrfToken();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -27,11 +29,20 @@ export default function AddSongPage() {
     setErrorMsg('');
 
     try {
-      const res = await fetch('/api/songs/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+      if (!csrfToken) {
+        setStatus('error');
+        setErrorMsg('Security token not ready. Please try again.');
+        return;
+      }
+
+      const res = await fetch(
+        '/api/songs/add',
+        withCsrfToken(csrfToken, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+      );
 
       const data = await res.json();
 

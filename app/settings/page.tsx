@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/src/components/ui/Button";
 import Input from "@/src/components/ui/Input";
 import { FaLock, FaCheck } from "react-icons/fa";
+import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 
 function SettingsContent() {
   const { data: session } = useSession();
@@ -21,6 +22,7 @@ function SettingsContent() {
   const [verifyingToken, setVerifyingToken] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
   const [tokenEmail, setTokenEmail] = useState("");
+  const { token: csrfToken } = useCsrfToken();
 
   useEffect(() => {
     if (resetToken) {
@@ -68,11 +70,16 @@ function SettingsContent() {
         body.resetToken = resetToken;
       }
 
-      const res = await fetch("/api/auth/set-password", {
+      const options = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-      });
+      };
+
+      const res = await fetch(
+        "/api/auth/set-password",
+        csrfToken ? withCsrfToken(csrfToken, options) : options
+      );
 
       if (!res.ok) {
         const data = await res.json();

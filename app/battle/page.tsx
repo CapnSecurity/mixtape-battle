@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Button from "@/src/components/ui/Button";
 import { eloToStars } from "../../lib/elo";
+import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 
 type Song = { id: number; title: string; artist: string; elo: number };
 
@@ -12,6 +13,7 @@ export default function BattlePage() {
   const [pair, setPair] = useState<{ a: Song; b: Song } | null>(null);
   const [loading, setLoading] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
+  const { token: csrfToken } = useCsrfToken();
 
   useEffect(() => {
     fetchPair();
@@ -26,11 +28,20 @@ export default function BattlePage() {
 
   async function vote(winner: Song, loser: Song) {
     setLoading(true);
-    await fetch("/api/battle/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ winnerId: winner.id, loserId: loser.id }),
-    });
+    if (!csrfToken) {
+      setLoading(false);
+      alert("Security token not ready. Please try again.");
+      return;
+    }
+
+    await fetch(
+      "/api/battle/submit",
+      withCsrfToken(csrfToken, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ winnerId: winner.id, loserId: loser.id }),
+      })
+    );
     setVoteCount(voteCount + 1);
     await fetchPair();
   }

@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { Session } from "next-auth";
 import { validatePassword } from "@/lib/password-validation";
 import { sanitizeError, logError, ErrorMessages } from "@/lib/error-handler";
+import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +14,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { password, resetToken } = body;
     console.log("[SET-PASSWORD] Has resetToken:", !!resetToken);
+
+    // Require CSRF token for session-based password changes
+    if (!resetToken && !verifyCsrfToken(req, body)) {
+      console.log('[SET-PASSWORD] Invalid CSRF token');
+      return csrfErrorResponse();
+    }
 
     if (!password) {
       console.log("[SET-PASSWORD] Password missing");

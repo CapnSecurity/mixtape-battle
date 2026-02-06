@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-with-credentials";
 import { prisma } from "@/lib/prisma";
+import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
-    const { songId, youtubeUrl, songsterrUrl, ultimateGuitarUrl, lyricsUrl } = await req.json();
+    const session = await getServerSession(authOptions as any);
+    if (!session?.user || !(session.user as any).isAdmin) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+
+    // Verify CSRF token
+    if (!verifyCsrfToken(req, body)) {
+      console.log('[UPDATE LINKS] Invalid CSRF token');
+      return csrfErrorResponse();
+    }
+
+    const { songId, youtubeUrl, songsterrUrl, ultimateGuitarUrl, lyricsUrl } = body;
 
     if (!songId) {
       return NextResponse.json({ error: "Song ID required" }, { status: 400 });

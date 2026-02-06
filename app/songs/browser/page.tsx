@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import Button from "@/src/components/ui/Button";
 import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics } from "../../../lib/links";
+import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 
 type Song = {
   id: number;
@@ -32,6 +33,7 @@ function SongBrowser() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const { token: csrfToken } = useCsrfToken();
 
   async function handleDeleteSong() {
     if (!selectedSong) return;
@@ -42,11 +44,20 @@ function SongBrowser() {
 
     setDeleting(true);
     try {
-      const res = await fetch('/api/songs/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ songId: selectedSong.id }),
-      });
+      if (!csrfToken) {
+        alert('Security token not ready. Please try again.');
+        setDeleting(false);
+        return;
+      }
+
+      const res = await fetch(
+        '/api/songs/delete',
+        withCsrfToken(csrfToken, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ songId: selectedSong.id }),
+        })
+      );
 
       if (res.ok) {
         // Refresh the song list

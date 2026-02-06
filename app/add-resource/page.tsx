@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
+import { useCsrfToken, withCsrfToken } from '@/lib/use-csrf';
 
 export default function AddSongResourcePage() {
+  const { data: session, status: sessionStatus } = useSession();
   const [songs, setSongs] = useState([]);
   const [selectedSongId, setSelectedSongId] = useState('');
   const [selectedSong, setSelectedSong] = useState(null);
@@ -15,6 +18,8 @@ export default function AddSongResourcePage() {
     lyricsUrl: '',
   });
   const [status, setStatus] = useState('');
+  const { token: csrfToken } = useCsrfToken();
+  const isAdmin = session?.user && (session.user as any).isAdmin;
 
   // Fetch all songs on mount
   useEffect(() => {
@@ -57,14 +62,22 @@ export default function AddSongResourcePage() {
     setStatus('Saving...');
     
     try {
-      const res = await fetch('/api/songs/update-links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          songId: selectedSongId,
-          ...form,
-        }),
-      });
+      if (!csrfToken) {
+        setStatus('❌ Security token not ready. Please try again.');
+        return;
+      }
+
+      const res = await fetch(
+        '/api/songs/update-links',
+        withCsrfToken(csrfToken, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            songId: selectedSongId,
+            ...form,
+          }),
+        })
+      );
       
       if (res.ok) {
         setStatus('✅ Successfully updated!');
@@ -76,6 +89,38 @@ export default function AddSongResourcePage() {
       console.error('Error updating links:', error);
       setStatus('❌ Error occurred');
     }
+  }
+
+  if (sessionStatus === 'loading') {
+    return null;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="max-w-lg mx-auto p-8 mt-12 rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)]">
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4">🔒</div>
+          <h1 className="text-3xl font-bold mb-3 text-[var(--text)]">Admin Access Required</h1>
+          <p className="text-[var(--muted)] mb-6">
+            Only administrators can update song resource links.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <a 
+            href="/songs/browser" 
+            className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
+          >
+            🎸 Browse Songs
+          </a>
+          <a 
+            href="/battle" 
+            className="block w-full py-3 px-4 rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-semibold text-center hover:opacity-90 transition-opacity"
+          >
+            🎵 Go to Battle Page
+          </a>
+        </div>
+      </div>
+    );
   }
 
   return (

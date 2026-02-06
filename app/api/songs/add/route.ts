@@ -6,6 +6,7 @@ import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics } from "../../../.
 import { fetchSongMetadata } from "../../../../lib/musicbrainz";
 import { validateSongInput } from "../../../../lib/input-sanitization";
 import { sanitizeError, logError } from "../../../../lib/error-handler";
+import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +15,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { artist, title, album, releaseDate } = await req.json();
+    const body = await req.json();
+
+    // Verify CSRF token
+    if (!verifyCsrfToken(req, body)) {
+      console.log("[ADD SONG] Invalid CSRF token");
+      return csrfErrorResponse();
+    }
+
+    const { artist, title, album, releaseDate } = body;
     
     // Validate and sanitize all input
     const validation = validateSongInput({ title, artist, album, releaseDate });

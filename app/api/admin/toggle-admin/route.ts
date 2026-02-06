@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth-with-credentials";
 import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 import { sanitizeError, logError } from "@/lib/error-handler";
+import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,6 +38,12 @@ export async function POST(req: NextRequest) {
 
     // Parse request body
     const body = await req.json();
+
+    // Verify CSRF token
+    if (!verifyCsrfToken(req, body)) {
+      console.log('[toggle-admin] Invalid CSRF token');
+      return csrfErrorResponse();
+    }
     const { email } = body;
 
     if (!email) {

@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 import { rateLimiters } from '@/lib/rate-limit';
 import { sanitizeError, logError, ErrorMessages } from '@/lib/error-handler';
+import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +26,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email } = await req.json();
+    const body = await req.json();
+
+    // Verify CSRF token
+    if (!verifyCsrfToken(req, body)) {
+      console.log('[SEND-RESET] Invalid CSRF token');
+      return csrfErrorResponse();
+    }
+
+    const { email } = body;
     console.log("[SEND-RESET] Sending reset to:", email);
     if (!email || typeof email !== 'string') {
       console.log("[SEND-RESET] Invalid email format");

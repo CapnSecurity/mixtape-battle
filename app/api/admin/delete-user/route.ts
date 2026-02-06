@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
+import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,7 +11,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { email } = await req.json();
+    const body = await req.json();
+
+    // Verify CSRF token
+    if (!verifyCsrfToken(req, body)) {
+      console.log("[DELETE USER] Invalid CSRF token");
+      return csrfErrorResponse();
+    }
+
+    const { email } = body;
     if (!email) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }

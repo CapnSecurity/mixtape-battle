@@ -40,7 +40,7 @@
   - Permissions-Policy header
   - Tested with https://securityheaders.com/
 
-- [ ] **CSRF Protection**
+- [x] **CSRF Protection** ✅ (v0.3.5)
   - Review NextAuth CSRF implementation
   - Add CSRF tokens to critical forms
   - Audit API endpoints for CSRF vulnerabilities
@@ -64,6 +64,12 @@
 - [ ] Automated security scanning
 
 ## Completed ✅
+
+### Version 0.3.5 (February 6, 2026)
+- ✅ CSRF protection for critical POST/DELETE actions
+- ✅ CSRF token endpoint and client hook
+- ✅ Admin-only protection for update-links
+- ✅ Battle vote endpoint now requires auth
 
 ### Version 0.3.4 (February 6, 2026)
 - ✅ Enhanced security headers (nginx)

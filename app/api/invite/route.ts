@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 import { rateLimiters } from '@/lib/rate-limit';
 import { sanitizeError, logError } from '@/lib/error-handler';
+import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +17,22 @@ export async function POST(req: NextRequest) {
       return rateLimitResult.response;
     }
 
-    const { email } = await req.json();
+    // Check if user is admin
+    const session = await getServerSession(authOptions as any);
+    if (!session?.user || !(session.user as any).isAdmin) {
+      console.log('[INVITE] Unauthorized - not admin');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+
+    // Verify CSRF token
+    if (!verifyCsrfToken(req, body)) {
+      console.log('[INVITE] Invalid CSRF token');
+      return csrfErrorResponse();
+    }
+
+    const { email } = body;
     console.log("[INVITE] Invite request for:", email);
     
     if (!email || typeof email !== 'string') {
@@ -22,9 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
     }
 
-    // Only allow admin (tim@levesques.net) to invite
-    // (In production, check session or JWT)
-    // For now, allow all POSTs for local dev
+    // Only allow admin to invite
 
     // Generate secure token
     console.log("[INVITE] Generating invite token");

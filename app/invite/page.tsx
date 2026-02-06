@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
+import { useCsrfToken, withCsrfToken } from '@/lib/use-csrf';
 
 type User = {
   id: string;
@@ -23,6 +24,7 @@ export default function InvitePage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [resetStatus, setResetStatus] = useState<{ [email: string]: 'idle'|'sending'|'sent'|'error' }>({});
   const [adminToggleStatus, setAdminToggleStatus] = useState<{ [email: string]: 'idle'|'toggling'|'success'|'error' }>({});
+  const { token: csrfToken } = useCsrfToken();
 
   useEffect(() => {
     if (session?.user && (session.user as any).isAdmin) {
@@ -90,11 +92,19 @@ export default function InvitePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatusMsg('sending');
-    const res = await fetch('/api/invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
+    if (!csrfToken) {
+      setStatusMsg('error');
+      return;
+    }
+
+    const res = await fetch(
+      '/api/invite',
+      withCsrfToken(csrfToken, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+    );
     setStatusMsg(res.ok ? 'sent' : 'error');
   }
 
@@ -107,11 +117,20 @@ export default function InvitePage() {
     setDeleteStatus('deleting');
     setDeleteError('');
     
-    const res = await fetch('/api/admin/delete-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: deleteEmail }),
-    });
+    if (!csrfToken) {
+      setDeleteError('Security token not ready. Please try again.');
+      setDeleteStatus('error');
+      return;
+    }
+
+    const res = await fetch(
+      '/api/admin/delete-user',
+      withCsrfToken(csrfToken, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: deleteEmail }),
+      })
+    );
     
     if (res.ok) {
       setDeleteStatus('deleted');
@@ -130,11 +149,19 @@ export default function InvitePage() {
     setResetStatus(prev => ({ ...prev, [email]: 'sending' }));
     
     try {
-      const res = await fetch('/api/admin/send-password-reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+      if (!csrfToken) {
+        setResetStatus(prev => ({ ...prev, [email]: 'error' }));
+        return;
+      }
+
+      const res = await fetch(
+        '/api/admin/send-password-reset',
+        withCsrfToken(csrfToken, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+      );
       
       if (res.ok) {
         setResetStatus(prev => ({ ...prev, [email]: 'sent' }));
@@ -165,11 +192,19 @@ export default function InvitePage() {
     setAdminToggleStatus(prev => ({ ...prev, [email]: 'toggling' }));
     
     try {
-      const res = await fetch('/api/admin/toggle-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+      if (!csrfToken) {
+        setAdminToggleStatus(prev => ({ ...prev, [email]: 'error' }));
+        return;
+      }
+
+      const res = await fetch(
+        '/api/admin/toggle-admin',
+        withCsrfToken(csrfToken, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+      );
       
       if (res.ok) {
         setAdminToggleStatus(prev => ({ ...prev, [email]: 'success' }));
