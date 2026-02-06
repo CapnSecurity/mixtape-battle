@@ -6,8 +6,9 @@ import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions as any);
-    if (!session?.user || !(session.user as any).isAdmin) {
+    const session = (await getServerSession(authOptions as any)) as any;
+    const user = session?.user as { isAdmin?: boolean } | undefined;
+    if (!user?.isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
