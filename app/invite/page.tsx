@@ -22,6 +22,7 @@ export default function InvitePage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [resetStatus, setResetStatus] = useState<{ [email: string]: 'idle'|'sending'|'sent'|'error' }>({});
+  const [adminToggleStatus, setAdminToggleStatus] = useState<{ [email: string]: 'idle'|'toggling'|'success'|'error' }>({});
 
   useEffect(() => {
     if (session?.user && (session.user as any).isAdmin) {
@@ -117,6 +118,45 @@ export default function InvitePage() {
     }
   }
 
+  async function handleToggleAdmin(email: string, currentIsAdmin: boolean) {
+    // Prevent self-demotion
+    if (currentIsAdmin && email === session?.user?.email) {
+      alert('Cannot remove your own admin privileges');
+      return;
+    }
+
+    const action = currentIsAdmin ? 'remove admin privileges from' : 'make admin';
+    if (!confirm(`Are you sure you want to ${action} ${email}?`)) {
+      return;
+    }
+
+    setAdminToggleStatus(prev => ({ ...prev, [email]: 'toggling' }));
+    
+    try {
+      const res = await fetch('/api/admin/toggle-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (res.ok) {
+        setAdminToggleStatus(prev => ({ ...prev, [email]: 'success' }));
+        setTimeout(() => {
+          setAdminToggleStatus(prev => ({ ...prev, [email]: 'idle' }));
+        }, 2000);
+        // Refresh user list to show updated admin status
+        fetchUsers();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to toggle admin status');
+        setAdminToggleStatus(prev => ({ ...prev, [email]: 'error' }));
+      }
+    } catch (error) {
+      console.error('Failed to toggle admin status:', error);
+      setAdminToggleStatus(prev => ({ ...prev, [email]: 'error' }));
+    }
+  }
+
   return (
     <div className="max-w-lg mx-auto p-8 mt-12 space-y-8">
       {/* Invite User Section */}
@@ -166,6 +206,18 @@ export default function InvitePage() {
                         ADMIN
                       </span>
                     )}
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleToggleAdmin(user.email, user.isAdmin)}
+                      disabled={adminToggleStatus[user.email] === 'toggling'}
+                      className="text-xs"
+                      title={user.isAdmin ? 'Remove admin privileges' : 'Make admin'}
+                    >
+                      {adminToggleStatus[user.email] === 'toggling' && '⏳'}
+                      {adminToggleStatus[user.email] === 'success' && '✓'}
+                      {adminToggleStatus[user.email] === 'error' && '✗'}
+                      {(!adminToggleStatus[user.email] || adminToggleStatus[user.email] === 'idle') && (user.isAdmin ? '👑 Demote' : '👑 Promote')}
+                    </Button>
                     <Button
                       variant="ghost"
                       onClick={() => handleSendPasswordReset(user.email)}
