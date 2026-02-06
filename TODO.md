@@ -2,13 +2,13 @@
 
 ## Immediate Priorities
 
-### Security Hardening (In Progress)
+### Security Hardening
 - [x] Password policy enforcement (v0.3.1)
 - [x] Session security hardening (v0.3.1)
 - [x] Admin role management (v0.3.1)
 - [x] Account enumeration prevention (v0.3.2)
 - [x] Error message sanitization (v0.3.2)
-- [ ] Input validation & XSS protection (30 min)
+- [x] Input validation & XSS protection (v0.3.3)
 - [x] ~~Email verification~~ (Not needed - invite system already verifies emails)
 
 ### Git Workflow Migration
@@ -42,6 +42,14 @@
 - [ ] Automated security scanning
 
 ## Completed ✅
+
+### Version 0.3.3 (February 6, 2026)
+- ✅ XSS protection with DOMPurify
+- ✅ Input validation and sanitization
+- ✅ Song input validation (title, artist, album, year)
+- ✅ HTML tag stripping from user inputs
+- ✅ Results page expanded to show ALL songs
+- ✅ Top 10 badges added to results page
 
 ### Version 0.3.2 (February 6, 2026)
 - ✅ Account enumeration prevention (signup, password reset)
