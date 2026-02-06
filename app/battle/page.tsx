@@ -221,8 +221,8 @@ export default function BattlePage() {
             {/* Next Battle Button */}
             <div className="text-center">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" onClick={() => fetchPair()}>
-                  Next Battle
+                <Button size="lg" asChild>
+                  <Link href="/results">View Rankings</Link>
                 </Button>
                 <Button
                   size="lg"
