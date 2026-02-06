@@ -4,6 +4,7 @@ import { authOptions } from "../../../../lib/auth-with-credentials";
 import { prisma } from "../../../../lib/prisma";
 import bcrypt from "bcryptjs";
 import { Session } from "next-auth";
+import { validatePassword } from "@/lib/password-validation";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,10 +13,23 @@ export async function POST(req: NextRequest) {
     const { password, resetToken } = body;
     console.log("[SET-PASSWORD] Has resetToken:", !!resetToken);
 
-    if (!password || password.length < 8) {
-      console.log("[SET-PASSWORD] Password validation failed");
+    if (!password) {
+      console.log("[SET-PASSWORD] Password missing");
       return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
+        { error: "Password is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      console.log("[SET-PASSWORD] Password validation failed:", passwordValidation.errors);
+      return NextResponse.json(
+        { 
+          error: "Password does not meet requirements",
+          details: passwordValidation.errors 
+        },
         { status: 400 }
       );
     }
