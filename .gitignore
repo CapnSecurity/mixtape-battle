@@ -41,6 +41,7 @@ node_modules
 /backups/
 /certbot/
 /ssl/
+/nginx-logs/
 
 # Generated restore/import files and DB dumps
 /restore-*.sql

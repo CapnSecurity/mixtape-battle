@@ -21,13 +21,21 @@ export const authOptions: NextAuthOptions = {
       from: process.env.EMAIL_FROM,
     }),
   ],
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
+  },
   pages: {
     signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
+      const now = Math.floor(Date.now() / 1000);
+      const maxAge = 7 * 24 * 60 * 60;
+      const updateAge = 24 * 60 * 60;
+
       if (user) {
         token.id = user.id;
         // Fetch the user's isAdmin status from the database
@@ -36,6 +44,14 @@ export const authOptions: NextAuthOptions = {
           select: { isAdmin: true },
         });
         token.isAdmin = dbUser?.isAdmin || false;
+        token.iat = now;
+        token.exp = now + maxAge;
+      } else {
+        const tokenIat = typeof token.iat === "number" ? token.iat : undefined;
+        if (!tokenIat || now - tokenIat > updateAge) {
+          token.iat = now;
+          token.exp = now + maxAge;
+        }
       }
       return token;
     },

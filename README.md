@@ -5,7 +5,7 @@ Minimal instructions to run this project locally.
 Prerequisites
 - Node.js (18+)
 - npm
-- Docker (for MailHog SMTP) — optional but recommended for email testing
+- Docker (for Postgres + MailHog)
 
 Setup
 
@@ -22,16 +22,17 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=replace-me-with-a-random-secret
 EMAIL_SERVER=smtp://localhost:1025
 EMAIL_FROM=no-reply@example.com
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mixtape_battle
 ```
 
-3. Start MailHog (optional) for local email capture
+3. Start Postgres + MailHog
 
 ```bash
 docker compose up -d
 # MailHog UI: http://localhost:8025
 ```
 
-4. Prepare the database (Prisma + SQLite)
+4. Prepare the database (Prisma + Postgres)
 
 ```bash
 npx prisma generate

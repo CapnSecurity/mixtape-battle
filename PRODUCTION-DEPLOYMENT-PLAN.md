@@ -424,34 +424,52 @@ sudo ufw allow 587/tcp
 sudo ufw enable
 ```
 
-### 5.2 Fail2Ban (Brute Force Protection)
+### 5.2 IPBan (Windows Brute Force Protection)
+Fail2Ban is Linux-only. Since production is hosted on Windows, use IPBan instead.
+
+**Install IPBan (run in PowerShell as Administrator):**
+```powershell
+$ProgressPreference = 'SilentlyContinue';
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
+iex "& { $((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/DigitalRuby/IPBan/master/IPBanCore/Windows/Scripts/install_latest.ps1')) } -startupType 'delayed-auto' -silent $True -autostart $True"
+```
+
+**Ensure Nginx logs are accessible on host:**
 ```bash
-sudo apt install fail2ban
-
-# Create jail for nginx
-sudo nano /etc/fail2ban/jail.local
+# In docker-compose.production.yml
+# nginx service mounts logs to: ./nginx-logs:/var/log/nginx
 ```
 
-```ini
-[nginx-http-auth]
-enabled = true
-port = http,https
-logpath = /var/log/nginx/error.log
+**Configure IPBan to read Nginx logs:**
+1. Open `C:\Program Files\IPBan\ipban.config` (or `C:\ProgramData\IPBan\ipban.config`).
+2. Add a `LogFilesToParse` entry to scan `nginx-logs\access.log` for failed auth attempts.
 
-[nginx-limit-req]
-enabled = true
-port = http,https
-logpath = /var/log/nginx/error.log
-maxretry = 10
-findtime = 600
-bantime = 3600
-```
+**Testing IPBan (safe approach):**
+1. Temporarily set `FailedLoginAttemptsBeforeBan` to 3 in `ipban.config`.
+2. Restart the service:
+  ```powershell
+  Restart-Service ipban
+  ```
+3. Trigger failed auth attempts (e.g., bad logins to `/login`).
+4. Confirm blocked IPs:
+  ```powershell
+  Get-NetFirewallRule -DisplayName "IPBan*" | Select-Object -First 5
+  ```
+5. Unban your IP:
+  ```powershell
+  Get-Content "C:\Program Files\IPBan\unban.txt" | Out-Null
+  Add-Content "C:\Program Files\IPBan\unban.txt" "<YOUR_IP>"
+  ```
 
 ### 5.3 Database Security
 - Use strong passwords (32+ characters)
 - Database not exposed to internet (Docker internal network only)
 - Regular backups to encrypted storage
 - Enable PostgreSQL SSL/TLS for connections
+
+### 5.3.1 Session Token Rotation
+- Session tokens rotate every 24 hours (`updateAge`) with a 7-day max lifetime.
+- No action required for users; rotation is automatic on active sessions.
 
 ### 5.4 Docker Security
 ```bash
