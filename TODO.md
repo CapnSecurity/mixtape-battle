@@ -34,11 +34,11 @@
   - 3 votes max per song pairing
 
 ### Security - Medium Priority
-- [ ] **Security Headers Enhancement**
-  - Add Content-Security-Policy (CSP) header
-  - Add Referrer-Policy header
-  - Add Permissions-Policy header
-  - Test with https://securityheaders.com/
+- [x] **Security Headers Enhancement** ✅ (v0.3.4)
+  - Content-Security-Policy (CSP) header
+  - Referrer-Policy header
+  - Permissions-Policy header
+  - Tested with https://securityheaders.com/
 
 - [ ] **CSRF Protection**
   - Review NextAuth CSRF implementation
@@ -65,7 +65,13 @@
 
 ## Completed ✅
 
-### Version 0.3.3 (February 6, 2026)
+### Version 0.3.4 (February 6, 2026)
+- ✅ Enhanced security headers (nginx)
+- ✅ Content-Security-Policy with strict resource loading rules
+- ✅ Referrer-Policy for privacy protection
+- ✅ Permissions-Policy to restrict browser features
+
+### Version 0.3.3 (February  6, 2026)
 - ✅ XSS protection with DOMPurify
 - ✅ Input validation and sanitization
 - ✅ Song input validation (title, artist, album, year)
