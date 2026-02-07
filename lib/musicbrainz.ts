@@ -84,6 +84,47 @@ function saveCache(artist: string, title: string, data: MusicBrainzMetadata | nu
   }
 }
 
+/**
+ * Normalize artist name (fix common typos and variations)
+ */
+function normalizeArtist(artist: string): string {
+  const normalized = artist.trim();
+  
+  // Common artist corrections
+  const corrections: Record<string, string> = {
+    'Bruce Springstein': 'Bruce Springsteen',
+    'CCR': 'Creedence Clearwater Revival',
+    'The Eagles': 'Eagles',
+    'The Black Crowes': 'Black Crowes',
+    'Concrete Blondes': 'Concrete Blonde',
+    'Bad Co.': 'Bad Company',
+  };
+  
+  return corrections[normalized] || normalized;
+}
+
+/**
+ * Normalize title (fix common typos)
+ */
+function normalizeTitle(title: string): string {
+  let normalized = title.trim();
+  
+  // Common title corrections
+  const corrections: Record<string, string> = {
+    'Parachutte': 'Parachute',
+    'World i Know': 'The World I Know',
+    'Old Time Rock n Roll': 'Old Time Rock and Roll',
+    'For What its Worth': 'For What It\'s Worth',
+    'Nuthin \'bout You': 'Nothin\' \'Bout Love',
+  };
+  
+  if (corrections[normalized]) {
+    normalized = corrections[normalized];
+  }
+  
+  return normalized;
+}
+
 interface MusicBrainzMetadata {
   album: string | null;
   releaseDate: number | null;
@@ -124,13 +165,38 @@ async function fetchAlbumArt(releaseId: string): Promise<string | null> {
 }
 
 export async function fetchSongMetadata(artist: string, title: string): Promise<MusicBrainzMetadata | null> {
+  // Check cache with original names first
+  const originalCache = loadCache(artist, title);
+  if (originalCache) {
+    return originalCache;
+  }
+  
+  // Normalize artist and title
+  const normalizedArtist = normalizeArtist(artist);
+  const normalizedTitle = normalizeTitle(title);
+  
+  // If normalized, check cache with normalized names
+  if (normalizedArtist !== artist || normalizedTitle !== title) {
+    console.log(`[MusicBrainz] Normalized: "${artist}" → "${normalizedArtist}", "${title}" → "${normalizedTitle}"`);
+    const normalizedCache = loadCache(normalizedArtist, normalizedTitle);
+    if (normalizedCache) {
+      // Save to cache with original names too
+      saveCache(artist, title, normalizedCache);
+      return normalizedCache;
+    }
+  }
+  
+  // Use normalized names for API search
+  const searchArtist = normalizedArtist;
+  const searchTitle = normalizedTitle;
+  
   try {
     // Search for recordings (songs) matching artist and title
     // Request tags and release info in the same query
-    const searchQuery = encodeURIComponent(`artist:"${artist}" AND recording:"${title}"`);
+    const searchQuery = encodeURIComponent(`artist:"${searchArtist}" AND recording:"${searchTitle}"`);
     const url = `${MUSICBRAINZ_API}/recording?query=${searchQuery}&fmt=json&limit=10&inc=tags+releases+artist-credits`;
     
-    console.log('[MusicBrainz] Searching for:', artist, '-', title);
+    console.log('[MusicBrainz] Searching for:', searchArtist, '-', searchTitle);
     console.log('[MusicBrainz] URL:', url);
     
     const response = await fetch(url, {
@@ -148,15 +214,15 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
     const data = await response.json();
     
     if (!data.recordings || data.recordings.length === 0) {
-      console.log('[MusicBrainz] No recordings found for:', artist, title);
+      console.log('[MusicBrainz] No recordings found for:', searchArtist, searchTitle);
       return null;
     }
 
     console.log(`[MusicBrainz] Found ${data.recordings.length} recordings`);
     
     // Find the best match by checking artist and title similarity
-    const normalizedArtist = artist.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const normalizedTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizedSearchArtist = searchArtist.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const normalizedSearchTitle = searchTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
     
     let bestMatch = null;
     let bestScore = 0;
@@ -166,11 +232,11 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
       const recordingTitle = (recording.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const recordingArtist = (recording['artist-credit']?.[0]?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       
-      console.log(`[MusicBrainz] Comparing: "${recordingArtist}" vs "${normalizedArtist}", "${recordingTitle}" vs "${normalizedTitle}"`);
+      console.log(`[MusicBrainz] Comparing: "${recordingArtist}" vs "${normalizedSearchArtist}", "${recordingTitle}" vs "${normalizedSearchTitle}"`);
       
       // Simple similarity score: both title and artist must contain the search terms
-      const titleMatch = recordingTitle.includes(normalizedTitle) || normalizedTitle.includes(recordingTitle);
-      const artistMatch = recordingArtist.includes(normalizedArtist) || normalizedArtist.includes(recordingArtist);
+      const titleMatch = recordingTitle.includes(normalizedSearchTitle) || normalizedSearchTitle.includes(recordingTitle);
+      const artistMatch = recordingArtist.includes(normalizedSearchArtist) || normalizedSearchArtist.includes(recordingArtist);
       
       console.log(`[MusicBrainz] Title match: ${titleMatch}, Artist match: ${artistMatch}`);
       
@@ -258,14 +324,22 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
       confidence: bestScore,
     };
 
-    // Cache the result
+    // Cache the result with original names
     saveCache(artist, title, result);
+    
+    // Also cache with normalized names if different
+    if (normalizedArtist !== artist || normalizedTitle !== title) {
+      saveCache(normalizedArtist, normalizedTitle, result);
+    }
 
     return result;
   } catch (error) {
     console.error('[MusicBrainz] Error fetching data:', error);
     // Cache the null result to avoid repeated failed lookups
     saveCache(artist, title, null);
+    if (normalizedArtist !== artist || normalizedTitle !== title) {
+      saveCache(normalizedArtist, normalizedTitle, null);
+    }
     return null;
   }
 }
