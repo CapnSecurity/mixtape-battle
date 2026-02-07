@@ -33,9 +33,19 @@ export default function BattlePage() {
 
   async function fetchPair() {
     setLoading(true);
-    const res = await fetch("/api/battle/next");
-    if (res.ok) setPair(await res.json());
-    setLoading(false);
+    try {
+      const res = await fetch("/api/battle/next");
+      if (res.ok && res.status !== 204) {
+        setPair(await res.json());
+      } else if (res.status === 204) {
+        console.log("No battles available");
+        setPair(null);
+      }
+    } catch (error) {
+      console.error("Error fetching battle:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function vote(winner: Song, loser: Song) {
@@ -46,7 +56,7 @@ export default function BattlePage() {
       return;
     }
 
-    await fetch(
+    const res = await fetch(
       "/api/battle/submit",
       withCsrfToken(csrfToken, {
         method: "POST",
@@ -54,6 +64,14 @@ export default function BattlePage() {
         body: JSON.stringify({ winnerId: winner.id, loserId: loser.id }),
       })
     );
+    
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: "Unknown error" }));
+      alert(error.error || "Failed to submit vote");
+      setLoading(false);
+      return;
+    }
+    
     setVoteCount(voteCount + 1);
     await fetchPair();
   }
@@ -66,7 +84,7 @@ export default function BattlePage() {
       return;
     }
 
-    await fetch(
+    const res = await fetch(
       "/api/battle/submit",
       withCsrfToken(csrfToken, {
         method: "POST",
@@ -74,6 +92,14 @@ export default function BattlePage() {
         body: JSON.stringify({ winnerId: a.id, loserId: b.id, skipped: true }),
       })
     );
+    
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: "Unknown error" }));
+      alert(error.error || "Failed to skip");
+      setLoading(false);
+      return;
+    }
+    
     await fetchPair();
   }
 
@@ -144,6 +170,28 @@ export default function BattlePage() {
             <p className="text-[var(--muted)] text-lg font-medium">
               Loading next battle...
             </p>
+          </div>
+        )}
+
+        {/* No Battles Available */}
+        {!loading && !pair && (
+          <div className="text-center py-32">
+            <div className="text-6xl mb-4">✨</div>
+            <h2 className="text-3xl font-bold text-[var(--text)] mb-4">
+              No battles available
+            </h2>
+            <p className="text-[var(--muted)] text-lg mb-8">
+              You've completed all available battles for now!<br/>
+              Check back later or add more songs to continue.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button asChild>
+                <Link href="/add-song">Add New Song</Link>
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href="/results">View Rankings</Link>
+              </Button>
+            </div>
           </div>
         )}
 
