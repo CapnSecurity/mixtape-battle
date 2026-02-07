@@ -3,6 +3,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fetchFromiTunes } from './itunes';
+import { fetchFromLastFm } from './lastfm';
 
 const MUSICBRAINZ_API = 'https://musicbrainz.org/ws/2';
 const COVERART_API = 'https://coverartarchive.org';
@@ -342,4 +344,86 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
     }
     return null;
   }
+}
+
+/**
+ * Comprehensive metadata fetcher with automatic fallbacks
+ * Tries MusicBrainz first, then iTunes, then Last.fm
+ */
+export async function fetchSongMetadataWithFallbacks(artist: string, title: string): Promise<MusicBrainzMetadata | null> {
+  console.log('[MetadataFetch] Starting comprehensive search for:', artist, '-', title);
+  
+  // Try MusicBrainz first
+  const mbData = await fetchSongMetadata(artist, title);
+  
+  // If MusicBrainz found complete data with album art, we're done
+  if (mbData?.albumArtUrl) {
+    console.log('[MetadataFetch] ✅ MusicBrainz found complete data');
+    return mbData;
+  }
+  
+  // Initialize result with MusicBrainz data (if any)
+  let result: MusicBrainzMetadata = mbData || {
+    album: null,
+    releaseDate: null,
+    decade: null,
+    albumArtUrl: null,
+    genre: null,
+    durationMs: null,
+    releaseId: null,
+    confidence: 0,
+  };
+  
+  // Try iTunes as fallback
+  if (!result.albumArtUrl) {
+    console.log('[MetadataFetch] 🔄 Trying iTunes fallback...');
+    const itunesData = await fetchFromiTunes(artist, title);
+    
+    if (itunesData?.albumArtUrl) {
+      console.log('[MetadataFetch] ✅ iTunes found album art!');
+      result.albumArtUrl = itunesData.albumArtUrl;
+      // Use iTunes data for missing fields
+      if (!result.album && itunesData.album) {
+        result.album = itunesData.album;
+      }
+      if (!result.releaseDate && itunesData.releaseDate) {
+        result.releaseDate = itunesData.releaseDate;
+        result.decade = Math.floor(itunesData.releaseDate / 10) * 10;
+      }
+      result.confidence = Math.max(result.confidence, 75); // iTunes is pretty reliable
+      
+      // Cache the combined result
+      saveCache(artist, title, result);
+      return result;
+    }
+  }
+  
+  // Try Last.fm as final fallback
+  if (!result.albumArtUrl) {
+    console.log('[MetadataFetch] 🔄 Trying Last.fm fallback...');
+    const lastfmData = await fetchFromLastFm(artist, title);
+    
+    if (lastfmData?.albumArtUrl) {
+      console.log('[MetadataFetch] ✅ Last.fm found album art!');
+      result.albumArtUrl = lastfmData.albumArtUrl;
+      // Use Last.fm data for missing fields
+      if (!result.album && lastfmData.album) {
+        result.album = lastfmData.album;
+      }
+      result.confidence = Math.max(result.confidence, 70);
+      
+      // Cache the combined result
+      saveCache(artist, title, result);
+      return result;
+    }
+  }
+  
+  // Return whatever we have (even if incomplete)
+  if (result.album || result.releaseDate || result.genre) {
+    console.log('[MetadataFetch] ⚠️  Partial data found (no album art)');
+    return result;
+  }
+  
+  console.log('[MetadataFetch] ❌ No metadata found from any source');
+  return null;
 }

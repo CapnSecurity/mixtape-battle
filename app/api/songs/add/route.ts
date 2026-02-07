@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics } from "../../../../lib/links";
-import { fetchSongMetadata } from "../../../../lib/musicbrainz";
+import { fetchSongMetadataWithFallbacks } from "../../../../lib/musicbrainz";
 import { validateSongInput } from "../../../../lib/input-sanitization";
 import { sanitizeError, logError } from "../../../../lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
@@ -59,11 +59,11 @@ export async function POST(req: NextRequest) {
     let decade = null;
     
     if (!finalAlbum || !finalReleaseDate) {
-      console.log(`[ADD SONG] Fetching metadata from MusicBrainz for: ${sanitizedArtist} - ${sanitizedTitle}`);
-      const metadata = await fetchSongMetadata(sanitizedArtist, sanitizedTitle);
+      console.log(`[ADD SONG] Fetching metadata (MusicBrainz → iTunes → Last.fm) for: ${sanitizedArtist} - ${sanitizedTitle}`);
+      const metadata = await fetchSongMetadataWithFallbacks(sanitizedArtist, sanitizedTitle);
       
       if (metadata) {
-        console.log(`[ADD SONG] MusicBrainz found: album="${metadata.album}", year=${metadata.releaseDate}, genre=${metadata.genre}, albumArt=${!!metadata.albumArtUrl}, confidence=${metadata.confidence}`);
+        console.log(`[ADD SONG] Metadata found: album="${metadata.album}", year=${metadata.releaseDate}, genre=${metadata.genre}, albumArt=${!!metadata.albumArtUrl}, confidence=${metadata.confidence}`);
         if (!finalAlbum && metadata.album) {
           finalAlbum = metadata.album;
         }
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         durationMs = metadata.durationMs;
         decade = metadata.decade;
       } else {
-        console.log(`[ADD SONG] No metadata found on MusicBrainz`);
+        console.log(`[ADD SONG] No metadata found from any source`);
         // Calculate decade from user-provided year if available
         if (finalReleaseDate) {
           decade = Math.floor(finalReleaseDate / 10) * 10;
@@ -84,8 +84,8 @@ export async function POST(req: NextRequest) {
       }
     } else {
       // User provided album/year, but still fetch additional metadata
-      console.log(`[ADD SONG] Fetching additional metadata from MusicBrainz for: ${sanitizedArtist} - ${sanitizedTitle}`);
-      const metadata = await fetchSongMetadata(sanitizedArtist, sanitizedTitle);
+      console.log(`[ADD SONG] Fetching additional metadata (MusicBrainz → iTunes → Last.fm) for: ${sanitizedArtist} - ${sanitizedTitle}`);
+      const metadata = await fetchSongMetadataWithFallbacks(sanitizedArtist, sanitizedTitle);
       if (metadata) {
         albumArtUrl = metadata.albumArtUrl;
         genre = metadata.genre;
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
         albumArtUrl: albumArtUrl,
         genre: genre,
         durationMs: durationMs,
-        source: (sanitizedAlbum || sanitizedYear) ? 'user' : 'musicbrainz',
+        source: (sanitizedAlbum || sanitizedYear) ? 'user' : 'auto',
       }
     });
   } catch (error) {
