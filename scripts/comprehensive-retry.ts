@@ -30,7 +30,7 @@ function saveToCache(artist: string, title: string, data: any) {
 async function comprehensiveRetry() {
   const songsWithoutArt = await prisma.song.findMany({
     where: { albumArtUrl: null },
-    select: { id: true, artist: true, title: true, elo: true },
+    select: { id: true, artist: true, title: true, elo: true, album: true, releaseDate: true, decade: true },
     orderBy: { elo: 'desc' },
   });
   
