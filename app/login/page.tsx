@@ -5,7 +5,6 @@ import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaSignInAlt, FaUserPlus, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-  const [showPassword, setShowPassword] = useState(false);
 import AuthShell from "@/src/components/AuthShell";
 import Button from "@/src/components/ui/Button";
 import Input from "@/src/components/ui/Input";
@@ -19,6 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mode, setMode] = useState<'signin'|'signup'>('signin');
+  const [showPassword, setShowPassword] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +35,6 @@ export default function LoginPage() {
         if (!result || result?.error) {
           setError("Invalid email or password. Please try again.");
         } else {
-          // Force full page reload to pick up session cookie
           window.location.href = result.url || "/dashboard";
         }
       } else {
@@ -58,7 +57,6 @@ export default function LoginPage() {
           setError(data?.error || "Sign up failed. Please try again.");
           return;
         }
-        // Add delay to avoid race conditions in dev
         await new Promise(resolve => setTimeout(resolve, 200));
         const result = await signIn("credentials", { 
           email, 
@@ -89,7 +87,6 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <div className="w-full max-w-xl">
-        {/* Logo */}
         <div className="text-center mb-16">
           <div className="text-7xl mb-4">🎵</div>
           <h1 className="text-6xl font-bold text-[var(--text)] mb-3">Mixtape</h1>
@@ -97,8 +94,6 @@ export default function LoginPage() {
             Band Music Management Platform
           </p>
         </div>
-
-        {/* Card */}
         <div className="p-10 sm:p-12 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] backdrop-blur-xl">
           <div className="mb-10">
             <h2 className="text-3xl font-bold text-[var(--text)] mb-4 flex items-center gap-3">
@@ -111,7 +106,6 @@ export default function LoginPage() {
                 : 'Create an account with your email and a strong password.'}
             </p>
           </div>
-
           <form onSubmit={submit} className="space-y-6">
                 <div className="space-y-3">
                   <label htmlFor="email" className="block text-sm font-semibold text-[var(--text)] flex items-center gap-2">
@@ -151,13 +145,11 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
-
                 {error && (
                   <div className="p-5 bg-[var(--surface2)] border-2 border-[var(--pink)]/70 text-[var(--pink)] rounded-xl text-sm font-medium leading-relaxed">
                     {error}
                   </div>
                 )}
-
                 <Button
                   type="submit"
                   size="lg"
@@ -176,13 +168,10 @@ export default function LoginPage() {
                   )}
                 </Button>
               </form>
-
               <div className="mt-8 text-[var(--muted)] text-xs text-center space-y-1">
                 <p>🔒 Passwords are securely encrypted and never shared.</p>
               </div>
           </div>
-
-          {/* Footer */}
         <div className="mt-12 text-center text-[var(--muted)] text-sm">
           <Link href="/" className="inline-flex items-center gap-2 hover:text-[var(--text)] transition font-medium">
             ← Back to Home
