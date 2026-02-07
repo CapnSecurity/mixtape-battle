@@ -15,6 +15,9 @@ type Song = {
   elo: number;
   album?: string | null;
   releaseDate?: number | null;
+  albumArtUrl?: string | null;
+  genre?: string | null;
+  durationMs?: number | null;
   spotify?: string | null;
   apple?: string | null;
   youtube?: string | null;
