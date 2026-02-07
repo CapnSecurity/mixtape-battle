@@ -47,7 +47,7 @@ services:
     networks:
       - mixtape-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -72,7 +72,7 @@ services:
     read_only: true
     tmpfs:
       - /var/run
-      - /tmp:uid=101,gid=101,mode=0755
+      - /tmp:mode=1777
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -80,9 +80,11 @@ services:
     cap_add:
       - CHOWN
       - NET_BIND_SERVICE
+      - SETGID
+      - SETUID
     networks:
       - mixtape-network
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    command: "/bin/sh -c 'mkdir -p /tmp/nginx/client_body /tmp/nginx/proxy_temp /tmp/nginx/fastcgi_temp /tmp/nginx/uwsgi_temp /tmp/nginx/scgi_temp; while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     image: certbot/certbot
