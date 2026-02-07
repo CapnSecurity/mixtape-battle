@@ -9,6 +9,7 @@ import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
+    const rootAdminEmail = "tim@levesques.net";
     // Rate limiting
     const rateLimitResult = await rateLimiters.admin(req);
     if (!rateLimitResult.success) {
@@ -62,6 +63,13 @@ export async function POST(req: NextRequest) {
     if (!targetUser) {
       console.log('[toggle-admin] User not found:', email);
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (targetUser.email === rootAdminEmail && targetUser.isAdmin) {
+      console.log('[toggle-admin] Prevented root admin demotion:', email);
+      return NextResponse.json({
+        error: "Cannot remove root admin privileges"
+      }, { status: 400 });
     }
 
     // Prevent self-demotion (optional safety check)

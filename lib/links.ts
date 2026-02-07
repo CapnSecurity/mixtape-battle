@@ -18,3 +18,18 @@ export const youtube = (artist: string, title: string) =>
 
 export const lyrics = (artist: string, title: string) =>
   `https://www.google.com/search?q=${encodeURIComponent(artist + " " + title + " lyrics")}`;
+
+// New resource link generators
+export const spotify = (artist: string, title: string) =>
+  `https://open.spotify.com/search/${encodeURIComponent(artist + " " + title)}`;
+
+export const genius = (artist: string, title: string) =>
+  `https://genius.com/search?q=${encodeURIComponent(artist + " " + title)}`;
+
+export const wikipedia = (artist: string, title: string) =>
+  `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(artist + " " + title)}`;
+
+export const allMusic = (artist: string, album?: string) => {
+  const query = album ? `${artist} ${album}` : artist;
+  return `https://www.allmusic.com/search/all/${encodeURIComponent(query)}`;
+};

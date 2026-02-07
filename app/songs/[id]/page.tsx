@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
-import { songsterrBass, ultimateGuitarGuitar, ultimateGuitarBass, youtube, lyrics } from "../../../lib/links";
+import { songsterrBass, ultimateGuitarGuitar, ultimateGuitarBass, youtube, lyrics, spotify, genius, wikipedia, allMusic } from "../../../lib/links";
 import Button from "@/src/components/ui/Button";
 
 type Params = Promise<{ id: string }>;
@@ -62,12 +62,13 @@ export default async function SongPage({ params }: { params: Params }) {
             Learn This Song
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Guitar Tabs */}
             <a
               href={song.ultimateGuitar || ultimateGuitarGuitar(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"
+              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
             >
               <span className="text-2xl">🎸</span>
               <div>
@@ -76,11 +77,12 @@ export default async function SongPage({ params }: { params: Params }) {
               </div>
             </a>
 
+            {/* Bass Tabs */}
             <a
               href={song.songsterr || songsterrBass(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"
+              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
             >
               <span className="text-2xl">🎸</span>
               <div>
@@ -89,29 +91,73 @@ export default async function SongPage({ params }: { params: Params }) {
               </div>
             </a>
 
+            {/* Lyrics (Genius) */}
             <a
-              href={song.lyrics || lyrics(song.artist, song.title)}
+              href={song.lyrics || genius(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"
+              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
             >
               <span className="text-2xl">📝</span>
               <div>
                 <div className="font-bold text-[var(--text)]">Lyrics</div>
-                <div className="text-sm text-[var(--muted)]">Song lyrics & meanings</div>
+                <div className="text-sm text-[var(--muted)]">Genius Lyrics</div>
               </div>
             </a>
 
+            {/* YouTube */}
             <a
               href={song.youtube || youtube(song.artist, song.title)}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition"
+              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
             >
               <span className="text-2xl">▶️</span>
               <div>
                 <div className="font-bold text-[var(--text)]">YouTube</div>
                 <div className="text-sm text-[var(--muted)]">Watch performances</div>
+              </div>
+            </a>
+
+            {/* Spotify */}
+            <a
+              href={spotify(song.artist, song.title)}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
+            >
+              <span className="text-2xl">🎧</span>
+              <div>
+                <div className="font-bold text-[var(--text)]">Spotify</div>
+                <div className="text-sm text-[var(--muted)]">Listen on Spotify</div>
+              </div>
+            </a>
+
+            {/* Wikipedia */}
+            <a
+              href={wikipedia(song.artist, song.title)}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
+            >
+              <span className="text-2xl">📚</span>
+              <div>
+                <div className="font-bold text-[var(--text)]">Wikipedia</div>
+                <div className="text-sm text-[var(--muted)]">Artist or Song Info</div>
+              </div>
+            </a>
+
+            {/* AllMusic */}
+            <a
+              href={allMusic(song.artist, song.album)}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
+            >
+              <span className="text-2xl">💿</span>
+              <div>
+                <div className="font-bold text-[var(--text)]">AllMusic</div>
+                <div className="text-sm text-[var(--muted)]">Album & Artist Info</div>
               </div>
             </a>
           </div>

@@ -14,6 +14,7 @@ type User = {
 };
 
 export default function InvitePage() {
+  const rootAdminEmail = 'tim@levesques.net';
   const { data: session, status } = useSession();
   const [email, setEmail] = useState('');
   const [statusMsg, setStatusMsg] = useState<'idle'|'sending'|'sent'|'error'>('idle');
@@ -184,6 +185,11 @@ export default function InvitePage() {
       return;
     }
 
+    if (email === rootAdminEmail && currentIsAdmin) {
+      alert('Cannot remove root admin privileges');
+      return;
+    }
+
     const action = currentIsAdmin ? 'remove admin privileges from' : 'make admin';
     if (!confirm(`Are you sure you want to ${action} ${email}?`)) {
       return;
@@ -273,10 +279,18 @@ export default function InvitePage() {
                         ADMIN
                       </span>
                     )}
+                    {user.email === rootAdminEmail && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded bg-[var(--surface2)] text-[var(--muted)]">
+                        ROOT
+                      </span>
+                    )}
                     <Button
                       variant="ghost"
                       onClick={() => handleToggleAdmin(user.email, user.isAdmin)}
-                      disabled={adminToggleStatus[user.email] === 'toggling'}
+                      disabled={
+                        adminToggleStatus[user.email] === 'toggling' ||
+                        (user.email === rootAdminEmail && user.isAdmin)
+                      }
                       className="text-xs"
                       title={user.isAdmin ? 'Remove admin privileges' : 'Make admin'}
                     >

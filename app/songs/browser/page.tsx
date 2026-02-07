@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import Button from "@/src/components/ui/Button";
-import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics } from "../../../lib/links";
+import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics, spotify, genius, wikipedia, allMusic } from "../../../lib/links";
 import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 
 type Song = {
@@ -205,8 +205,9 @@ function SongBrowser() {
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {/* Guitar Tabs - Always show */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+
+                    {/* Guitar Tabs */}
                     <a
                       href={selectedSong.ultimateGuitar || ultimateGuitarGuitar(selectedSong.artist, selectedSong.title)}
                       target="_blank"
@@ -217,7 +218,7 @@ function SongBrowser() {
                       Guitar Tabs
                     </a>
 
-                    {/* Bass Tabs - Always show */}
+                    {/* Bass Tabs */}
                     <a
                       href={selectedSong.songsterr || songsterrBass(selectedSong.artist, selectedSong.title)}
                       target="_blank"
@@ -228,9 +229,9 @@ function SongBrowser() {
                       Bass Tabs
                     </a>
 
-                    {/* Lyrics - Always show */}
+                    {/* Lyrics (Genius) */}
                     <a
-                      href={selectedSong.lyrics || lyrics(selectedSong.artist, selectedSong.title)}
+                      href={selectedSong.lyrics || genius(selectedSong.artist, selectedSong.title)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
@@ -239,7 +240,7 @@ function SongBrowser() {
                       Lyrics
                     </a>
 
-                    {/* YouTube - Always show */}
+                    {/* YouTube */}
                     <a
                       href={selectedSong.youtube || youtube(selectedSong.artist, selectedSong.title)}
                       target="_blank"
@@ -248,6 +249,39 @@ function SongBrowser() {
                     >
                       <div className="text-3xl mb-2">▶️</div>
                       YouTube Music
+                    </a>
+
+                    {/* Spotify */}
+                    <a
+                      href={spotify(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                    >
+                      <div className="text-3xl mb-2">🎧</div>
+                      Spotify
+                    </a>
+
+                    {/* Wikipedia */}
+                    <a
+                      href={wikipedia(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                    >
+                      <div className="text-3xl mb-2">📚</div>
+                      Wikipedia
+                    </a>
+
+                    {/* AllMusic */}
+                    <a
+                      href={allMusic(selectedSong.artist, selectedSong.album)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm cursor-pointer border border-[var(--ring)]/20 hover:shadow-[var(--shadow)]"
+                    >
+                      <div className="text-3xl mb-2">💿</div>
+                      AllMusic
                     </a>
 
                     {/* Streaming services - only show if available */}
