@@ -150,7 +150,17 @@ export default function BattlePage() {
               >
                 <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between">
                   <div className="mb-8">
-                    <div className="text-7xl mb-6">🎸</div>
+                    {pair.a.albumArtUrl ? (
+                      <div className="mb-6 flex justify-center">
+                        <img 
+                          src={pair.a.albumArtUrl} 
+                          alt={`${pair.a.album || pair.a.title} album art`}
+                          className="w-48 h-48 object-cover rounded-xl shadow-lg"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-7xl mb-6">🎸</div>
+                    )}
                     <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
                       {pair.a.title}
                     </h2>
@@ -208,7 +218,17 @@ export default function BattlePage() {
               >
                 <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between">
                   <div className="mb-8">
-                    <div className="text-7xl mb-6">🎵</div>
+                    {pair.b.albumArtUrl ? (
+                      <div className="mb-6 flex justify-center">
+                        <img 
+                          src={pair.b.albumArtUrl} 
+                          alt={`${pair.b.album || pair.b.title} album art`}
+                          className="w-48 h-48 object-cover rounded-xl shadow-lg"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-7xl mb-6">🎵</div>
+                    )}
                     <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
                       {pair.b.title}
                     </h2>

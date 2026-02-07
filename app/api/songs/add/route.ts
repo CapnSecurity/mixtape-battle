@@ -53,21 +53,47 @@ export async function POST(req: NextRequest) {
     // Fetch metadata from MusicBrainz if album/release date not provided
     let finalAlbum = sanitizedAlbum || null;
     let finalReleaseDate = sanitizedYear;
+    let albumArtUrl = null;
+    let genre = null;
+    let durationMs = null;
+    let decade = null;
     
     if (!finalAlbum || !finalReleaseDate) {
       console.log(`[ADD SONG] Fetching metadata from MusicBrainz for: ${sanitizedArtist} - ${sanitizedTitle}`);
       const metadata = await fetchSongMetadata(sanitizedArtist, sanitizedTitle);
       
       if (metadata) {
-        console.log(`[ADD SONG] MusicBrainz found: album="${metadata.album}", year=${metadata.releaseDate}, confidence=${metadata.confidence}`);
+        console.log(`[ADD SONG] MusicBrainz found: album="${metadata.album}", year=${metadata.releaseDate}, genre=${metadata.genre}, albumArt=${!!metadata.albumArtUrl}, confidence=${metadata.confidence}`);
         if (!finalAlbum && metadata.album) {
           finalAlbum = metadata.album;
         }
         if (!finalReleaseDate && metadata.releaseDate) {
           finalReleaseDate = metadata.releaseDate;
         }
+        // Always use MusicBrainz data for these fields
+        albumArtUrl = metadata.albumArtUrl;
+        genre = metadata.genre;
+        durationMs = metadata.durationMs;
+        decade = metadata.decade;
       } else {
         console.log(`[ADD SONG] No metadata found on MusicBrainz`);
+        // Calculate decade from user-provided year if available
+        if (finalReleaseDate) {
+          decade = Math.floor(finalReleaseDate / 10) * 10;
+        }
+      }
+    } else {
+      // User provided album/year, but still fetch additional metadata
+      console.log(`[ADD SONG] Fetching additional metadata from MusicBrainz for: ${sanitizedArtist} - ${sanitizedTitle}`);
+      const metadata = await fetchSongMetadata(sanitizedArtist, sanitizedTitle);
+      if (metadata) {
+        albumArtUrl = metadata.albumArtUrl;
+        genre = metadata.genre;
+        durationMs = metadata.durationMs;
+      }
+      // Calculate decade from user-provided year
+      if (finalReleaseDate) {
+        decade = Math.floor(finalReleaseDate / 10) * 10;
       }
     }
 
@@ -86,6 +112,10 @@ export async function POST(req: NextRequest) {
         title: sanitizedTitle,
         album: finalAlbum,
         releaseDate: finalReleaseDate,
+        decade: decade,
+        albumArtUrl: albumArtUrl,
+        genre: genre,
+        durationMs: durationMs,
         elo: 1500,
         // Store the generated resource URLs
         songsterr: generatedUrls.songsterr,
@@ -102,6 +132,10 @@ export async function POST(req: NextRequest) {
       metadata: {
         album: finalAlbum,
         releaseDate: finalReleaseDate,
+        decade: decade,
+        albumArtUrl: albumArtUrl,
+        genre: genre,
+        durationMs: durationMs,
         source: (sanitizedAlbum || sanitizedYear) ? 'user' : 'musicbrainz',
       }
     });
