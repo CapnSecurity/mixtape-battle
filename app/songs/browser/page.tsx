@@ -154,6 +154,17 @@ function SongBrowser() {
               <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 shadow-[var(--shadow)]">
                 {/* Song Info */}
                 <div className="mb-10 pb-10 border-b border-[var(--ring)]/20">
+                  {/* Album Art */}
+                  {selectedSong.albumArtUrl && (
+                    <div className="mb-8 flex justify-center">
+                      <img 
+                        src={selectedSong.albumArtUrl} 
+                        alt={`${selectedSong.album || selectedSong.title} album art`}
+                        className="w-64 h-64 object-cover rounded-2xl shadow-2xl"
+                      />
+                    </div>
+                  )}
+                  
                   <h2 className="text-5xl font-bold text-[var(--text)] mb-3">
                     {selectedSong.title}
                   </h2>
@@ -173,6 +184,13 @@ function SongBrowser() {
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-wider">Released</span>
                         <p className="text-lg text-[var(--text)] font-semibold">{selectedSong.releaseDate}</p>
+                      </div>
+                    )}
+                    
+                    {selectedSong.genre && (
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-wider">Genre</span>
+                        <p className="text-lg text-[var(--text)] font-semibold">{selectedSong.genre}</p>
                       </div>
                     )}
 

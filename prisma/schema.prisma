@@ -17,6 +17,8 @@ model Song {
   album     String?
   releaseDate Int?   // year
   decade    Int?
+  albumArtUrl String?  // Album cover from MusicBrainz Cover Art Archive
+  durationMs  Int?     // Track duration in milliseconds
 
   // Classification
   genre     String?

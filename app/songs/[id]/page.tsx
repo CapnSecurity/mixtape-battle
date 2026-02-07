@@ -40,13 +40,47 @@ export default async function SongPage({ params }: { params: Params }) {
 
         {/* Song Card */}
         <div className="bg-[linear-gradient(135deg,var(--gold),var(--pink))] rounded-2xl shadow-[var(--shadow)] p-8 mb-8">
-          <div className="text-7xl mb-6 text-center">🎶</div>
+          {song.albumArtUrl ? (
+            <div className="mb-6 flex justify-center">
+              <img 
+                src={song.albumArtUrl} 
+                alt={`${song.album || song.title} album art`}
+                className="w-64 h-64 object-cover rounded-xl shadow-2xl"
+              />
+            </div>
+          ) : (
+            <div className="text-7xl mb-6 text-center">🎶</div>
+          )}
           <h1 className="text-4xl font-bold text-[var(--bg)] mb-2 text-center">
             {song.title}
           </h1>
           <p className="text-xl text-[var(--bg)]/80 text-center mb-6">
             {song.artist}
           </p>
+          
+          {/* Metadata */}
+          {(song.album || song.releaseDate || song.genre) && (
+            <div className="bg-[var(--bg)]/20 rounded-xl p-4 mb-4 flex flex-wrap justify-center gap-6">
+              {song.album && (
+                <div className="text-center">
+                  <div className="text-xs text-[var(--bg)]/60 uppercase tracking-wider mb-1">Album</div>
+                  <div className="text-sm font-semibold text-[var(--bg)]">{song.album}</div>
+                </div>
+              )}
+              {song.releaseDate && (
+                <div className="text-center">
+                  <div className="text-xs text-[var(--bg)]/60 uppercase tracking-wider mb-1">Year</div>
+                  <div className="text-sm font-semibold text-[var(--bg)]">{song.releaseDate}</div>
+                </div>
+              )}
+              {song.genre && (
+                <div className="text-center">
+                  <div className="text-xs text-[var(--bg)]/60 uppercase tracking-wider mb-1">Genre</div>
+                  <div className="text-sm font-semibold text-[var(--bg)]">{song.genre}</div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="bg-[var(--bg)]/20 rounded-xl p-6 text-center">
             <div className="text-sm text-[var(--bg)]/80 mb-2">Battle Score</div>
