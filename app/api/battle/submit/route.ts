@@ -9,6 +9,10 @@ import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
+    const dailyVoteLimit = 100;
+    const pairDailyLimit = 3;
+    const voteCooldownMs = 5 * 1000;
+
     // Check authentication - battles require sign in
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -35,12 +39,70 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const lastVote = await prisma.battleVote.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+    if (lastVote) {
+      const elapsedMs = Date.now() - lastVote.createdAt.getTime();
+      if (elapsedMs < voteCooldownMs) {
+        const retryAfter = Math.ceil((voteCooldownMs - elapsedMs) / 1000);
+        return NextResponse.json(
+          { error: "You are voting too quickly. Please wait a moment.", retryAfter },
+          { status: 429, headers: { "Retry-After": retryAfter.toString() } }
+        );
+      }
+    }
+
     const normalizedPair = (aId: number, bId: number) => (aId < bId ? [aId, bId] : [bId, aId]);
     const [songAId, songBId] = normalizedPair(winnerId, loserId);
 
+    if (!skipped) {
+      const dayStart = new Date();
+      dayStart.setUTCHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setUTCDate(dayEnd.getUTCDate() + 1);
+
+      const [dailyCount, pairCount] = await Promise.all([
+        prisma.battleVote.count({
+          where: {
+            userId,
+            winner: { not: null },
+            createdAt: { gte: dayStart },
+          },
+        }),
+        prisma.battleVote.count({
+          where: {
+            userId,
+            songA: songAId,
+            songB: songBId,
+            winner: { not: null },
+            createdAt: { gte: dayStart },
+          },
+        }),
+      ]);
+
+      if (dailyCount >= dailyVoteLimit) {
+        const retryAfter = Math.ceil((dayEnd.getTime() - Date.now()) / 1000);
+        return NextResponse.json(
+          { error: "Daily vote limit reached. Try again tomorrow.", retryAfter },
+          { status: 429, headers: { "Retry-After": retryAfter.toString() } }
+        );
+      }
+
+      if (pairCount >= pairDailyLimit) {
+        return NextResponse.json(
+          { error: "Pairing vote limit reached. Please try a different matchup." },
+          { status: 429 }
+        );
+      }
+    }
+
     if (skipped) {
       await prisma.$transaction([
-        prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: null } }),
+        prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: null, userId } }),
         prisma.battlePairingHistory.upsert({
           where: { userId_songAId_songBId: { userId, songAId, songBId } },
           create: { userId, songAId, songBId },
@@ -79,7 +141,7 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction([
       prisma.song.update({ where: { id: winner.id }, data: { elo: newW } }),
       prisma.song.update({ where: { id: loser.id }, data: { elo: newL } }),
-      prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: winnerId } }),
+      prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: winnerId, userId } }),
       prisma.battlePairingHistory.upsert({
         where: { userId_songAId_songBId: { userId, songAId, songBId } },
         create: { userId, songAId, songBId },

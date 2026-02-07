@@ -41,7 +41,13 @@ model BattleVote {
   songA     Int
   songB     Int
   winner    Int?
+  userId    String?
   createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, songA, songB, createdAt])
 }
 
 // NextAuth Models
@@ -86,6 +92,7 @@ model User {
   preferences   UserPreference?
   battlePairs   BattlePairingHistory[]
   battleSkips   BattleSkip[]
+  battleVotes   BattleVote[]
 }
 
 model UserPreference {
