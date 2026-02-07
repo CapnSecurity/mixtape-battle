@@ -5,6 +5,7 @@ import Link from "next/link";
 import Button from "@/src/components/ui/Button";
 import { eloToStars } from "../../lib/elo";
 import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
+import { spotify, allMusic } from "../../lib/links";
 
 type Song = { id: number; title: string; artist: string; elo: number };
 
@@ -153,9 +154,29 @@ export default function BattlePage() {
                     <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
                       {pair.a.title}
                     </h2>
-                    <p className="text-2xl text-[var(--muted)]">
+                    <p className="text-2xl text-[var(--muted)] mb-4">
                       {pair.a.artist}
                     </p>
+                    <div className="flex gap-2 justify-center">
+                      <a
+                        href={spotify(pair.a.artist, pair.a.title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
+                      >
+                        🎧 Spotify
+                      </a>
+                      <a
+                        href={allMusic(pair.a.artist, pair.a.title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
+                      >
+                        💿 AllMusic
+                      </a>
+                    </div>
                   </div>
 
                   <div className="bg-[var(--surface2)] rounded-xl p-6 mb-6">
@@ -191,9 +212,29 @@ export default function BattlePage() {
                     <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
                       {pair.b.title}
                     </h2>
-                    <p className="text-2xl text-[var(--muted)]">
+                    <p className="text-2xl text-[var(--muted)] mb-4">
                       {pair.b.artist}
                     </p>
+                    <div className="flex gap-2 justify-center">
+                      <a
+                        href={spotify(pair.b.artist, pair.b.title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
+                      >
+                        🎧 Spotify
+                      </a>
+                      <a
+                        href={allMusic(pair.b.artist, pair.b.title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
+                      >
+                        💿 AllMusic
+                      </a>
+                    </div>
                   </div>
 
                   <div className="bg-[var(--surface2)] rounded-xl p-6 mb-6">
