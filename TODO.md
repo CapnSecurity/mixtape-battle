@@ -21,7 +21,7 @@
 ## Backlog (Prioritized)
 
 ### High Impact / Short Time
-- [ ] Docker rootless mode
+- [ ] Docker rootless mode (defer until cloud migration)
 - [ ] Add monitoring/logging service
 - [ ] Set up CI/CD pipeline
 
