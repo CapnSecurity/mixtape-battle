@@ -7,7 +7,16 @@ import { eloToStars } from "../../lib/elo";
 import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 import { spotify, allMusic } from "../../lib/links";
 
-type Song = { id: number; title: string; artist: string; elo: number };
+type Song = { 
+  id: number; 
+  title: string; 
+  artist: string; 
+  elo: number;
+  album?: string | null;
+  albumArtUrl?: string | null;
+  genre?: string | null;
+  releaseDate?: number | null;
+};
 
 export default function BattlePage() {
   const { status } = useSession();
