@@ -48,6 +48,9 @@ node_modules
 /restore-*.js
 /songs-backup.json
 /votes-backup.json
+
+# MusicBrainz API cache
+.cache/
 /verification.sql
 /check-*.sql
 /add-*.sql

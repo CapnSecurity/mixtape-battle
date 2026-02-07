@@ -1,9 +1,88 @@
 // MusicBrainz API helper to fetch song metadata
 // No API key required - just need to set a user agent
 
+import fs from 'fs';
+import path from 'path';
+
 const MUSICBRAINZ_API = 'https://musicbrainz.org/ws/2';
 const COVERART_API = 'https://coverartarchive.org';
 const USER_AGENT = 'MixtapeBattle/1.0.0 (https://mixtape.levesques.net)';
+const CACHE_DIR = path.join(process.cwd(), '.cache', 'musicbrainz');
+const RATE_LIMIT_MS = 1000; // MusicBrainz asks for 1 request per second
+
+// Ensure cache directory exists
+if (typeof window === 'undefined') {
+  try {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+  } catch (err) {
+    console.warn('[MusicBrainz] Could not create cache directory:', err);
+  }
+}
+
+let lastRequestTime = 0;
+
+/**
+ * Rate limiter - ensures we don't exceed 1 request per second
+ */
+async function rateLimit() {
+  const now = Date.now();
+  const elapsed = now - lastRequestTime;
+  if (elapsed < RATE_LIMIT_MS) {
+    await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_MS - elapsed));
+  }
+  lastRequestTime = Date.now();
+}
+
+/**
+ * Get cache file path for an artist-title combination
+ */
+function getCachePath(artist: string, title: string): string {
+  const key = `${artist.toLowerCase()}-${title.toLowerCase()}`.replace(/[^a-z0-9-]/g, '_');
+  return path.join(CACHE_DIR, `${key}.json`);
+}
+
+/**
+ * Load cached metadata if available
+ */
+function loadCache(artist: string, title: string): MusicBrainzMetadata | null {
+  if (typeof window !== 'undefined') return null; // Only cache on server
+  
+  try {
+    const cachePath = getCachePath(artist, title);
+    if (fs.existsSync(cachePath)) {
+      const cached = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+      const age = Date.now() - cached.timestamp;
+      // Cache valid for 30 days
+      if (age < 30 * 24 * 60 * 60 * 1000) {
+        console.log('[MusicBrainz] Using cached data for:', artist, '-', title);
+        return cached.data;
+      }
+    }
+  } catch (err) {
+    console.warn('[MusicBrainz] Cache read error:', err);
+  }
+  return null;
+}
+
+/**
+ * Save metadata to cache
+ */
+function saveCache(artist: string, title: string, data: MusicBrainzMetadata | null) {
+  if (typeof window !== 'undefined') return; // Only cache on server
+  
+  try {
+    const cachePath = getCachePath(artist, title);
+    fs.writeFileSync(cachePath, JSON.stringify({
+      timestamp: Date.now(),
+      artist,
+      title,
+      data
+    }), 'utf-8');
+    console.log('[MusicBrainz] Cached data for:', artist, '-', title);
+  } catch (err) {
+    console.warn('[MusicBrainz] Cache write error:', err);
+  }
+}
 
 interface MusicBrainzMetadata {
   album: string | null;
@@ -159,16 +238,16 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
     let durationMs = null;
     if (bestMatch.length) {
       durationMs = bestMatch.length; // MusicBrainz returns duration in milliseconds
-      console.log('[MusicBrainz] Found duration:', durationMs, 'ms');
     }
 
     // Fetch album art if we have a release ID
     let albumArtUrl = null;
     if (releaseId) {
+      await rateLimit(); // Respect rate limit before making another request
       albumArtUrl = await fetchAlbumArt(releaseId);
     }
 
-    return {
+    const result = {
       album,
       releaseDate,
       decade,
@@ -178,8 +257,15 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
       releaseId,
       confidence: bestScore,
     };
+
+    // Cache the result
+    saveCache(artist, title, result);
+
+    return result;
   } catch (error) {
     console.error('[MusicBrainz] Error fetching data:', error);
+    // Cache the null result to avoid repeated failed lookups
+    saveCache(artist, title, null);
     return null;
   }
 }
