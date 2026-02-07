@@ -74,6 +74,7 @@ export function createRateLimit(config: RateLimitConfig, keyPrefix: string = 'gl
 
     if (entry.count >= config.maxRequests) {
       const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
+      const resetTimeSeconds = Math.ceil(entry.resetTime / 1000);
       console.log(`[RATE-LIMIT] ${keyPrefix} - BLOCKED ${clientId}: ${entry.count}/${config.maxRequests} (retry in ${retryAfter}s)`);
       
       return {
@@ -89,7 +90,7 @@ export function createRateLimit(config: RateLimitConfig, keyPrefix: string = 'gl
               'Retry-After': retryAfter.toString(),
               'X-RateLimit-Limit': config.maxRequests.toString(),
               'X-RateLimit-Remaining': '0',
-              'X-RateLimit-Reset': entry.resetTime.toString(),
+              'X-RateLimit-Reset': resetTimeSeconds.toString(),
             },
           }
         ),
@@ -141,7 +142,11 @@ export const rateLimiters = {
 /**
  * Helper to get rate limit status without incrementing
  */
-export function getRateLimitStatus(keyPrefix: string, clientId: string): {
+export function getRateLimitStatus(
+  keyPrefix: string,
+  clientId: string,
+  maxRequests: number
+): {
   count: number;
   remaining: number;
   resetTime: number;
@@ -153,7 +158,7 @@ export function getRateLimitStatus(keyPrefix: string, clientId: string): {
   
   return {
     count: entry.count,
-    remaining: Math.max(0, entry.count),
-    resetTime: entry.resetTime,
+    remaining: Math.max(0, maxRequests - entry.count),
+    resetTime: Math.ceil(entry.resetTime / 1000),
   };
 }
