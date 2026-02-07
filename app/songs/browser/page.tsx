@@ -158,7 +158,7 @@ function SongBrowser() {
                 {/* Song Info */}
                 <div className="mb-10 pb-10 border-b border-[var(--ring)]/20">
                   {/* Album Art */}
-                  {selectedSong.albumArtUrl && (
+                  {selectedSong.albumArtUrl ? (
                     <div className="mb-8 flex justify-center">
                       <img 
                         src={selectedSong.albumArtUrl} 
@@ -166,6 +166,8 @@ function SongBrowser() {
                         className="w-64 h-64 object-cover rounded-2xl shadow-2xl"
                       />
                     </div>
+                  ) : (
+                    <div className="text-8xl mb-8 text-center">🎶</div>
                   )}
                   
                   <h2 className="text-5xl font-bold text-[var(--text)] mb-3">
