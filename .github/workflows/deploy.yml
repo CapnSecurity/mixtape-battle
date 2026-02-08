@@ -1,4 +1,4 @@
-name: Build Docker Image
+name: Build and Deploy
 
 on:
   push:
@@ -7,7 +7,8 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  build:
+  build-verify:
+    name: Verify Build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,14 +31,34 @@ jobs:
 
       - name: Build summary
         run: |
-          echo "## ✅ Build Successful" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Build Verified" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Docker image built and verified." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**To deploy to production:**" >> $GITHUB_STEP_SUMMARY
-          echo '```powershell' >> $GITHUB_STEP_SUMMARY
-          echo ".\deploy.ps1" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Docker image built successfully." >> $GITHUB_STEP_SUMMARY
+          echo "Deployment will proceed on self-hosted runner..." >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    name: Deploy to Production
+    runs-on: self-hosted
+    needs: build-verify
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+
+    steps:
+      - name: Deploy to production
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Deploying to production..."
+          Set-Location "C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle"
+          .\deploy.ps1
+          
+      - name: Deployment Summary
+        shell: pwsh
+        run: |
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## 🚀 Deployment Complete"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "Production has been updated with commit ``${{ github.sha }}``"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Branch:** ``${{ github.ref_name }}``"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Commit:** ``${{ github.sha }}``"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Triggered by:** ${{ github.actor }}"

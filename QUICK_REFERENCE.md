@@ -10,21 +10,35 @@ docker compose up -d  # Start dev environment
 ```
 
 ### Deploying to Production
+
+**With Self-Hosted Runner (Automatic):**
 ```bash
-# 1. Merge and push
+# Just push to main - that's it!
 git checkout main
 git merge feature/my-feature
 git push origin main
+# GitHub Actions builds → Runner deploys → Production updates
+# Monitor at: https://github.com/CapnSecurity/mixtape-battle/actions
+```
 
-# 2. Wait for GitHub Actions to build
+**Without Self-Hosted Runner (Manual):**
+```bash
+# 1. Merge and push
+git checkout main  
+git merge feature/my-feature
+git push origin main
+
+# 2. Wait for GitHub Actions build to complete
 #    Monitor at: https://github.com/CapnSecurity/mixtape-battle/actions
 
-# 3. Deploy to production
+# 3. Deploy manually
 .\deploy.ps1
 
 # 4. Test deployment
 .\test-production.ps1
 ```
+
+**Setup automatic deployment:** See [SELF_HOSTED_RUNNER_SETUP.md](SELF_HOSTED_RUNNER_SETUP.md)
 
 ## Deployment Scripts
 
@@ -46,7 +60,8 @@ git push origin main
 ### Check GitHub Actions Status
 https://github.com/CapnSecurity/mixtape-battle/actions
 
-Note: GitHub Actions only verifies the build works - it doesn't deploy anything.
+**With self-hosted runner:** Build verification + automatic deployment  
+**Without runner:** Build verification only (deploy manually with `.\deploy.ps1`)
 
 ### View Production Logs
 ```powershell

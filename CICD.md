@@ -2,7 +2,13 @@
 
 ## Overview
 
-This project uses a GitHub Actions workflow for automated builds and semi-automated deployments.
+This project uses a GitHub Actions workflow for automated builds and deployments.
+
+**Two deployment modes:**
+- **Automatic (Recommended)**: Set up a self-hosted runner for push-to-deploy automation
+- **Manual**: Deploy on-demand using `deploy.ps1` script
+
+See [SELF_HOSTED_RUNNER_SETUP.md](SELF_HOSTED_RUNNER_SETUP.md) for automatic deployment setup.
 
 ## Workflow Steps
 
@@ -70,28 +76,48 @@ git merge feature/my-feature
 git push origin main
 ```
 
-### 6. GitHub Actions Build
+### 6. GitHub Actions Build & Deploy
 
-The workflow automatically:
+The workflow has two jobs:
+
+**Job 1: Build Verification (GitHub servers)**
 1. ✅ Checks out code
-2. 🐳 Builds Docker image (verification only)
+2. 🐳 Builds Docker image to verify it compiles
 3. ✅ Confirms build succeeds
 4. 📝 Generates build summary
 
-**This is just a verification step - no deployment happens automatically.**
+**Job 2: Deployment (Self-hosted runner)**
+- Only runs if build verification succeeds
+- Requires self-hosted runner setup (see below)
+- Executes `deploy.ps1` automatically
+- Updates production with zero manual intervention
 
 **Monitor at:** https://github.com/CapnSecurity/mixtape-battle/actions
 
 ### 7. Deploy to Production
 
-#### Manual Deployment (Current Approach)
+#### Option A: Automatic Deployment (Recommended)
+
+**One-time setup:**
+1. Follow [SELF_HOSTED_RUNNER_SETUP.md](SELF_HOSTED_RUNNER_SETUP.md)
+2. Install GitHub Actions runner on your production Windows machine
+3. Runner automatically deploys when you push to main
+
+**How it works:**
+- Push to `main` → Build verifies → Runner deploys → Production updates
+- Completely automated, no manual commands needed
+- Full logs available in GitHub Actions tab
+
+#### Option B: Manual Deployment
+
+If you haven't set up the self-hosted runner:
 
 **On Windows (local production):**
 ```powershell
 .\deploy.ps1
 ```
 
-**On Linux server (if you set up SSH):**
+**On Linux server:**
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
@@ -182,7 +208,7 @@ docker stats
 ## Future Enhancements
 
 - [ ] Automated testing in GitHub Actions
-- [ ] Automated deployment via webhooks or self-hosted runner
+- [x] Automated deployment via self-hosted runner (see SELF_HOSTED_RUNNER_SETUP.md)
 - [ ] Staging environment
 - [ ] Automated rollback on test failures
 - [ ] Performance monitoring
