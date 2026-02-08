@@ -106,18 +106,6 @@ export async function POST(
       );
     }
 
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-
     // Create comment
     const comment = await prisma.comment.create({
       data: {
