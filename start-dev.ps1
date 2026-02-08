@@ -103,24 +103,59 @@ if (-not $SkipDocker) {
     } else {
         Write-Host "   ✓ Docker is running" -ForegroundColor Green
         
-        # Start dev containers
-        Write-Host "   → Starting containers..." -ForegroundColor Gray
+        # Start dev containers (postgres on 5433, mailhog)
+        Write-Host "   → Starting dev containers (postgres, mailhog)..." -ForegroundColor Gray
         docker compose up -d
         
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "   ✓ Development environment ready" -ForegroundColor Green
-            Write-Host "   → Application: http://localhost" -ForegroundColor Gray
+            Write-Host "   ✓ Dev containers ready" -ForegroundColor Green
             
-            # Wait for app to be ready
-            Write-Host "   → Waiting for application to start..." -ForegroundColor Gray
+            # Wait for postgres to be healthy
+            Write-Host "   → Waiting for postgres..." -ForegroundColor Gray
+            $maxAttempts = 20
+            $attempt = 0
+            $pgReady = $false
+            
+            while ($attempt -lt $maxAttempts -and -not $pgReady) {
+                try {
+                    $result = docker exec mixtape-dev-postgres pg_isready -U postgres 2>&1
+                    if ($result -match "accepting connections") {
+                        $pgReady = $true
+                    }
+                } catch {
+                    # Still starting
+                }
+                
+                if (-not $pgReady) {
+                    Start-Sleep -Seconds 1
+                    $attempt++
+                }
+            }
+            
+            if ($pgReady) {
+                Write-Host "   ✓ Database ready" -ForegroundColor Green
+            } else {
+                Write-Host "   ⚠ Database taking longer than usual" -ForegroundColor Yellow
+            }
+            
+            # Start Next.js dev server
+            Write-Host "   → Starting Next.js dev server..." -ForegroundColor Gray
+            $env:NODE_ENV = "development"
+            
+            Start-Process -FilePath "pwsh" `
+                -ArgumentList "-NoExit", "-Command", "npm run dev" `
+                -WorkingDirectory $PSScriptRoot `
+                -WindowStyle Normal
+            
+            # Wait for Next.js to be ready
+            Write-Host "   → Waiting for Next.js (http://localhost:3000)..." -ForegroundColor Gray
             $maxAttempts = 30
             $attempt = 0
             $ready = $false
             
             while ($attempt -lt $maxAttempts -and -not $ready) {
                 try {
-                    # Dev environment uses nginx on port 80
-                    $response = Invoke-WebRequest -Uri "http://localhost/" -TimeoutSec 2 -ErrorAction SilentlyContinue
+                    $response = Invoke-WebRequest -Uri "http://localhost:3000/" -TimeoutSec 2 -ErrorAction SilentlyContinue
                     if ($response.StatusCode -eq 200) {
                         $ready = $true
                     }
@@ -135,15 +170,15 @@ if (-not $SkipDocker) {
             }
             
             if ($ready) {
-                Write-Host "   ✓ Application is ready!" -ForegroundColor Green
+                Write-Host "   ✓ Next.js dev server is ready!" -ForegroundColor Green
                 
                 if ($OpenBrowser) {
                     Write-Host "   → Opening browser..." -ForegroundColor Gray
-                    Start-Process "http://localhost"
+                    Start-Process "http://localhost:3000"
                 }
             } else {
-                Write-Host "   ⚠ Application taking longer than usual to start" -ForegroundColor Yellow
-                Write-Host "   → Check logs: docker compose logs -f app" -ForegroundColor Gray
+                Write-Host "   ⚠ Next.js taking longer than usual to start" -ForegroundColor Yellow
+                Write-Host "   → Check the terminal window running 'npm run dev'" -ForegroundColor Gray
             }
         } else {
             Write-Host "   ✗ Failed to start containers" -ForegroundColor Red
@@ -155,9 +190,16 @@ if (-not $SkipDocker) {
 
 Write-Host "✅ Development Environment Started" -ForegroundColor Green
 Write-Host ""
+Write-Host "Environment Info:" -ForegroundColor Cyan
+Write-Host "  Dev Server:     http://localhost:3000" -ForegroundColor Gray
+Write-Host "  Dev Postgres:   localhost:5433 (separate from production)" -ForegroundColor Gray
+Write-Host "  Mailhog:        http://localhost:8025" -ForegroundColor Gray
+Write-Host "  Production:     https://localhost (unchanged, still running)" -ForegroundColor Gray
+Write-Host ""
 Write-Host "Quick Commands:" -ForegroundColor Cyan
-Write-Host "  View logs:    docker compose logs -f app" -ForegroundColor Gray
-Write-Host "  Stop runner:  Get-Process -Name 'Runner.Listener' | Stop-Process" -ForegroundColor Gray
-Write-Host "  Stop Docker:  docker compose down" -ForegroundColor Gray
-Write-Host "  Full stop:    .\stop-dev.ps1" -ForegroundColor Gray
+Write-Host "  View Next.js:   Check terminal window running 'npm run dev'" -ForegroundColor Gray
+Write-Host "  Stop Next.js:   Ctrl+C in the npm run dev terminal" -ForegroundColor Gray
+Write-Host "  Stop runner:    Get-Process -Name 'Runner.Listener' | Stop-Process" -ForegroundColor Gray
+Write-Host "  Stop Docker:    docker compose down" -ForegroundColor Gray
+Write-Host "  Full stop:      .\stop-dev.ps1" -ForegroundColor Gray
 Write-Host ""

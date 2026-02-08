@@ -70,6 +70,19 @@ if (-not $KeepDocker) {
             Write-Host "   ✗ Failed to stop containers" -ForegroundColor Red
         }
     }
+    
+    # Stop Next.js dev server
+    Write-Host "   → Stopping Next.js dev server..." -ForegroundColor Gray
+    $nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue | 
+        Where-Object { $_.CommandLine -like "*next*dev*" }
+    
+    if ($nodeProcesses) {
+        $nodeProcesses | Stop-Process -Force
+        Write-Host "   ✓ Next.js dev server stopped" -ForegroundColor Green
+    } else {
+        Write-Host "   ℹ Next.js dev server not running" -ForegroundColor Gray
+    }
+    
     Write-Host ""
 }
 

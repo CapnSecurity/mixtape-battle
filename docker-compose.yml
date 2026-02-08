@@ -2,12 +2,13 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: mixtape-dev-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Dev uses port 5433 to avoid conflict with production
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mixtape_battle
+      POSTGRES_DB: mixtape_battle_dev
   mailhog:
     image: mailhog/mailhog:latest
     ports:
