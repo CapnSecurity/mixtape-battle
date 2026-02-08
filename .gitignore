@@ -43,6 +43,9 @@ node_modules
 /ssl/
 /nginx-logs/
 
+# GitHub Actions self-hosted runner
+/actions-runner/
+
 # Generated restore/import files and DB dumps
 /restore-*.sql
 /restore-*.js
