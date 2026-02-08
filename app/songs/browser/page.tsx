@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import Button from "@/src/components/ui/Button";
+import Comments from "@/src/components/Comments";
 import { songsterrBass, ultimateGuitarGuitar, youtube, lyrics, spotify, genius, wikipedia, allMusic } from "../../../lib/links";
 import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 
@@ -356,6 +357,11 @@ function SongBrowser() {
                       </a>
                     )}
                   </div>
+                </div>
+
+                {/* Comments Section */}
+                <div className="mt-10">
+                  <Comments songId={selectedSong.id} />
                 </div>
               </div>
             </div>

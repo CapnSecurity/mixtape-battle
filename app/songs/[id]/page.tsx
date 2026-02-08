@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
 import { songsterrBass, ultimateGuitarGuitar, ultimateGuitarBass, youtube, lyrics, spotify, genius, wikipedia, allMusic } from "../../../lib/links";
 import Button from "@/src/components/ui/Button";
+import Comments from "@/src/components/Comments";
 
 type Params = Promise<{ id: string }>;
 
@@ -195,6 +196,11 @@ export default async function SongPage({ params }: { params: Params }) {
               </div>
             </a>
           </div>
+        </div>
+
+        {/* Comments Section */}
+        <div className="mt-8">
+          <Comments songId={songId} />
         </div>
 
         {/* Battle Button */}

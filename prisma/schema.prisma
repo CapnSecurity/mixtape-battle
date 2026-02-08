@@ -34,6 +34,8 @@ model Song {
   songsterr      String?
   ultimateGuitar String?
   
+  comments  Comment[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -95,6 +97,7 @@ model User {
   battlePairs   BattlePairingHistory[]
   battleSkips   BattleSkip[]
   battleVotes   BattleVote[]
+  comments      Comment[]
 }
 
 model UserPreference {
@@ -163,4 +166,19 @@ model BattleSkip {
 
   @@unique([userId, songId])
   @@index([userId, lastSkippedAt])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  songId    Int
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([songId, createdAt])
+  @@index([userId])
 }
