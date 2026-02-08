@@ -8,7 +8,6 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$REPO = "ghcr.io/capnsecurity/mixtape-battle"
 $ENV_FILE = ".env.production"
 $COMPOSE_FILE = "docker-compose.production.yml"
 
@@ -38,21 +37,9 @@ if (-not $SkipPull) {
     Write-Host ""
 }
 
-# Build or pull Docker image
-if ($SkipBuild) {
-    # Pull from registry
-    Write-Host "🐳 Pulling latest Docker image from registry..." -ForegroundColor Cyan
-    Write-Host "Note: You may need to login first with:" -ForegroundColor Yellow
-    Write-Host "  docker login ghcr.io" -ForegroundColor Yellow
-    Write-Host ""
-    docker pull ${REPO}:latest
-    
-    # Tag as local image
-    docker tag ${REPO}:latest mixtape-battle-app:latest
-    Write-Host "✅ Image pulled and tagged" -ForegroundColor Green
-} else {
-    # Build locally
-    Write-Host "🔨 Building Docker image locally..." -ForegroundColor Cyan
+# Build Docker image
+if (-not $SkipBuild) {
+    Write-Host "🔨 Building Docker image..." -ForegroundColor Cyan
     docker build -t mixtape-battle-app:latest .
     Write-Host "✅ Image built" -ForegroundColor Green
 }
@@ -108,5 +95,5 @@ Write-Host ""
 Write-Host "Usage examples:" -ForegroundColor Cyan
 Write-Host "  .\deploy.ps1                    # Full deployment (git pull + build + deploy)" -ForegroundColor Gray
 Write-Host "  .\deploy.ps1 -SkipPull          # Skip git pull" -ForegroundColor Gray
-Write-Host "  .\deploy.ps1 -SkipBuild         # Pull image from registry instead of building" -ForegroundColor Gray
+Write-Host "  .\deploy.ps1 -SkipBuild         # Skip Docker build (use existing image)" -ForegroundColor Gray
 Write-Host ""

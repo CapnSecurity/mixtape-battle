@@ -74,36 +74,27 @@ git push origin main
 
 The workflow automatically:
 1. ✅ Checks out code
-2. 🐳 Builds Docker image
-3. 📦 Pushes to GitHub Container Registry (`ghcr.io`)
-4. 📊 Creates deployment artifacts
-5. 📝 Generates deployment summary
+2. 🐳 Builds Docker image (verification only)
+3. ✅ Confirms build succeeds
+4. 📝 Generates build summary
+
+**This is just a verification step - no deployment happens automatically.**
 
 **Monitor at:** https://github.com/CapnSecurity/mixtape-battle/actions
 
 ### 7. Deploy to Production
 
-#### Option A: Manual Deployment (Recommended for now)
+#### Manual Deployment (Current Approach)
 
 **On Windows (local production):**
 ```powershell
 .\deploy.ps1
 ```
 
-**On Linux server:**
+**On Linux server (if you set up SSH):**
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
-```
-
-#### Option B: Pull from Registry
-
-```powershell
-# Login to GitHub Container Registry
-docker login ghcr.io -u YOUR_GITHUB_USERNAME
-
-# Pull and deploy
-.\deploy.ps1 -SkipBuild
 ```
 
 ### 8. Production Validation
@@ -154,22 +145,10 @@ docker compose -f docker-compose.production.yml up -d
 
 ## Environment Setup
 
-### GitHub Container Registry Authentication
-
-Create a Personal Access Token (PAT) with `read:packages` and `write:packages` permissions:
-
-1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
-2. Generate new token with `read:packages` and `write:packages` scopes
-3. Save the token securely
-4. Login:
-   ```bash
-   echo YOUR_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
-   ```
-
 ### Production Server Setup
 
 ```bash
-# Clone repository
+# Clone repository (if not already cloned)
 git clone https://github.com/CapnSecurity/mixtape-battle.git
 cd mixtape-battle
 

@@ -46,6 +46,8 @@ git push origin main
 ### Check GitHub Actions Status
 https://github.com/CapnSecurity/mixtape-battle/actions
 
+Note: GitHub Actions only verifies the build works - it doesn't deploy anything.
+
 ### View Production Logs
 ```powershell
 docker compose -f docker-compose.production.yml logs -f app
@@ -74,21 +76,6 @@ Before first deployment, ensure:
 - [ ] `DATABASE_URL` points to production database
 - [ ] `NEXTAUTH_URL` matches production domain
 - [ ] Email settings configured
-
-## GitHub Container Registry
-
-### Login (one-time setup)
-```powershell
-# Create PAT at: https://github.com/settings/tokens
-# Needs: read:packages, write:packages
-docker login ghcr.io -u YOUR_GITHUB_USERNAME
-# Paste your PAT when prompted
-```
-
-### Pull Latest Image
-```powershell
-docker pull ghcr.io/capnsecurity/mixtape-battle:latest
-```
 
 ## Monitoring
 

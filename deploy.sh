@@ -1,10 +1,9 @@
 #!/bin/bash
 # Production deployment script for mixtape-battle
-# Run this on the production server after GitHub Actions builds the image
+# Run this on the production server after pushing to main
 
 set -e  # Exit on error
 
-REPO="ghcr.io/capnsecurity/mixtape-battle"
 ENV_FILE=".env.production"
 COMPOSE_FILE="docker-compose.production.yml"
 
@@ -32,23 +31,10 @@ git pull origin main
 echo "✅ Code updated"
 echo ""
 
-# Login to GitHub Container Registry (if needed)
-echo "🔐 Logging into GitHub Container Registry..."
-echo "Enter your GitHub Personal Access Token (PAT) with read:packages permission:"
-echo "(or press Enter to skip if already logged in)"
-read -s GITHUB_TOKEN
-if [ ! -z "$GITHUB_TOKEN" ]; then
-    echo "$GITHUB_TOKEN" | docker login ghcr.io -u $(git config user.name) --password-stdin
-    echo "✅ Logged in to registry"
-else
-    echo "⏭️  Skipped login"
-fi
-echo ""
-
-# Pull latest Docker image
-echo "🐳 Pulling latest Docker image..."
-docker pull $REPO:latest
-echo "✅ Image pulled"
+# Build Docker image
+echo "🔨 Building Docker image..."
+docker build -t mixtape-battle-app:latest .
+echo "✅ Image built"
 echo ""
 
 # Stop current containers
