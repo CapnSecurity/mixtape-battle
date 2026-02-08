@@ -62,7 +62,7 @@ if (-not $KeepDocker) {
         Write-Host "   ℹ Docker not running" -ForegroundColor Gray
     } else {
         Write-Host "   → Stopping containers..." -ForegroundColor Gray
-        docker compose down
+        docker compose -f docker-compose.yml down
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "   ✓ Containers stopped" -ForegroundColor Green
