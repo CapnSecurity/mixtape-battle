@@ -106,6 +106,18 @@ export async function POST(
       );
     }
 
+    // Ensure user exists (create if needed for dev/test environments)
+    await prisma.user.upsert({
+      where: { id: session.user.id },
+      update: {},
+      create: {
+        id: session.user.id,
+        email: session.user.email || null,
+        name: session.user.name || null,
+        image: session.user.image || null,
+      },
+    });
+
     // Create comment
     const comment = await prisma.comment.create({
       data: {
