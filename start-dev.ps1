@@ -134,6 +134,17 @@ if (-not $SkipDocker) {
             
             if ($pgReady) {
                 Write-Host "   ✓ Database ready" -ForegroundColor Green
+                
+                # Seed dev test accounts
+                Write-Host "   → Seeding dev test accounts..." -ForegroundColor Gray
+                $env:NODE_ENV = "development"
+                $env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/mixtape_battle_dev"
+                $seedOutput = node prisma/seed-dev-accounts.js 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "   ✓ Test accounts ready (admin@test.local, user@test.local)" -ForegroundColor Green
+                } else {
+                    Write-Host "   ⚠ Failed to seed accounts (may already exist)" -ForegroundColor Yellow
+                }
             } else {
                 Write-Host "   ⚠ Database taking longer than usual" -ForegroundColor Yellow
             }
