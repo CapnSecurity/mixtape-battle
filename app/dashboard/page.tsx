@@ -55,7 +55,7 @@ export default function DashboardPage() {
           </Link>
 
           {/* Invite */}
-          <Link href="/invite" className="group">
+          <Link href="/admin" className="group">
             <div className="p-8 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] hover:bg-[var(--surface)] transition">
               <div className="text-5xl mb-4">✉️</div>
               <h2 className="text-2xl font-bold text-[var(--text)] mb-2">Invite</h2>

@@ -21,15 +21,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // /invite page handles its own admin check and shows friendly message
+  // /admin page handles its own admin check and shows friendly message
   // Just ensure user is authenticated
-  if (pathname.startsWith("/invite")) {
+  if (pathname.startsWith("/admin")) {
     const token = await getToken({ 
       req, 
       secret: process.env.NEXTAUTH_SECRET
     });
     if (!token || !token.email) {
-      console.log("[MIDDLEWARE] /invite - not authenticated, redirecting to login");
+      console.log("[MIDDLEWARE] /admin - not authenticated, redirecting to login");
       const loginUrl = req.nextUrl.clone();
       loginUrl.pathname = "/login";
       return NextResponse.redirect(loginUrl);

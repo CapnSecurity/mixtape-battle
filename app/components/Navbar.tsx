@@ -38,10 +38,10 @@ export default function Navbar() {
               <span>🏆</span> Rankings
             </Link>
             <Link
-              href="/invite"
+              href="/admin"
               className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
             >
-              <span>✉️</span> Invite
+              <span>⚙️</span> Admin
             </Link>
             <Link
               href="/songs/browser"
