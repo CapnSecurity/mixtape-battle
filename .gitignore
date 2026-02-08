@@ -10,6 +10,9 @@ out/
 .env.*
 .env.local
 
+# Dev credentials (local only)
+DEV_ACCOUNTS.md
+
 # Prisma DB
 prisma/dev.db
 
