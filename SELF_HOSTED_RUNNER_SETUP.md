@@ -61,17 +61,41 @@ When prompted:
 - **Labels**: Press Enter for default
 - **Work folder**: Press Enter for default
 
-### 4. Install as a Windows Service
+### 4. Run the Runner
 
-To ensure the runner starts automatically and runs in the background:
+**Option A: Automatic with dev workflow (Recommended for dev machine)**
 
+Use the automated startup script:
+```powershell
+# Navigate to project root
+cd "C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle"
+
+# Start runner + dev environment
+.\start-dev.ps1
+```
+
+The runner will start in the background and be available for deployments.
+
+**Option B: Manual interactive**
+
+Leave a PowerShell window running:
+```powershell
+cd "C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle\actions-runner"
+.\run.cmd
+```
+
+**Option C: Windows Service (Advanced - if not using Desktop folder)**
+
+⚠️ Only works if runner is NOT in your Desktop folder (permission issues):
 ```powershell
 # Install the service (run as Administrator)
 .\svc.sh install
 
-# Start the service
+# Start the service  
 .\svc.sh start
 ```
+
+If you get permission errors, use Option A or B instead.
 
 ### 5. Verify Runner Status
 

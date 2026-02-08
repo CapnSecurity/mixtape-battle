@@ -1,0 +1,11 @@
+﻿{
+  "agentId": 2,
+  "agentName": "mixtape_battle_Deploy",
+  "poolId": 1,
+  "poolName": "Default",
+  "serverUrl": "https://pipelinesghubeus24.actions.githubusercontent.com/fg2LjVZNuRxgoglMk3tbS5UVaJ4FI87YDb03lJ1uClCXCdlz71/",
+  "gitHubUrl": "https://github.com/CapnSecurity/mixtape-battle",
+  "workFolder": "mixtape_battle_wf",
+  "useV2Flow": true,
+  "serverUrlV2": "https://broker.actions.githubusercontent.com/"
+}

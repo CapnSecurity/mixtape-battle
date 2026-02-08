@@ -2,11 +2,25 @@
 
 ## Daily Workflow
 
+### Starting Development
+```powershell
+# Automated - starts runner + dev environment
+.\start-dev.ps1
+
+# With browser auto-open
+.\start-dev.ps1 -OpenBrowser
+```
+
 ### Starting a New Feature
 ```bash
 git checkout -b feature/my-feature
-docker compose up -d  # Start dev environment
 # Make changes, test at http://localhost:3000
+```
+
+### Stopping Development
+```powershell
+.\stop-dev.ps1              # Stop everything
+.\stop-dev.ps1 -KeepRunner   # Stop Docker only, keep runner online
 ```
 
 ### Deploying to Production
