@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 import Button from "./ui/Button";
 
@@ -19,6 +20,9 @@ export default function PracticeTracker({
   initialTuningNotes,
   onUpdate,
 }: PracticeTrackerProps) {
+  const { data: session } = useSession();
+  const isAdmin = (session?.user as any)?.isAdmin || false;
+  
   const [lastPracticed, setLastPracticed] = useState(initialLastPracticed);
   const [keyNotes, setKeyNotes] = useState(initialKeyNotes || "");
   const [tuningNotes, setTuningNotes] = useState(initialTuningNotes || "");
@@ -107,9 +111,11 @@ export default function PracticeTracker({
               {formatDate(lastPracticed)}
             </div>
           </div>
-          <Button onClick={handleMarkPracticed} disabled={isLoading}>
-            {isLoading ? "Saving..." : "Mark Practiced Today"}
-          </Button>
+          {isAdmin && (
+            <Button onClick={handleMarkPracticed} disabled={isLoading}>
+              {isLoading ? "Saving..." : "Mark Practiced Today"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -118,31 +124,45 @@ export default function PracticeTracker({
           <label className="block text-xs text-[var(--muted)] uppercase tracking-wider mb-2">
             Key / Signature
           </label>
-          <input
-            type="text"
-            value={keyNotes}
-            onChange={(e) => setKeyNotes(e.target.value)}
-            placeholder="e.g., E minor, Drop D"
-            className="w-full px-4 py-2 bg-[var(--bg)] border border-[var(--ring)]/20 rounded-lg text-[var(--text)] placeholder:text-[var(--muted)]/50 focus:outline-none focus:border-[var(--gold)] transition"
-          />
+          {isAdmin ? (
+            <input
+              type="text"
+              value={keyNotes}
+              onChange={(e) => setKeyNotes(e.target.value)}
+              placeholder="e.g., E minor, Drop D"
+              className="w-full px-4 py-2 bg-[var(--bg)] border border-[var(--ring)]/20 rounded-lg text-[var(--text)] placeholder:text-[var(--muted)]/50 focus:outline-none focus:border-[var(--gold)] transition"
+            />
+          ) : (
+            <div className="px-4 py-2 text-[var(--text)]">
+              {keyNotes || <span className="text-[var(--muted)]">Not set</span>}
+            </div>
+          )}
         </div>
 
         <div>
           <label className="block text-xs text-[var(--muted)] uppercase tracking-wider mb-2">
             Tuning Notes
           </label>
-          <textarea
-            value={tuningNotes}
-            onChange={(e) => setTuningNotes(e.target.value)}
-            placeholder="e.g., Standard tuning, capo 2nd fret"
-            rows={2}
-            className="w-full px-4 py-2 bg-[var(--bg)] border border-[var(--ring)]/20 rounded-lg text-[var(--text)] placeholder:text-[var(--muted)]/50 focus:outline-none focus:border-[var(--gold)] transition resize-none"
-          />
+          {isAdmin ? (
+            <textarea
+              value={tuningNotes}
+              onChange={(e) => setTuningNotes(e.target.value)}
+              placeholder="e.g., Standard tuning, capo 2nd fret"
+              rows={2}
+              className="w-full px-4 py-2 bg-[var(--bg)] border border-[var(--ring)]/20 rounded-lg text-[var(--text)] placeholder:text-[var(--muted)]/50 focus:outline-none focus:border-[var(--gold)] transition resize-none"
+            />
+          ) : (
+            <div className="px-4 py-2 text-[var(--text)]">
+              {tuningNotes || <span className="text-[var(--muted)]">Not set</span>}
+            </div>
+          )}
         </div>
 
-        <Button onClick={handleSaveNotes} disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save Notes"}
-        </Button>
+        {isAdmin && (
+          <Button onClick={handleSaveNotes} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Notes"}
+          </Button>
+        )}
       </div>
     </div>
   );

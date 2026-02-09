@@ -14,6 +14,15 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is admin
+    const isAdmin = (session.user as any)?.isAdmin;
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const songId = parseInt(id);
 
