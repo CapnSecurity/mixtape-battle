@@ -6,7 +6,17 @@ import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 type Params = Promise<{ id: string }>;
 
-// GET readiness for a song
+/**
+ * GET /api/songs/[id]/readiness
+ * 
+ * Returns readiness information for a song including:
+ * - Current user's readiness status (if set)
+ * - Aggregate band readiness (overall status, vote counts, average score)
+ * 
+ * Requires authentication.
+ * 
+ * Response: { userReadiness, aggregate }
+ */
 export async function GET(req: NextRequest, { params }: { params: Params }) {
   try {
     const session = await getServerSession(authOptions);
@@ -82,6 +92,21 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
   }
 }
 
+/**
+ * POST /api/songs/[id]/readiness
+ * 
+ * Set the current user's readiness status for a song.
+ * 
+ * Request body: { status: 'SOLID' | 'NEEDS_WORK' | 'NOT_READY', csrfToken: string }
+ * 
+ * Requires:
+ * - Authentication
+ * - Valid CSRF token
+ * 
+ * Upserts the readiness record (creates or updates).
+ * 
+ * Response: { status, message, readiness }
+ */
 // POST set readiness for current user
 export async function POST(req: NextRequest, { params }: { params: Params }) {
   try {

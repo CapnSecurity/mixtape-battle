@@ -105,8 +105,19 @@ The workflow has two jobs:
 
 **How it works:**
 - Push to `main` → Build verifies → Runner deploys → Production updates
+- Database migrations run automatically during deployment
 - Completely automated, no manual commands needed
 - Full logs available in GitHub Actions tab
+
+**Deployment steps performed automatically:**
+1. Pull latest code from GitHub
+2. Build Docker image with latest changes
+3. Stop current containers gracefully
+4. Start new containers
+5. Wait for health checks to pass
+6. **Run database migrations (`prisma migrate deploy`)**
+7. Verify deployment success
+8. Display logs and status
 
 #### Option B: Manual Deployment
 
@@ -239,5 +250,8 @@ docker stats
 
 **Database migration issues:**
 - Migrations run automatically during deployment via `deploy.ps1`
-- Check migration status: `docker exec mixtape-app npx prisma migrate status`
-- Run manually if needed: `docker exec mixtape-app npx prisma migrate deploy`
+- Migration command: `docker exec mixtape-app node node_modules/prisma/build/index.js migrate deploy`
+- Check migration status: `docker exec mixtape-app node node_modules/prisma/build/index.js migrate status`
+- Resolve failed migrations: `docker exec mixtape-app node node_modules/prisma/build/index.js migrate resolve --rolled-back <migration_name>`
+
+**Note:** The deployment uses the direct Prisma binary path because the container runs as a read-only filesystem for security.

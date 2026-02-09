@@ -1,3 +1,19 @@
+/**
+ * Setlist Confidence Page
+ * 
+ * Displays the top 20 songs by ELO ranking with comprehensive rehearsal readiness info.
+ * 
+ * Features:
+ * - Top-ranked songs sorted by battle performance
+ * - Aggregate band readiness for each song
+ * - Last practice date with visual indicators (red if >30 days old)
+ * - Key signature and tuning notes for quick reference
+ * 
+ * Helps bands prepare for gigs by showing which top songs need practice attention.
+ * 
+ * Requires authentication.
+ */
+
 import Link from "next/link";
 import { prisma } from "../../lib/prisma";
 import ReadinessIcon from "@/src/components/ReadinessIcon";

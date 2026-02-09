@@ -6,6 +6,30 @@ import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 type Params = Promise<{ id: string }>;
 
+/**
+ * POST /api/songs/[id]/practice
+ * 
+ * Update practice tracking information for a song (admin-only).
+ * 
+ * Request body: {
+ *   markPracticed?: boolean,
+ *   keyNotes?: string,
+ *   tuningNotes?: string,
+ *   csrfToken: string
+ * }
+ * 
+ * Requires:
+ * - Authentication
+ * - Admin role
+ * - Valid CSRF token
+ * 
+ * Updates shared band practice data:
+ * - lastPracticedAt (if markPracticed=true)
+ * - keyNotes (key signature, capo info)
+ * - tuningNotes (alternate tunings, etc.)
+ * 
+ * Response: { song }
+ */
 // POST update practice date and notes
 export async function POST(req: NextRequest, { params }: { params: Params }) {
   try {

@@ -97,6 +97,40 @@ docker system prune -f
 .\deploy.ps1
 ```
 
+## Database Migrations
+
+### Development
+```powershell
+# Create a new migration
+npx prisma migrate dev --name description_of_change
+
+# Apply migrations
+npx prisma migrate deploy
+
+# Check migration status
+npx prisma migrate status
+
+# Generate Prisma client after schema changes
+npx prisma generate
+```
+
+### Production
+**Migrations run automatically during deployment!**
+
+Manual migration commands (if needed):
+```powershell
+# Check status
+docker exec mixtape-app node node_modules/prisma/build/index.js migrate status
+
+# Apply pending migrations
+docker exec mixtape-app node node_modules/prisma/build/index.js migrate deploy
+
+# Resolve failed migration
+docker exec mixtape-app node node_modules/prisma/build/index.js migrate resolve --rolled-back <migration_name>
+```
+
+**Note:** Use the direct Prisma binary path (`node node_modules/prisma/build/index.js`) because the production container runs with a read-only filesystem.
+
 ## Environment Checklist
 
 Before first deployment, ensure:

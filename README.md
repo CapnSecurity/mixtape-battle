@@ -1,6 +1,38 @@
 # Mixtape Battle — Local Development
 
-Minimal instructions to run this project locally.
+A collaborative band song voting and rehearsal management system.
+
+## Features
+
+### 🎵 Song Battle System
+- Head-to-head song voting with ELO ranking
+- Dynamic song recommendations based on voting history
+- Comprehensive song rankings and statistics
+
+### 🎯 Song Readiness Tracking
+- Personal readiness status (Solid ✅ / Needs Work ⚠️ / Not Ready ❌)
+- Band-wide readiness aggregation
+- Individual voting on song preparedness
+- Real-time readiness indicators on song pages
+
+### 📋 Setlist Confidence View
+- Top 20 songs by ELO ranking
+- Band readiness status at-a-glance
+- Last practice date tracking
+- Key signature and tuning notes
+- Visual indicators for songs needing practice
+
+### 🎸 Practice Management (Admin Only)
+- Mark songs as practiced with timestamps
+- Key signature and tuning notes documentation
+- Practice history tracking
+- Admin-controlled shared band data
+
+### 🔐 Authentication & Security
+- Secure email-based authentication
+- Admin role management
+- CSRF protection on all mutations
+- Read-only practice data for non-admins
 
 Prerequisites
 - Node.js (18+)
@@ -46,9 +78,27 @@ npm run prisma:seed || npx prisma db seed
 npm run dev
 ```
 
-API endpoints
-- `GET /api/battle/next` — returns two songs to vote on
-- `POST /api/battle/submit` — body `{ "winnerId": <id>, "loserId": <id> }`
+## API Endpoints
+
+### Battle System
+- `GET /api/battle/next` — Returns two songs to vote on
+- `POST /api/battle/submit` — Submit vote: `{ "winnerId": <id>, "loserId": <id> }`
+
+### Song Readiness
+- `GET /api/songs/[id]/readiness` — Get user and aggregate readiness for a song
+- `POST /api/songs/[id]/readiness` — Set personal readiness status (requires auth)
+
+### Practice Tracking (Admin Only)
+- `POST /api/songs/[id]/practice` — Update practice date and notes (requires admin)
+
+## Pages
+
+- `/` — Home page with battle interface
+- `/battle` — Song battle voting
+- `/results` — Song rankings with readiness indicators
+- `/songs/[id]` — Song detail with readiness controls and practice info
+- `/setlist-confidence` — Top 20 songs with band readiness overview
+- `/login` — Authentication
 
 Notes
 - This repo intentionally excludes local secrets and build artifacts via `.gitignore`.
