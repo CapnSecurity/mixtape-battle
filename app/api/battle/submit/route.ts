@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const dailyVoteLimit = 100;
     const pairDailyLimit = 3;
-    const voteCooldownMs = 5 * 1000;
+    const voteCooldownMs = 2 * 1000;
 
     // Check authentication - battles require sign in
     const session = await getServerSession(authOptions);

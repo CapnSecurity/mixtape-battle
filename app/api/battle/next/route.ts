@@ -33,7 +33,7 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string } | undefined)?.id;
 
-  const songs = await prisma.song.findMany({ take: 200, orderBy: { elo: "desc" } });
+  const songs = await prisma.song.findMany();
   if (songs.length < 2) return new Response(null, { status: 204 });
 
   const now = new Date();
@@ -87,9 +87,12 @@ export async function GET() {
   });
 
   const pool = filtered.length ? filtered : eligible;
-  const candidate = pool.sort(
-    (a, b) => Math.abs(a.elo - pivot.elo) - Math.abs(b.elo - pivot.elo)
-  )[0];
+  const candidate = pickWeighted(pool, (song) => {
+    const eloDiff = Math.abs(song.elo - pivot.elo);
+    const weight = weightFor(song);
+    // Prefer closer ELO but with randomness: 1/(1+diff/100) gives ~50% weight at 100 ELO diff
+    return weight * (1 / (1 + eloDiff / 100));
+  });
 
   return new Response(JSON.stringify({ a: pivot, b: candidate }), {
     headers: { "Content-Type": "application/json" },
