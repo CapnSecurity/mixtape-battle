@@ -79,6 +79,17 @@ try {
 }
 Write-Host ""
 
+# Run database migrations
+Write-Host "🗄️  Running database migrations..." -ForegroundColor Cyan
+try {
+    docker exec mixtape-app npx prisma migrate deploy
+    Write-Host "✅ Migrations applied successfully" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️  Migration step failed - check logs" -ForegroundColor Red
+    Write-Host "You may need to run manually: docker exec mixtape-app npx prisma migrate deploy" -ForegroundColor Yellow
+}
+Write-Host ""
+
 # Display recent logs
 Write-Host "📝 Recent logs:" -ForegroundColor Cyan
 docker compose -f $COMPOSE_FILE logs --tail=20 app

@@ -238,5 +238,6 @@ docker stats
 5. Verify environment variables are loaded
 
 **Database migration issues:**
-- Run manually: `docker exec mixtape-app npx prisma migrate deploy`
+- Migrations run automatically during deployment via `deploy.ps1`
 - Check migration status: `docker exec mixtape-app npx prisma migrate status`
+- Run manually if needed: `docker exec mixtape-app npx prisma migrate deploy`
