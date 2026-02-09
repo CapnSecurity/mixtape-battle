@@ -170,7 +170,7 @@ export default function SongBrowser() {
                     <div className="mb-8 flex justify-center">
                       <img 
                         src={selectedSong.albumArtUrl} 
-                        alt={${selectedSong.album || selectedSong.title} album art}
+                        alt={`${selectedSong.album || selectedSong.title} album art`}
                         className="w-64 h-64 object-cover rounded-2xl shadow-2xl"
                       />
                     </div>
@@ -246,7 +246,7 @@ export default function SongBrowser() {
                       href={lyrics(selectedSong.artist, selectedSong.title)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)} text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm border border-[var(--ring)]/20"
+                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm border border-[var(--ring)]/20"
                     >
                       <div className="text-3xl mb-2">📝</div>
                       Lyrics
@@ -332,7 +332,9 @@ export default function SongBrowser() {
                         {filteredAndSortedSongs.map((song, index) => (
                           <tr
                             key={song.id}
-                            className={order-b border-[var(--ring)]/10 hover:bg-[var(--surface2)] transition-colors cursor-pointer }
+                            className={`border-b border-[var(--ring)]/10 hover:bg-[var(--surface2)] transition-colors cursor-pointer ${
+                              index % 2 === 0 ? "" : "bg-[var(--surface)]/50"
+                            }`}
                           >
                             <td className="px-6 py-4">
                               <button
