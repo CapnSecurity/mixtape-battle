@@ -14,10 +14,15 @@ Write-Host ""
 
 # Check 1: Verify all files are committed
 Write-Host "📋 Checking git status..." -ForegroundColor Yellow
-$gitStatus = git status --porcelain
-if ($gitStatus) {
-    $issues += "Uncommitted changes detected:"
-    $gitStatus | ForEach-Object { $issues += "  $_" }
+if (-not $env:CI) {
+    # Only check for uncommitted changes when running locally
+    $gitStatus = git status --porcelain
+    if ($gitStatus) {
+        $issues += "Uncommitted changes detected:"
+        $gitStatus | ForEach-Object { $issues += "  $_" }
+    }
+} else {
+    Write-Host "   ⏭️  Skipping uncommitted changes check (CI environment)" -ForegroundColor Gray
 }
 
 # Check 2: Find orphaned routes (routes that exist but aren't linked to)
@@ -153,12 +158,26 @@ if ($issues.Count -gt 0) {
     }
     Write-Host ""
     Write-Host "Please fix these issues before deploying to production." -ForegroundColor Red
+    
+    # Add to GitHub Actions summary if in CI
+    if ($env:GITHUB_STEP_SUMMARY) {
+        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## ❌ Pre-deployment Validation Failed"
+        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Issues found:** $($issues.Count)"
+        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+        foreach ($issue in $issues) {
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- $issue"
+        }
+    }
+    
     exit 1
 } else {
     Write-Host "✅ All checks passed!" -ForegroundColor Green
     Write-Host ""
-    Write-Host "Ready to deploy:" -ForegroundColor Cyan
-    Write-Host "  git push origin main" -ForegroundColor White
-    Write-Host ""
+    if (-not $env:CI) {
+        Write-Host "Ready to deploy:" -ForegroundColor Cyan
+        Write-Host "  git push origin main" -ForegroundColor White
+        Write-Host ""
+    }
     exit 0
 }

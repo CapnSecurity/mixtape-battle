@@ -108,10 +108,41 @@ npm run dev
 
 **After:**
 1. Test in dev ✅
-2. Run `test-and-deploy.ps1`
-3. Script catches issues BEFORE pushing ✅
-4. Fix locally
-5. Deploy once, done ✅
+2. Run `test-and-deploy.ps1` (or just `git push`)
+3. **CI automatically validates before deploying** ✅
+4. If issues found, deployment blocked ⛔
+5. Fix locally, push again
+6. Deploy once, done ✅
+
+---
+
+## CI/CD Integration
+
+The pre-deployment checks now run **automatically** in GitHub Actions before every production deployment.
+
+**What happens when you push:**
+
+```
+1. Build verification (ubuntu) ✅
+2. Pre-deployment validation (self-hosted) ⬅️ NEW!
+   ├─ Check for broken route references
+   ├─ Find orphaned routes
+   ├─ Validate Docker Compose
+   └─ If issues found → ⛔ DEPLOYMENT BLOCKED
+3. Deploy to production (self-hosted)
+4. Deployment summary
+```
+
+**If validation fails:**
+- ❌ Deployment is blocked
+- 📋 Issues are listed in the GitHub Actions summary
+- 🔧 Fix locally and push again
+
+**Benefits:**
+- No bad deployments reach production
+- Issues caught automatically, not manually
+- Clear feedback in CI logs
+- No need to remember to run checks locally
 
 ---
 

@@ -45,6 +45,20 @@ jobs:
       contents: read
 
     steps:
+      - name: Pre-deployment validation
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Running pre-deployment validation..."
+          Set-Location "C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle"
+          git fetch origin
+          git reset --hard origin/main
+          $env:CI = "true"
+          .\scripts\pre-deploy-check.ps1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Validation failed! Aborting deployment." -ForegroundColor Red
+            exit 1
+          }
+          
       - name: Deploy to production
         shell: pwsh
         run: |
@@ -55,6 +69,10 @@ jobs:
       - name: Deployment Summary
         shell: pwsh
         run: |
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## ✅ Pre-deployment Validation Passed"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "All route references verified and validated."
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## 🚀 Deployment Complete"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "Production has been updated with commit ``${{ github.sha }}``"
