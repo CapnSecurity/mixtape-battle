@@ -22,7 +22,7 @@ export default async function SongPage({ params }: { params: Params }) {
             We couldn't find this song. Please go back and try again.
           </p>
           <Button asChild>
-            <Link href="/songs/browser">Back to Songs</Link>
+            <Link href="/songs">Back to Songs</Link>
           </Button>
         </div>
       </div>
@@ -33,7 +33,7 @@ export default async function SongPage({ params }: { params: Params }) {
       <div className="max-w-2xl mx-auto">
         {/* Back Button */}
         <Link
-          href="/songs/browser"
+          href="/songs"
           className="inline-block text-[var(--muted)] hover:text-[var(--text)] transition mb-8"
         >
           ← Back to Songs

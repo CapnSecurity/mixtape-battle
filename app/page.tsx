@@ -20,7 +20,7 @@ export default async function Home() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild>
-                <Link href="/songs/browser">Browse Songs</Link>
+                <Link href="/songs">Browse Songs</Link>
               </Button>
               <Button asChild>
                 <Link href="/battle">Start Battling</Link>

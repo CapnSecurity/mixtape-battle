@@ -105,7 +105,7 @@ export default async function ResultsPage() {
               Add some songs and start battling to see rankings!
             </p>
             <Button asChild>
-              <Link href="/songs/browser">Manage Songs</Link>
+              <Link href="/songs">Manage Songs</Link>
             </Button>
           </div>
         )}

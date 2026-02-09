@@ -50,7 +50,7 @@ export default function AddSongPage() {
         setStatus('success');
         setForm({ artist: '', title: '', album: '', releaseDate: '' });
         setTimeout(() => {
-          router.push(`/songs/browser?songId=${data.song.id}`);
+          router.push(`/songs?songId=${data.song.id}`);
         }, 2000);
       } else {
         setStatus('error');
@@ -68,7 +68,7 @@ export default function AddSongPage() {
       <div className="max-w-2xl mx-auto">
         {/* Back Link */}
         <Link
-          href="/songs/browser"
+          href="/songs"
           className="inline-block text-[var(--muted)] hover:text-[var(--text)] transition mb-8"
         >
           ← Back to Song Library

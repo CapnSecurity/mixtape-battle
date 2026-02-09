@@ -44,7 +44,7 @@ export default function Navbar() {
               <span>⚙️</span> Admin
             </Link>
             <Link
-              href="/songs/browser"
+              href="/songs"
               className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
             >
               <span>🎸</span> Songs
@@ -85,7 +85,7 @@ export default function Navbar() {
           <Link href="/results" className="hover:text-[var(--text)] flex items-center gap-1">
             🏆 Rankings
           </Link>
-          <Link href="/songs/browser" className="hover:text-[var(--text)] flex items-center gap-1">
+          <Link href="/songs" className="hover:text-[var(--text)] flex items-center gap-1">
             🎸 Songs
           </Link>
         </div>

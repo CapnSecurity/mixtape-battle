@@ -361,7 +361,7 @@ export default function BattlePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/songs/browser"
+              href="/songs"
               className="text-[var(--text)] hover:text-[var(--muted)] font-semibold transition"
             >
               📖 Song Library

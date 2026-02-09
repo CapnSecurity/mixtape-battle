@@ -107,7 +107,7 @@ export default function AddSongResourcePage() {
         </div>
         <div className="space-y-3">
           <a 
-            href="/songs/browser" 
+            href="/songs" 
             className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
           >
             🎸 Browse Songs
