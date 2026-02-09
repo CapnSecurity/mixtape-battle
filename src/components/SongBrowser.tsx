@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { ultimateGuitarGuitar, songsterrBass, youtube, lyrics } from "@/lib/links";
 import Comments from "@/src/components/Comments";
@@ -24,6 +24,15 @@ export default function SongBrowser() {
   const [searchType, setSearchType] = useState<"all" | "artist" | "song" | "genre" | "year">("all");
   const [sortBy, setSortBy] = useState<"title" | "artist" | "elo" | "year">("artist");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const songDetailsRef = useRef<HTMLDivElement>(null);
+
+  function handleSongSelect(song: Song) {
+    setSelectedSong(song);
+    // Scroll to song details after a short delay to allow render
+    setTimeout(() => {
+      songDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
 
   useEffect(() => {
     fetchSongs();
@@ -165,7 +174,7 @@ export default function SongBrowser() {
                   value={selectedSong?.id || ""}
                   onChange={(e) => {
                     const song = songs.find((s) => s.id === parseInt(e.target.value));
-                    if (song) setSelectedSong(song);
+                    if (song) handleSongSelect(song);
                   }}
                   className="w-full rounded-xl p-4 text-[var(--text)] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] text-base bg-[var(--surface2)] cursor-pointer border border-[var(--ring)]/20 transition-colors"
                 >
@@ -312,7 +321,7 @@ export default function SongBrowser() {
                         {filteredAndSortedSongs.map((song, index) => (
                           <tr
                             key={song.id}
-                            onClick={() => setSelectedSong(song)}
+                            onClick={() => handleSongSelect(song)}
                             className={`border-b border-[var(--ring)]/10 hover:bg-[var(--surface2)] transition-colors cursor-pointer ${
                               index % 2 === 0 ? "" : "bg-[var(--surface)]/50"
                             } ${selectedSong?.id === song.id ? "bg-[var(--accent)]/10" : ""}`}
@@ -356,7 +365,7 @@ export default function SongBrowser() {
             )}
             {/* Selected Song Details */}
             {selectedSong && (
-              <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 shadow-[var(--shadow)]">
+              <div ref={songDetailsRef} className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 shadow-[var(--shadow)]">
                 <div className="mb-10 pb-10 border-b border-[var(--ring)]/20">
                   {selectedSong.albumArtUrl && (
                     <div className="mb-8 flex justify-center">
