@@ -43,10 +43,13 @@ export default function ReadinessControl({
         setStatus(newStatus);
         onUpdate?.();
       } else {
-        console.error("Failed to update readiness");
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("Failed to update readiness:", response.status, errorData);
+        alert(`Failed to update readiness: ${errorData.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error updating readiness:", error);
+      alert(`Error updating readiness: ${error}`);
     } finally {
       setIsLoading(false);
     }
