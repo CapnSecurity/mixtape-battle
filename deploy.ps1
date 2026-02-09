@@ -82,11 +82,11 @@ Write-Host ""
 # Run database migrations
 Write-Host "🗄️  Running database migrations..." -ForegroundColor Cyan
 try {
-    docker exec mixtape-app sh -c "HOME=/tmp npx prisma migrate deploy"
+    docker exec mixtape-app node node_modules/prisma/build/index.js migrate deploy
     Write-Host "✅ Migrations applied successfully" -ForegroundColor Green
 } catch {
     Write-Host "⚠️  Migration step failed - check logs" -ForegroundColor Red
-    Write-Host "You may need to run manually: docker exec mixtape-app sh -c 'HOME=/tmp npx prisma migrate deploy'" -ForegroundColor Yellow
+    Write-Host "You may need to run manually: docker exec mixtape-app node node_modules/prisma/build/index.js migrate deploy" -ForegroundColor Yellow
 }
 Write-Host ""
 
