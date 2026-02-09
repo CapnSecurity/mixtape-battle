@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { songsterrBass, ultimateGuitarGuitar, ultimateGuitarBass, youtube, lyrics, spotify, genius, wikipedia, allMusic } from "../../../lib/links";
 import Button from "@/src/components/ui/Button";
 import Comments from "@/src/components/Comments";
+import SongDetailClient from "@/src/components/SongDetailClient";
 
 type Params = Promise<{ id: string }>;
 
@@ -196,6 +197,16 @@ export default async function SongPage({ params }: { params: Params }) {
               </div>
             </a>
           </div>
+        </div>
+
+        {/* Readiness & Practice Tracking */}
+        <div className="mt-8">
+          <SongDetailClient
+            songId={songId}
+            lastPracticedAt={song.lastPracticedAt?.toISOString() || null}
+            keyNotes={song.keyNotes}
+            tuningNotes={song.tuningNotes}
+          />
         </div>
 
         {/* Comments Section */}

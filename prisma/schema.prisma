@@ -34,7 +34,13 @@ model Song {
   songsterr      String?
   ultimateGuitar String?
   
+  // Practice & Performance
+  lastPracticedAt DateTime?
+  keyNotes        String?
+  tuningNotes     String?
+  
   comments  Comment[]
+  readiness SongReadiness[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -98,6 +104,7 @@ model User {
   battleSkips   BattleSkip[]
   battleVotes   BattleVote[]
   comments      Comment[]
+  readiness     SongReadiness[]
 }
 
 model UserPreference {
@@ -180,5 +187,27 @@ model Comment {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([songId, createdAt])
+  @@index([userId])
+}
+
+enum ReadinessStatus {
+  SOLID
+  NEEDS_WORK
+  NOT_READY
+}
+
+model SongReadiness {
+  id        Int              @id @default(autoincrement())
+  songId    Int
+  userId    String
+  status    ReadinessStatus
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([songId, userId])
+  @@index([songId])
   @@index([userId])
 }

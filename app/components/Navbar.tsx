@@ -38,6 +38,12 @@ export default function Navbar() {
               <span>🏆</span> Rankings
             </Link>
             <Link
+              href="/setlist-confidence"
+              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
+            >
+              <span>🎯</span> Setlist
+            </Link>
+            <Link
               href="/admin"
               className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2"
             >
@@ -84,6 +90,9 @@ export default function Navbar() {
           </Link>
           <Link href="/results" className="hover:text-[var(--text)] flex items-center gap-1">
             🏆 Rankings
+          </Link>
+          <Link href="/setlist-confidence" className="hover:text-[var(--text)] flex items-center gap-1">
+            🎯 Setlist
           </Link>
           <Link href="/songs" className="hover:text-[var(--text)] flex items-center gap-1">
             🎸 Songs

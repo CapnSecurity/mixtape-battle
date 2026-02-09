@@ -1,13 +1,36 @@
 import Link from "next/link";
 import { prisma } from "../../lib/prisma";
 import Button from "@/src/components/ui/Button";
+import ReadinessIcon from "@/src/components/ReadinessIcon";
 
 export const dynamic = 'force-dynamic';
 
+type AggregateStatus = "SOLID" | "NEEDS_WORK" | "NOT_READY" | "NONE";
+
+function calculateAggregateStatus(readiness: { status: string }[]): AggregateStatus {
+  if (readiness.length === 0) return "NONE";
+  
+  const hasNotReady = readiness.some((r) => r.status === "NOT_READY");
+  const hasNeedsWork = readiness.some((r) => r.status === "NEEDS_WORK");
+  const hasSolid = readiness.some((r) => r.status === "SOLID");
+  
+  if (hasNotReady) return "NOT_READY";
+  if (hasNeedsWork) return "NEEDS_WORK";
+  if (hasSolid) return "SOLID";
+  return "NONE";
+}
+
 export default async function ResultsPage() {
-  // Get ALL songs ordered by ELO (descending)
+  // Get ALL songs ordered by ELO (descending) with readiness data
   const allSongs = await prisma.song.findMany({
     orderBy: { elo: "desc" },
+    include: {
+      readiness: {
+        select: {
+          status: true,
+        },
+      },
+    },
   });
 
   return (
@@ -37,6 +60,9 @@ export default async function ResultsPage() {
                     <th className="px-6 py-4 text-left text-[var(--bg)] font-bold text-lg hidden md:table-cell">
                       Artist
                     </th>
+                    <th className="px-6 py-4 text-left text-[var(--bg)] font-bold text-lg hidden lg:table-cell">
+                      Readiness
+                    </th>
                     <th className="px-6 py-4 text-right text-[var(--bg)] font-bold text-lg">
                       Battle Score
                     </th>
@@ -55,6 +81,9 @@ export default async function ResultsPage() {
                       index === 1 ? "bg-[#C0C0C0]" :  // Silver
                       index === 2 ? "bg-[#CD7F32]" :  // Bronze
                       "bg-gradient-to-r from-[var(--gold)] to-[var(--pink)]"; // Top 10
+
+                    // Calculate aggregate readiness
+                    const aggregateStatus = calculateAggregateStatus(song.readiness);
 
                     return (
                       <tr
@@ -82,6 +111,9 @@ export default async function ResultsPage() {
                         </td>
                         <td className="px-6 py-4 text-[var(--muted)] hidden md:table-cell">
                           {song.artist}
+                        </td>
+                        <td className="px-6 py-4 hidden lg:table-cell">
+                          <ReadinessIcon status={aggregateStatus} size="sm" />
                         </td>
                         <td className="px-6 py-4 text-right">
                           <span className={`inline-block ${isTopTen ? 'bg-[linear-gradient(135deg,var(--gold),var(--pink))]' : 'bg-[var(--surface2)]'} text-[var(--bg)] font-bold px-4 py-2 rounded-lg`}>
