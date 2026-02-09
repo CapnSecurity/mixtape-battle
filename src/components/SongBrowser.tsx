@@ -21,6 +21,7 @@ export default function SongBrowser() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<"all" | "artist" | "song" | "genre" | "year">("all");
   const [sortBy, setSortBy] = useState<"title" | "artist" | "elo" | "year">("artist");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -58,15 +59,30 @@ export default function SongBrowser() {
     
     let filtered = songs;
     
+    // Only show results if there's a search query
     if (query) {
       filtered = songs.filter((song) => {
-        const titleMatch = song.title.toLowerCase().includes(query);
-        const artistMatch = song.artist.toLowerCase().includes(query);
-        const genreMatch = song.genre?.toLowerCase().includes(query) ?? false;
-        const yearMatch = song.releaseDate?.toString().includes(query) ?? false;
-        
-        return titleMatch || artistMatch || genreMatch || yearMatch;
+        switch (searchType) {
+          case "artist":
+            return song.artist.toLowerCase().includes(query);
+          case "song":
+            return song.title.toLowerCase().includes(query);
+          case "genre":
+            return song.genre?.toLowerCase().includes(query) ?? false;
+          case "year":
+            return song.releaseDate?.toString().includes(query) ?? false;
+          case "all":
+          default:
+            const titleMatch = song.title.toLowerCase().includes(query);
+            const artistMatch = song.artist.toLowerCase().includes(query);
+            const genreMatch = song.genre?.toLowerCase().includes(query) ?? false;
+            const yearMatch = song.releaseDate?.toString().includes(query) ?? false;
+            return titleMatch || artistMatch || genreMatch || yearMatch;
+        }
       });
+    } else {
+      // No search query = no results shown
+      filtered = [];
     }
 
     // Sort the filtered results
@@ -101,7 +117,7 @@ export default function SongBrowser() {
     });
 
     return sorted;
-  }, [songs, searchQuery, sortBy, sortOrder]);
+  }, [songs, searchQuery, searchType, sortBy, sortOrder]);
 
   function handleSort(column: typeof sortBy) {
     if (sortBy === column) {
@@ -137,31 +153,207 @@ export default function SongBrowser() {
         </div>
 
         <div className="grid lg:grid-cols-4 gap-12">
-          {/* Dropdown Section */}
+          {/* Dropdown and Search Section */}
           <div className="lg:col-span-1">
-            <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-6 sticky top-24">
-              <label className="block text-lg font-bold text-[var(--text)] mb-4">
-                Select a Song
-              </label>
-              <select
-                value={selectedSong?.id || ""}
-                onChange={(e) => {
-                  const song = songs.find((s) => s.id === parseInt(e.target.value));
-                  if (song) setSelectedSong(song);
-                }}
-                className="w-full rounded-xl p-4 text-[var(--text)] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] text-base bg-[var(--surface2)] cursor-pointer border border-[var(--ring)]/20 transition-colors"
-              >
-                {songs.map((song) => (
-                  <option key={song.id} value={song.id}>
-                    {song.artist} - {song.title}
-                  </option>
-                ))}
-              </select>
+            <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-6 sticky top-24 space-y-6">
+              {/* Dropdown */}
+              <div>
+                <label className="block text-lg font-bold text-[var(--text)] mb-4">
+                  Select a Song
+                </label>
+                <select
+                  value={selectedSong?.id || ""}
+                  onChange={(e) => {
+                    const song = songs.find((s) => s.id === parseInt(e.target.value));
+                    if (song) setSelectedSong(song);
+                  }}
+                  className="w-full rounded-xl p-4 text-[var(--text)] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] text-base bg-[var(--surface2)] cursor-pointer border border-[var(--ring)]/20 transition-colors"
+                >
+                  {songs.map((song) => (
+                    <option key={song.id} value={song.id}>
+                      {song.artist} - {song.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search */}
+              <div>
+                <label className="block text-lg font-bold text-[var(--text)] mb-4">
+                  Search Songs
+                </label>
+                
+                {/* Search Type Radio Buttons */}
+                <div className="mb-4 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="searchType"
+                      value="all"
+                      checked={searchType === "all"}
+                      onChange={(e) => setSearchType(e.target.value as any)}
+                      className="cursor-pointer"
+                    />
+                    <span className="text-sm text-[var(--text)]">All Fields</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="searchType"
+                      value="artist"
+                      checked={searchType === "artist"}
+                      onChange={(e) => setSearchType(e.target.value as any)}
+                      className="cursor-pointer"
+                    />
+                    <span className="text-sm text-[var(--text)]">Artist</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="searchType"
+                      value="song"
+                      checked={searchType === "song"}
+                      onChange={(e) => setSearchType(e.target.value as any)}
+                      className="cursor-pointer"
+                    />
+                    <span className="text-sm text-[var(--text)]">Song Title</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="searchType"
+                      value="genre"
+                      checked={searchType === "genre"}
+                      onChange={(e) => setSearchType(e.target.value as any)}
+                      className="cursor-pointer"
+                    />
+                    <span className="text-sm text-[var(--text)]">Genre</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="searchType"
+                      value="year"
+                      checked={searchType === "year"}
+                      onChange={(e) => setSearchType(e.target.value as any)}
+                      className="cursor-pointer"
+                    />
+                    <span className="text-sm text-[var(--text)]">Year</span>
+                  </label>
+                </div>
+
+                {/* Search Input */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={`Search by ${searchType === 'all' ? 'anything' : searchType}...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--surface2)] border border-[var(--ring)]/20 text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)]"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {searchQuery && (
+                  <p className="mt-2 text-xs text-[var(--muted)]">
+                    {filteredAndSortedSongs.length} result{filteredAndSortedSongs.length !== 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
+          <div className="lg:col-span-3 space-y-8">{/* Search Results Table */}
+            {searchQuery && filteredAndSortedSongs.length > 0 && (
+              <div>
+                <h3 className="text-2xl font-bold text-[var(--text)] mb-4">Search Results</h3>
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-[var(--surface2)] border-b border-[var(--ring)]/20">
+                        <tr>
+                          <th
+                            className="text-left px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
+                            onClick={() => handleSort("title")}
+                          >
+                            Song {getSortIcon("title")}
+                          </th>
+                          <th
+                            className="text-left px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
+                            onClick={() => handleSort("artist")}
+                          >
+                            Artist {getSortIcon("artist")}
+                          </th>
+                          <th className="text-left px-6 py-4 font-semibold text-[var(--text)]">
+                            Genre
+                          </th>
+                          <th
+                            className="text-left px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
+                            onClick={() => handleSort("year")}
+                          >
+                            Year {getSortIcon("year")}
+                          </th>
+                          <th
+                            className="text-center px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
+                            onClick={() => handleSort("elo")}
+                          >
+                            ELO {getSortIcon("elo")}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredAndSortedSongs.map((song, index) => (
+                          <tr
+                            key={song.id}
+                            onClick={() => setSelectedSong(song)}
+                            className={`border-b border-[var(--ring)]/10 hover:bg-[var(--surface2)] transition-colors cursor-pointer ${
+                              index % 2 === 0 ? "" : "bg-[var(--surface)]/50"
+                            } ${selectedSong?.id === song.id ? "bg-[var(--accent)]/10" : ""}`}
+                          >
+                            <td className="px-6 py-4">
+                              <span className="text-[var(--text)] font-medium">
+                                {song.title}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-[var(--muted)]">{song.artist}</td>
+                            <td className="px-6 py-4 text-[var(--muted)]">
+                              {song.genre || "-"}
+                            </td>
+                            <td className="px-6 py-4 text-[var(--muted)]">
+                              {song.releaseDate || "-"}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="inline-block px-3 py-1 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] font-semibold">
+                                {Math.round(song.elo)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {searchQuery && filteredAndSortedSongs.length === 0 && (
+              <div className="border border-[var(--ring)]/20 rounded-2xl p-12 text-center bg-[var(--surface)]/70">
+                <div className="text-6xl mb-4">🔍</div>
+                <h2 className="text-3xl font-bold text-[var(--text)] mb-4">
+                  No Songs Found
+                </h2>
+                <p className="text-[var(--muted)] text-lg">
+                  Try a different search term
+                </p>
+              </div>
+            )}
             {/* Selected Song Details */}
             {selectedSong && (
               <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 shadow-[var(--shadow)]">
@@ -260,164 +452,6 @@ export default function SongBrowser() {
                 </div>
               </div>
             )}
-
-            {/* Search and Table */}
-            <div>
-              <h3 className="text-3xl font-bold text-[var(--text)] mb-6">Search All Songs</h3>
-              
-              {/* Search Bar */}
-              <div className="mb-6">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search by song, artist, genre, or year..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-6 py-4 text-lg rounded-xl bg-[var(--surface)] border border-[var(--ring)]/20 text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--text)]"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  {filteredAndSortedSongs.length} of {songs.length} songs
-                </p>
-              </div>
-
-              {/* Results Table */}
-              {filteredAndSortedSongs.length > 0 ? (
-                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-[var(--surface2)] border-b border-[var(--ring)]/20">
-                        <tr>
-                          <th
-                            className="text-left px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
-                            onClick={() => handleSort("title")}
-                          >
-                            Song {getSortIcon("title")}
-                          </th>
-                          <th
-                            className="text-left px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
-                            onClick={() => handleSort("artist")}
-                          >
-                            Artist {getSortIcon("artist")}
-                          </th>
-                          <th className="text-left px-6 py-4 font-semibold text-[var(--text)]">
-                            Genre
-                          </th>
-                          <th
-                            className="text-left px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
-                            onClick={() => handleSort("year")}
-                          >
-                            Year {getSortIcon("year")}
-                          </th>
-                          <th
-                            className="text-center px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
-                            onClick={() => handleSort("elo")}
-                          >
-                            ELO {getSortIcon("elo")}
-                          </th>
-                          <th className="text-center px-6 py-4 font-semibold text-[var(--text)]">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredAndSortedSongs.map((song, index) => (
-                          <tr
-                            key={song.id}
-                            className={`border-b border-[var(--ring)]/10 hover:bg-[var(--surface2)] transition-colors cursor-pointer ${
-                              index % 2 === 0 ? "" : "bg-[var(--surface)]/50"
-                            }`}
-                          >
-                            <td className="px-6 py-4">
-                              <button
-                                onClick={() => setSelectedSong(song)}
-                                className="text-[var(--text)] hover:text-[var(--accent)] font-medium transition-colors text-left"
-                              >
-                                {song.title}
-                              </button>
-                            </td>
-                            <td className="px-6 py-4 text-[var(--muted)]">{song.artist}</td>
-                            <td className="px-6 py-4 text-[var(--muted)]">
-                              {song.genre || "-"}
-                            </td>
-                            <td className="px-6 py-4 text-[var(--muted)]">
-                              {song.releaseDate || "-"}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="inline-block px-3 py-1 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] font-semibold">
-                                {Math.round(song.elo)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex gap-2 justify-center">
-                                <a
-                                  href={ultimateGuitarGuitar(song.artist, song.title)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-3 py-1 rounded-lg bg-[var(--surface2)] hover:bg-[var(--accent)]/20 text-[var(--text)] text-sm transition-colors"
-                                  title="Guitar Tabs"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  🎸
-                                </a>
-                                <a
-                                  href={songsterrBass(song.artist, song.title)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-3 py-1 rounded-lg bg-[var(--surface2)] hover:bg-[var(--accent)]/20 text-[var(--text)] text-sm transition-colors"
-                                  title="Bass Tabs"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  🎵
-                                </a>
-                                <a
-                                  href={youtube(song.artist, song.title)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-3 py-1 rounded-lg bg-[var(--surface2)] hover:bg-[var(--accent)]/20 text-[var(--text)] text-sm transition-colors"
-                                  title="YouTube"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  ▶️
-                                </a>
-                                <a
-                                  href={lyrics(song.artist, song.title)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-3 py-1 rounded-lg bg-[var(--surface2)] hover:bg-[var(--accent)]/20 text-[var(--text)] text-sm transition-colors"
-                                  title="Lyrics"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  📝
-                                </a>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="border border-[var(--ring)]/20 rounded-2xl p-12 text-center bg-[var(--surface)]/70">
-                  <div className="text-6xl mb-4">🔍</div>
-                  <h2 className="text-3xl font-bold text-[var(--text)] mb-4">
-                    No Songs Found
-                  </h2>
-                  <p className="text-[var(--muted)] text-lg">
-                    Try a different search term
-                  </p>
-                </div>
-              )}
-            </div>
 
             {/* Footer */}
             <div className="mt-8 text-center">
