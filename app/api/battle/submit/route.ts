@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     if (skipped) {
       await prisma.$transaction([
-        prisma.battleVote.create({ data: { songA: winnerId, songB: loserId, winner: null, userId } }),
+        prisma.battleVote.create({ data: { songA: songAId, songB: songBId, winner: null, userId } }),
         prisma.battlePairingHistory.upsert({
           where: { userId_songAId_songBId: { userId, songAId, songBId } },
           create: { userId, songAId, songBId },

@@ -135,15 +135,35 @@ if (-not $SkipDocker) {
             if ($pgReady) {
                 Write-Host "   ✓ Database ready" -ForegroundColor Green
                 
-                # Seed dev test accounts
-                Write-Host "   → Seeding dev test accounts..." -ForegroundColor Gray
+                # Set up database schema and seed data
                 $env:NODE_ENV = "development"
                 $env:DATABASE_URL = "postgresql://postgres:postgres@localhost:5433/mixtape_battle_dev"
-                $seedOutput = node prisma/seed-dev-accounts.js 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Host "   ✓ Test accounts ready (admin@test.local, user@test.local)" -ForegroundColor Green
+                
+                # Push schema to database (works for both SQLite and PostgreSQL)
+                Write-Host "   → Setting up database schema..." -ForegroundColor Gray
+                $schemaOutput = npx prisma db push --skip-generate 2>&1 | Out-String
+                if ($schemaOutput -match "is now in sync|already in sync" -or $LASTEXITCODE -eq 0) {
+                    Write-Host "   ✓ Database schema ready" -ForegroundColor Green
+                    
+                    # Seed songs
+                    Write-Host "   → Seeding songs..." -ForegroundColor Gray
+                    $songSeedOutput = npx tsx prisma/seed.ts 2>&1 | Out-String
+                    if ($songSeedOutput -match "Seeded \d+ songs" -or $LASTEXITCODE -eq 0) {
+                        Write-Host "   ✓ Songs seeded" -ForegroundColor Green
+                    } else {
+                        Write-Host "   ⚠ Song seeding failed or songs already exist" -ForegroundColor Yellow
+                    }
+                    
+                    # Seed dev test accounts
+                    Write-Host "   → Seeding test accounts..." -ForegroundColor Gray
+                    $accountSeedOutput = node prisma/seed-dev-accounts.js 2>&1 | Out-String
+                    if ($accountSeedOutput -match "Dev accounts ready" -or $LASTEXITCODE -eq 0) {
+                        Write-Host "   ✓ Test accounts ready (admin@test.local, user@test.local)" -ForegroundColor Green
+                    } else {
+                        Write-Host "   ⚠ Accounts may already exist" -ForegroundColor Yellow
+                    }
                 } else {
-                    Write-Host "   ⚠ Failed to seed accounts (may already exist)" -ForegroundColor Yellow
+                    Write-Host "   ⚠ Schema setup had issues, continuing anyway..." -ForegroundColor Yellow
                 }
             } else {
                 Write-Host "   ⚠ Database taking longer than usual" -ForegroundColor Yellow
