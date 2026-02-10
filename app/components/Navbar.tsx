@@ -57,13 +57,13 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Auth Section */}
-          <div className="flex items-center gap-2 md:gap-4">
+          {/* Auth Section - Desktop */}
+          <div className="hidden md:flex items-center gap-4">
             {status === "loading" ? (
               <div className="text-[var(--muted)] text-sm">Loading...</div>
             ) : session ? (
-              <div className="flex items-center gap-2 md:gap-4">
-                <div className="text-xs md:text-sm text-[var(--muted)] hidden sm:inline truncate max-w-[120px] md:max-w-none">
+              <>
+                <div className="text-sm text-[var(--muted)] truncate max-w-[200px]">
                   {session.user?.email}
                 </div>
                 <Button
@@ -72,18 +72,48 @@ export default function Navbar() {
                   onClick={async () => {
                     await signOut({ callbackUrl: "/login" });
                   }}
-                  className="min-h-[44px] md:min-h-0"
                 >
                   Sign Out
                 </Button>
-              </div>
+              </>
             ) : (
-              <Button asChild size="md" className="min-h-[44px] md:min-h-0">
+              <Button asChild size="md">
+                <Link href="/login">Sign In</Link>
+              </Button>
+            )}
+          </div>
+
+          {/* Auth Section - Mobile */}
+          <div className="md:hidden flex items-center">
+            {status === "loading" ? (
+              <div className="text-[var(--muted)] text-xs">...</div>
+            ) : session ? (
+              <Button
+                variant="surface"
+                size="md"
+                onClick={async () => {
+                  await signOut({ callbackUrl: "/login" });
+                }}
+                className="min-h-[44px]"
+              >
+                Sign Out
+              </Button>
+            ) : (
+              <Button asChild size="md" className="min-h-[44px]">
                 <Link href="/login">Sign In</Link>
               </Button>
             )}
           </div>
         </div>
+
+        {/* Mobile User Info Row */}
+        {session && (
+          <div className="md:hidden flex items-center justify-between py-2 border-t border-[var(--ring)]/10">
+            <div className="text-xs text-[var(--muted)] truncate">
+              Signed in as: {session.user?.email}
+            </div>
+          </div>
+        )}
 
         {/* Mobile Nav */}
         <div className="md:hidden flex gap-2 pb-3 overflow-x-auto border-t border-[var(--ring)]/20 pt-3 -mx-4 px-4">
