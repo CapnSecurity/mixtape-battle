@@ -123,7 +123,6 @@ export default function Navbar() {
             <span className="text-sm font-medium">Admin</span>
           </Link>
         </div>
-        </div>
       </div>
     </nav>
   );
