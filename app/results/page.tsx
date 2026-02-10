@@ -44,9 +44,68 @@ export default async function ResultsPage() {
           </p>
         </div>
 
-        {/* Rankings Table */}
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4">
+          {allSongs.map((song, index) => {
+            const medalEmoji =
+              index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "";
+            const isTopTen = index < 10;
+            const aggregateStatus = calculateAggregateStatus(song.readiness);
+
+            return (
+              <div
+                key={song.id}
+                className={`rounded-xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-sm p-4 ${
+                  isTopTen ? 'ring-2 ring-[var(--gold)]/30' : ''
+                }`}
+              >
+                {/* Rank and Score Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {medalEmoji && <span className="text-3xl">{medalEmoji}</span>}
+                    <span className="text-2xl font-bold text-[var(--gold)]">#{index + 1}</span>
+                    {isTopTen && !medalEmoji && (
+                      <span className="bg-gradient-to-r from-[var(--gold)] to-[var(--pink)] text-white text-xs font-bold px-2 py-1 rounded-full">
+                        TOP 10
+                      </span>
+                    )}
+                  </div>
+                  <span className={`inline-block ${
+                    isTopTen 
+                      ? 'bg-[linear-gradient(135deg,var(--gold),var(--pink))]' 
+                      : 'bg-[var(--surface2)]'
+                  } text-[var(--bg)] font-bold px-4 py-2 rounded-lg text-lg`}>
+                    {Math.round(song.elo)}
+                  </span>
+                </div>
+
+                {/* Song Info */}
+                <Link href={`/songs/${song.id}`} className="block mb-3">
+                  <div className="font-semibold text-lg text-[var(--gold)] hover:text-[var(--pink)] transition">
+                    {song.title}
+                  </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    {song.artist}
+                  </div>
+                </Link>
+
+                {/* Readiness */}
+                <div className="flex items-center gap-2">
+                  <ReadinessIcon status={aggregateStatus} size="sm" />
+                  {song.readiness.length > 0 && (
+                    <span className="text-xs text-[var(--muted)]">
+                      {song.readiness.length} {song.readiness.length === 1 ? 'vote' : 'votes'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
         {allSongs.length > 0 ? (
-          <div className="rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] overflow-hidden">
+          <div className="hidden md:block rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[linear-gradient(135deg,var(--gold),var(--pink))]">
@@ -57,10 +116,10 @@ export default async function ResultsPage() {
                     <th className="px-6 py-4 text-left text-[var(--bg)] font-bold text-lg">
                       Song
                     </th>
-                    <th className="px-6 py-4 text-left text-[var(--bg)] font-bold text-lg hidden md:table-cell">
+                    <th className="px-6 py-4 text-left text-[var(--bg)] font-bold text-lg">
                       Artist
                     </th>
-                    <th className="px-6 py-4 text-left text-[var(--bg)] font-bold text-lg hidden lg:table-cell">
+                    <th className="px-6 py-4 text-left text-[var(--bg)] font-bold text-lg">
                       Readiness
                     </th>
                     <th className="px-6 py-4 text-right text-[var(--bg)] font-bold text-lg">
@@ -109,11 +168,18 @@ export default async function ResultsPage() {
                             {song.title}
                           </Link>
                         </td>
-                        <td className="px-6 py-4 text-[var(--muted)] hidden md:table-cell">
+                        <td className="px-6 py-4 text-[var(--muted)]">
                           {song.artist}
                         </td>
-                        <td className="px-6 py-4 hidden lg:table-cell">
-                          <ReadinessIcon status={aggregateStatus} size="sm" />
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <ReadinessIcon status={aggregateStatus} size="sm" />
+                            {song.readiness.length > 0 && (
+                              <span className="text-xs text-[var(--muted)]">
+                                {song.readiness.length} {song.readiness.length === 1 ? 'vote' : 'votes'}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <span className={`inline-block ${isTopTen ? 'bg-[linear-gradient(135deg,var(--gold),var(--pink))]' : 'bg-[var(--surface2)]'} text-[var(--bg)] font-bold px-4 py-2 rounded-lg`}>

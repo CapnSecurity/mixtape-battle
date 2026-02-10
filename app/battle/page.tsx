@@ -205,32 +205,32 @@ export default function BattlePage() {
                 className="w-full text-left p-0 border-0 bg-transparent"
                 onClick={() => vote(pair.a, pair.b)}
               >
-                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between">
-                  <div className="mb-8">
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-6 md:p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between min-h-[44px]">
+                  <div className="mb-6 md:mb-8">
                     {pair.a.albumArtUrl ? (
-                      <div className="mb-6 flex justify-center">
+                      <div className="mb-4 md:mb-6 flex justify-center">
                         <img 
                           src={pair.a.albumArtUrl} 
                           alt={`${pair.a.album || pair.a.title} album art`}
-                          className="w-48 h-48 object-cover rounded-xl shadow-lg"
+                          className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-xl shadow-lg"
                         />
                       </div>
                     ) : (
-                      <div className="text-7xl mb-6">🎸</div>
+                      <div className="text-5xl md:text-7xl mb-4 md:mb-6">🎸</div>
                     )}
-                    <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
+                    <h2 className="text-2xl md:text-4xl font-bold text-[var(--text)] mb-2 md:mb-3">
                       {pair.a.title}
                     </h2>
-                    <p className="text-2xl text-[var(--muted)] mb-4">
+                    <p className="text-lg md:text-2xl text-[var(--muted)] mb-3 md:mb-4">
                       {pair.a.artist}
                     </p>
-                    <div className="flex gap-2 justify-center">
+                    <div className="flex gap-2 justify-center flex-wrap">
                       <a
                         href={spotify(pair.a.artist, pair.a.title)}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
+                        className="px-3 py-2 md:py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5 min-h-[44px] md:min-h-0"
                       >
                         🎧 Spotify
                       </a>
@@ -239,29 +239,29 @@ export default function BattlePage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
+                        className="px-3 py-2 md:py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5 min-h-[44px] md:min-h-0"
                       >
                         💿 AllMusic
                       </a>
                     </div>
                   </div>
 
-                  <div className="bg-[var(--surface2)] rounded-xl p-6 mb-6">
-                    <p className="text-sm text-[var(--muted)] font-semibold mb-2">
+                  <div className="bg-[var(--surface2)] rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <p className="text-xs md:text-sm text-[var(--muted)] font-semibold mb-2">
                       BATTLE SCORE
                     </p>
-                    <p className="text-6xl font-bold text-[var(--text)]">
+                    <p className="text-4xl md:text-6xl font-bold text-[var(--text)]">
                       {Math.round(pair.a.elo)}
                     </p>
-                    <div className="mt-2 flex items-center justify-center gap-3">
+                    <div className="mt-2 flex items-center justify-center gap-2 md:gap-3">
                       <Stars value={eloToStars(pair.a.elo)} />
-                      <span className="text-sm text-[var(--muted)]">
+                      <span className="text-xs md:text-sm text-[var(--muted)]">
                         {eloToStars(pair.a.elo).toFixed(1)} / 5
                       </span>
                     </div>
                   </div>
 
-                  <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-3.5 px-6 rounded-xl text-lg">
+                  <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-4 md:py-3.5 px-6 rounded-xl text-base md:text-lg min-h-[48px] flex items-center justify-center">
                     Vote for This Track
                   </div>
                 </div>
@@ -273,31 +273,67 @@ export default function BattlePage() {
                 className="w-full text-left p-0 border-0 bg-transparent"
                 onClick={() => vote(pair.b, pair.a)}
               >
-                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between">
-                  <div className="mb-8">
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-6 md:p-10 hover:bg-[var(--surface2)] transition-all duration-300 h-full flex flex-col justify-between min-h-[44px]">
+                  <div className="mb-6 md:mb-8">
                     {pair.b.albumArtUrl ? (
-                      <div className="mb-6 flex justify-center">
+                      <div className="mb-4 md:mb-6 flex justify-center">
                         <img 
                           src={pair.b.albumArtUrl} 
                           alt={`${pair.b.album || pair.b.title} album art`}
-                          className="w-48 h-48 object-cover rounded-xl shadow-lg"
+                          className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-xl shadow-lg"
                         />
                       </div>
                     ) : (
-                      <div className="text-7xl mb-6">🎵</div>
+                      <div className="text-5xl md:text-7xl mb-4 md:mb-6">🎵</div>
                     )}
-                    <h2 className="text-4xl font-bold text-[var(--text)] mb-3">
+                    <h2 className="text-2xl md:text-4xl font-bold text-[var(--text)] mb-2 md:mb-3">
                       {pair.b.title}
                     </h2>
-                    <p className="text-2xl text-[var(--muted)] mb-4">
+                    <p className="text-lg md:text-2xl text-[var(--muted)] mb-3 md:mb-4">
                       {pair.b.artist}
                     </p>
-                    <div className="flex gap-2 justify-center">
+                    <div className="flex gap-2 justify-center flex-wrap">
                       <a
                         href={spotify(pair.b.artist, pair.b.title)}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-2 md:py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5 min-h-[44px] md:min-h-0"
+                      >
+                        🎧 Spotify
+                      </a>
+                      <a
+                        href={allMusic(pair.b.artist, pair.b.title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-3 py-2 md:py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5 min-h-[44px] md:min-h-0"
+                      >
+                        💿 AllMusic
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--surface2)] rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                    <p className="text-xs md:text-sm text-[var(--muted)] font-semibold mb-2">
+                      BATTLE SCORE
+                    </p>
+                    <p className="text-4xl md:text-6xl font-bold text-[var(--text)]">
+                      {Math.round(pair.b.elo)}
+                    </p>
+                    <div className="mt-2 flex items-center justify-center gap-2 md:gap-3">
+                      <Stars value={eloToStars(pair.b.elo)} />
+                      <span className="text-xs md:text-sm text-[var(--muted)]">
+                        {eloToStars(pair.b.elo).toFixed(1)} / 5
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-4 md:py-3.5 px-6 rounded-xl text-base md:text-lg min-h-[48px] flex items-center justify-center">
+                    Vote for This Track
+                  </div>
+                </div>
+              </Button>
                         className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
                       >
                         🎧 Spotify

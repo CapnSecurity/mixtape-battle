@@ -86,9 +86,78 @@ export default async function SetlistConfidencePage() {
           </p>
         </div>
 
-        {/* Confidence Table */}
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4">
+          {topSongs.map((song, index) => {
+            const aggregateStatus = calculateAggregateStatus(song.readiness);
+            const practiceDate = formatPracticeDate(song.lastPracticedAt);
+            const isPracticeOld = song.lastPracticedAt && 
+              (new Date().getTime() - song.lastPracticedAt.getTime()) > (30 * 24 * 60 * 60 * 1000);
+
+            return (
+              <div
+                key={song.id}
+                className="rounded-xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-sm p-4"
+              >
+                {/* Rank and Score Header */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-[var(--gold)]">#{index + 1}</span>
+                    <ReadinessIcon status={aggregateStatus} size="sm" />
+                  </div>
+                  <span className="bg-[var(--surface2)] text-[var(--text)] font-bold px-4 py-2 rounded-lg">
+                    {Math.round(song.elo)}
+                  </span>
+                </div>
+
+                {/* Song Info */}
+                <Link href={`/songs/${song.id}`} className="block mb-3">
+                  <div className="font-semibold text-lg text-[var(--gold)] hover:text-[var(--pink)] transition">
+                    {song.title}
+                  </div>
+                  <div className="text-sm text-[var(--muted)]">
+                    {song.artist}
+                  </div>
+                </Link>
+
+                {/* Readiness Votes */}
+                {song.readiness.length > 0 && (
+                  <div className="text-xs text-[var(--muted)] mb-3">
+                    {song.readiness.length} {song.readiness.length === 1 ? 'vote' : 'votes'}
+                  </div>
+                )}
+
+                {/* Practice Info */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[var(--muted)]">🕐 Last practiced:</span>
+                    <span className={isPracticeOld ? 'text-[var(--danger,#ef4444)] font-semibold' : 'text-[var(--text)]'}>
+                      {practiceDate}
+                    </span>
+                  </div>
+                  
+                  {song.keyNotes && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-[var(--muted)]">🎹</span>
+                      <span className="text-[var(--text)]">{song.keyNotes}</span>
+                    </div>
+                  )}
+                  
+                  {song.tuningNotes && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-[var(--muted)]">🎸</span>
+                      <span className="text-[var(--muted)]">{song.tuningNotes}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
         {topSongs.length > 0 ? (
-          <div className="rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] overflow-hidden">
+          <div className="hidden md:block rounded-2xl border border-[var(--ring)]/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-[linear-gradient(135deg,var(--gold),var(--pink))]">
@@ -99,10 +168,10 @@ export default async function SetlistConfidencePage() {
                     <th className="px-4 py-4 text-left text-[var(--bg)] font-bold text-sm lg:text-base">
                       Song
                     </th>
-                    <th className="px-4 py-4 text-left text-[var(--bg)] font-bold text-sm lg:text-base hidden md:table-cell">
+                    <th className="px-4 py-4 text-left text-[var(--bg)] font-bold text-sm lg:text-base">
                       Readiness
                     </th>
-                    <th className="px-4 py-4 text-left text-[var(--bg)] font-bold text-sm lg:text-base hidden lg:table-cell">
+                    <th className="px-4 py-4 text-left text-[var(--bg)] font-bold text-sm lg:text-base">
                       Last Practiced
                     </th>
                     <th className="px-4 py-4 text-left text-[var(--bg)] font-bold text-sm lg:text-base hidden xl:table-cell">
@@ -142,7 +211,7 @@ export default async function SetlistConfidencePage() {
                             </div>
                           </Link>
                         </td>
-                        <td className="px-4 py-4 hidden md:table-cell">
+                        <td className="px-4 py-4">
                           <div className="space-y-1">
                             <ReadinessIcon status={aggregateStatus} size="sm" />
                             {song.readiness.length > 0 && (
@@ -152,7 +221,7 @@ export default async function SetlistConfidencePage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4 hidden lg:table-cell">
+                        <td className="px-4 py-4">
                           <div className={`text-sm ${isPracticeOld ? 'text-[var(--danger,#ef4444)]' : 'text-[var(--text)]'}`}>
                             {practiceDate}
                           </div>
