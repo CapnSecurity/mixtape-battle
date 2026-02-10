@@ -334,42 +334,6 @@ export default function BattlePage() {
                   </div>
                 </div>
               </Button>
-                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
-                      >
-                        🎧 Spotify
-                      </a>
-                      <a
-                        href={allMusic(pair.b.artist, pair.b.title)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="px-3 py-1.5 bg-[var(--surface2)] hover:bg-[var(--surface)] border border-[var(--ring)]/20 rounded-lg text-xs font-semibold text-[var(--text)] transition flex items-center gap-1.5"
-                      >
-                        💿 AllMusic
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="bg-[var(--surface2)] rounded-xl p-6 mb-6">
-                    <p className="text-sm text-[var(--muted)] font-semibold mb-2">
-                      BATTLE SCORE
-                    </p>
-                    <p className="text-6xl font-bold text-[var(--text)]">
-                      {Math.round(pair.b.elo)}
-                    </p>
-                    <div className="mt-2 flex items-center justify-center gap-3">
-                      <Stars value={eloToStars(pair.b.elo)} />
-                      <span className="text-sm text-[var(--muted)]">
-                        {eloToStars(pair.b.elo).toFixed(1)} / 5
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="w-full text-center bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] font-bold py-3.5 px-6 rounded-xl text-lg">
-                    Vote for This Track
-                  </div>
-                </div>
-              </Button>
             </div>
 
             {/* Next Battle Button */}

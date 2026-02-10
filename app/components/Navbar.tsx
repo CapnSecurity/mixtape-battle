@@ -68,7 +68,7 @@ export default function Navbar() {
                 </div>
                 <Button
                   variant="surface"
-                  size="sm"
+                  size="md"
                   onClick={async () => {
                     await signOut({ callbackUrl: "/login" });
                   }}
@@ -78,7 +78,7 @@ export default function Navbar() {
                 </Button>
               </div>
             ) : (
-              <Button asChild size="sm" className="min-h-[44px] md:min-h-0">
+              <Button asChild size="md" className="min-h-[44px] md:min-h-0">
                 <Link href="/login">Sign In</Link>
               </Button>
             )}
