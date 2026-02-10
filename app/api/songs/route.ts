@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimiters } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
+  // Rate limiting to prevent abuse
+  const rateLimitResult = await rateLimiters.api(request);
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response;
+  }
+
   try {
     const songs = await prisma.song.findMany({
       orderBy: { title: "asc" },
