@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
         lyrics: true,
         songsterr: true,
         ultimateGuitar: true,
+        lastPracticedAt: true,
+        keyNotes: true,
+        tuningNotes: true,
       },
     });
 

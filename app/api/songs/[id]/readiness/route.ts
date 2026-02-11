@@ -45,19 +45,73 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
       },
     });
 
-    // Get current user's readiness
-    const userReadiness = allReadiness.find((r) => r.userId === userId);
+    // Get all practice list items for this song (to include in aggregate)
+    const practiceItems = await prisma.practiceListItem.findMany({
+      where: { songId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
 
-    // Calculate aggregate statistics
+    // Get current user's readiness (from explicit vote or woodshed practice)
+    let userReadinessStatus = allReadiness.find((r) => r.userId === userId)?.status || null;
+
+    // If user doesn't have explicit readiness vote, check woodshed practice status as fallback
+    if (!userReadinessStatus) {
+      const practiceItem = practiceItems.find((p) => p.userId === userId);
+
+      // Map practice status to readiness status
+      if (practiceItem) {
+        if (practiceItem.status === 'CONFIDENT') {
+          userReadinessStatus = 'SOLID';
+        } else if (practiceItem.status === 'LEARNING') {
+          userReadinessStatus = 'NEEDS_WORK';
+        } else if (practiceItem.status === 'NOT_STARTED') {
+          userReadinessStatus = 'NOT_READY';
+        }
+      }
+    }
+
+    // Build combined readiness map (explicit votes + practice items)
+    const readinessMap = new Map<string, string>();
+
+    // First, add all explicit readiness votes
+    allReadiness.forEach((r) => {
+      readinessMap.set(r.userId, r.status);
+    });
+
+    // Then, add practice items for users who don't have explicit votes
+    practiceItems.forEach((p) => {
+      if (!readinessMap.has(p.userId)) {
+        let status = 'NOT_READY';
+        if (p.status === 'CONFIDENT') status = 'SOLID';
+        else if (p.status === 'LEARNING') status = 'NEEDS_WORK';
+        readinessMap.set(p.userId, status);
+      }
+    });
+
+    // Calculate aggregate statistics from combined data
     const counts = {
-      SOLID: allReadiness.filter((r) => r.status === "SOLID").length,
-      NEEDS_WORK: allReadiness.filter((r) => r.status === "NEEDS_WORK").length,
-      NOT_READY: allReadiness.filter((r) => r.status === "NOT_READY").length,
+      SOLID: 0,
+      NEEDS_WORK: 0,
+      NOT_READY: 0,
     };
+
+    readinessMap.forEach((status) => {
+      if (status === 'SOLID') counts.SOLID++;
+      else if (status === 'NEEDS_WORK') counts.NEEDS_WORK++;
+      else if (status === 'NOT_READY') counts.NOT_READY++;
+    });
 
     // Calculate aggregate status
     let aggregateStatus: "SOLID" | "NEEDS_WORK" | "NOT_READY" | "NONE" = "NONE";
-    if (allReadiness.length > 0) {
+    const totalVotes = readinessMap.size;
+    if (totalVotes > 0) {
       if (counts.NOT_READY > 0) {
         aggregateStatus = "NOT_READY";
       } else if (counts.NEEDS_WORK > 0) {
@@ -68,19 +122,20 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     }
 
     // Calculate average readiness score (SOLID=2, NEEDS_WORK=1, NOT_READY=0)
-    const totalScore = allReadiness.reduce((sum, r) => {
-      const score = r.status === "SOLID" ? 2 : r.status === "NEEDS_WORK" ? 1 : 0;
-      return sum + score;
-    }, 0);
-    const avgScore = allReadiness.length > 0 ? totalScore / allReadiness.length : 0;
+    let totalScore = 0;
+    readinessMap.forEach((status) => {
+      const score = status === 'SOLID' ? 2 : status === 'NEEDS_WORK' ? 1 : 0;
+      totalScore += score;
+    });
+    const avgScore = totalVotes > 0 ? totalScore / totalVotes : 0;
 
     return NextResponse.json({
-      userReadiness: userReadiness?.status || null,
+      userReadiness: userReadinessStatus,
       aggregate: {
         status: aggregateStatus,
         counts,
         avgScore,
-        totalVotes: allReadiness.length,
+        totalVotes,
       },
     });
   } catch (error) {

@@ -43,6 +43,14 @@ export default function Navbar() {
             >
               <span>🎯</span> Setlist
             </Link>
+            {session && (
+              <Link
+                href="/woodshed"
+                className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
+              >
+                <span>🪵</span> Woodshed
+              </Link>
+            )}
             <Link
               href="/admin"
               className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
@@ -138,6 +146,15 @@ export default function Navbar() {
             <span className="text-lg">🎯</span> 
             <span className="text-sm font-medium">Setlist</span>
           </Link>
+          {session && (
+            <Link 
+              href="/woodshed" 
+              className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"
+            >
+              <span className="text-lg">🪵</span> 
+              <span className="text-sm font-medium">Woodshed</span>
+            </Link>
+          )}
           <Link 
             href="/songs" 
             className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"
