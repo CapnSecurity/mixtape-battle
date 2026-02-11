@@ -43,10 +43,7 @@ async function main() {
   });
   console.log('✅ Created user account:', user.email);
 
-  console.log('\n🎉 Dev accounts ready!');
-  console.log('\nLogin credentials:');
-  console.log('  Admin: admin@test.local / admin123');
-  console.log('  User:  user@test.local / user123');
+  console.log('Dev accounts ready');
 }
 
 main()

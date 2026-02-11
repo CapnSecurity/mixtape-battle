@@ -4,6 +4,7 @@ import { songsterrBass, ultimateGuitarGuitar, ultimateGuitarBass, youtube, lyric
 import Button from "@/src/components/ui/Button";
 import Comments from "@/src/components/Comments";
 import SongDetailClient from "@/src/components/SongDetailClient";
+import AddToWoodshed from "@/src/components/AddToWoodshed";
 
 type Params = Promise<{ id: string }>;
 
@@ -94,9 +95,12 @@ export default async function SongPage({ params }: { params: Params }) {
 
         {/* Resource Links */}
         <div className="bg-[var(--surface)] rounded-2xl shadow-[var(--shadow)] p-8 border border-[var(--ring)]/20">
-          <h2 className="text-2xl font-bold text-[var(--text)] mb-6">
-            Learn This Song
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-[var(--text)]">
+              Learn This Song
+            </h2>
+            <AddToWoodshed songId={songId} variant="button" />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {/* Guitar Tabs */}

@@ -41,6 +41,7 @@ model Song {
   
   comments  Comment[]
   readiness SongReadiness[]
+  practiceListItems PracticeListItem[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -105,6 +106,7 @@ model User {
   battleVotes   BattleVote[]
   comments      Comment[]
   readiness     SongReadiness[]
+  practiceList  PracticeListItem[]
 }
 
 model UserPreference {
@@ -173,6 +175,30 @@ model BattleSkip {
 
   @@unique([userId, songId])
   @@index([userId, lastSkippedAt])
+}
+
+enum PracticeStatus {
+  NOT_STARTED
+  LEARNING
+  CONFIDENT
+}
+
+model PracticeListItem {
+  id        String          @id @default(cuid())
+  userId    String
+  songId    Int
+  status    PracticeStatus  @default(NOT_STARTED)
+  priority  Int             @default(3) // 1-5 scale
+  notes     String?
+  addedAt   DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song Song @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, songId])
+  @@index([userId, status])
+  @@index([userId, priority])
 }
 
 model Comment {

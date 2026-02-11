@@ -1,15 +1,18 @@
 /**
  * Setlist Confidence Page
  * 
- * Displays the top 20 songs by ELO ranking with comprehensive rehearsal readiness info.
+ * Displays the top 20 songs ranked by a composite score combining ELO and readiness.
+ * 
+ * Composite Score = ELO + (Average Readiness × 200)
+ * This keeps popular songs ranked high while significantly boosting well-practiced songs.
  * 
  * Features:
- * - Top-ranked songs sorted by battle performance
+ * - Top-ranked songs sorted by battle performance and practice readiness
  * - Aggregate band readiness for each song
  * - Last practice date with visual indicators (red if >30 days old)
  * - Key signature and tuning notes for quick reference
  * 
- * Helps bands prepare for gigs by showing which top songs need practice attention.
+ * Helps bands prepare for gigs by showing which songs are both popular and ready to perform.
  * 
  * Requires authentication.
  */
@@ -17,6 +20,7 @@
 import Link from "next/link";
 import { prisma } from "../../lib/prisma";
 import ReadinessIcon from "@/src/components/ReadinessIcon";
+import AddToWoodshed from "@/src/components/AddToWoodshed";
 
 export const dynamic = 'force-dynamic';
 
@@ -62,10 +66,11 @@ function formatPracticeDate(date: Date | null): string {
 }
 
 export default async function SetlistConfidencePage() {
-  // Get top 20 songs by ELO with readiness and practice data
-  const topSongs = await prisma.song.findMany({
+  // Get top songs with readiness and practice data
+  // We'll sort by a composite score of ELO + readiness
+  const songs = await prisma.song.findMany({
     orderBy: { elo: "desc" },
-    take: 20,
+    take: 50, // Get more songs to ensure good selection after composite sorting
     include: {
       readiness: {
         select: {
@@ -75,6 +80,22 @@ export default async function SetlistConfidencePage() {
     },
   });
 
+  // Calculate composite score for each song and sort
+  // Composite = ELO + (avgReadiness * 200)
+  // This weights readiness significantly while keeping popular songs ranked high
+  const songsWithScore = songs.map(song => ({
+    ...song,
+    avgReadiness: calculateAvgReadiness(song.readiness),
+  })).map(song => ({
+    ...song,
+    compositeScore: song.elo + (song.avgReadiness * 200),
+  }));
+
+  // Sort by composite score and take top 20
+  const topSongs = songsWithScore
+    .sort((a, b) => b.compositeScore - a.compositeScore)
+    .slice(0, 20);
+
   return (
     <div className="min-h-screen py-12 px-4 bg-[var(--bg)] text-[var(--text)]">
       <div className="max-w-6xl mx-auto">
@@ -82,7 +103,7 @@ export default async function SetlistConfidencePage() {
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-bold mb-3">🎯 Setlist Confidence</h1>
           <p className="text-xl text-[var(--muted)]">
-            Top 20 songs with readiness and practice tracking
+            Top 20 songs ranked by popularity and practice readiness
           </p>
         </div>
 
@@ -126,6 +147,11 @@ export default async function SetlistConfidencePage() {
                     {song.readiness.length} {song.readiness.length === 1 ? 'vote' : 'votes'}
                   </div>
                 )}
+
+                {/* Add to Woodshed */}
+                <div className="mb-3">
+                  <AddToWoodshed songId={song.id} variant="compact" />
+                </div>
 
                 {/* Practice Info */}
                 <div className="space-y-2 text-sm">
@@ -244,9 +270,12 @@ export default async function SetlistConfidencePage() {
                           </div>
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <span className="inline-block bg-[var(--surface2)] text-[var(--text)] font-bold px-3 py-1 lg:px-4 lg:py-2 rounded-lg text-sm lg:text-base">
-                            {Math.round(song.elo)}
-                          </span>
+                          <div className="flex items-center justify-end gap-3">
+                            <AddToWoodshed songId={song.id} variant="compact" />
+                            <span className="inline-block bg-[var(--surface2)] text-[var(--text)] font-bold px-3 py-1 lg:px-4 lg:py-2 rounded-lg text-sm lg:text-base">
+                              {Math.round(song.elo)}
+                            </span>
+                          </div>
                         </td>
                       </tr>
                     );
