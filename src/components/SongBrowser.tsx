@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import { ultimateGuitarGuitar, songsterrBass, youtube, lyrics } from "@/lib/links";
+import { ultimateGuitarGuitar, ultimateGuitarBass, songsterrBass, youtube, lyrics, spotify, genius, wikipedia, allMusic } from "@/lib/links";
 import Comments from "@/src/components/Comments";
+import AddToWoodshed from "@/src/components/AddToWoodshed";
+import SongDetailClient from "@/src/components/SongDetailClient";
 
 type Song = {
   id: number;
@@ -14,6 +16,13 @@ type Song = {
   releaseDate: number | null;
   album: string | null;
   albumArtUrl?: string | null;
+  lastPracticedAt?: Date | null;
+  keyNotes?: string | null;
+  tuningNotes?: string | null;
+  ultimateGuitar?: string | null;
+  songsterr?: string | null;
+  youtube?: string | null;
+  lyrics?: string | null;
 };
 
 export default function SongBrowser() {
@@ -365,98 +374,183 @@ export default function SongBrowser() {
             )}
             {/* Selected Song Details */}
             {selectedSong && (
-              <div ref={songDetailsRef} className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-10 shadow-[var(--shadow)]">
-                <div className="mb-10 pb-10 border-b border-[var(--ring)]/20">
-                  {selectedSong.albumArtUrl && (
-                    <div className="mb-8 flex justify-center">
+              <div ref={songDetailsRef} className="space-y-8">
+                {/* Song Header Card with Gradient */}
+                <div className="bg-[linear-gradient(135deg,var(--gold),var(--pink))] rounded-2xl shadow-[var(--shadow)] p-8">
+                  {selectedSong.albumArtUrl ? (
+                    <div className="mb-6 flex justify-center">
                       <img 
                         src={selectedSong.albumArtUrl} 
                         alt={`${selectedSong.album || selectedSong.title} album art`}
-                        className="w-64 h-64 object-cover rounded-2xl shadow-2xl"
+                        className="w-64 h-64 object-cover rounded-xl shadow-2xl"
                       />
                     </div>
+                  ) : (
+                    <div className="text-7xl mb-6 text-center">🎶</div>
                   )}
                   
-                  <h2 className="text-5xl font-bold text-[var(--text)] mb-3">
+                  <h2 className="text-4xl font-bold text-[var(--bg)] mb-2 text-center">
                     {selectedSong.title}
                   </h2>
-                  <p className="text-2xl text-[var(--muted)] mb-6 font-semibold">
+                  <p className="text-xl text-[var(--bg)]/80 text-center mb-6">
                     {selectedSong.artist}
                   </p>
 
-                  <div className="flex flex-wrap gap-8 mb-6">
-                    {selectedSong.album && (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-wider">Album</span>
-                        <p className="text-lg text-[var(--text)] font-semibold">{selectedSong.album}</p>
-                      </div>
-                    )}
-                    {selectedSong.releaseDate && (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-wider">Released</span>
-                        <p className="text-lg text-[var(--text)] font-semibold">{selectedSong.releaseDate}</p>
-                      </div>
-                    )}
-                    {selectedSong.genre && (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-wider">Genre</span>
-                        <p className="text-lg text-[var(--text)] font-semibold">{selectedSong.genre}</p>
-                      </div>
-                    )}
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-[var(--muted)] uppercase tracking-wider">Battle Score</span>
-                      <p className="text-4xl font-bold text-[var(--gold)]">
-                        {Math.round(selectedSong.elo)}
-                      </p>
+                  {/* Metadata */}
+                  {(selectedSong.album || selectedSong.releaseDate || selectedSong.genre) && (
+                    <div className="bg-[var(--bg)]/20 rounded-xl p-4 mb-4 flex flex-wrap justify-center gap-6">
+                      {selectedSong.album && (
+                        <div className="text-center">
+                          <div className="text-xs text-[var(--bg)]/60 uppercase tracking-wider mb-1">Album</div>
+                          <div className="text-sm font-semibold text-[var(--bg)]">{selectedSong.album}</div>
+                        </div>
+                      )}
+                      {selectedSong.releaseDate && (
+                        <div className="text-center">
+                          <div className="text-xs text-[var(--bg)]/60 uppercase tracking-wider mb-1">Year</div>
+                          <div className="text-sm font-semibold text-[var(--bg)]">{selectedSong.releaseDate}</div>
+                        </div>
+                      )}
+                      {selectedSong.genre && (
+                        <div className="text-center">
+                          <div className="text-xs text-[var(--bg)]/60 uppercase tracking-wider mb-1">Genre</div>
+                          <div className="text-sm font-semibold text-[var(--bg)]">{selectedSong.genre}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="bg-[var(--bg)]/20 rounded-xl p-6 text-center">
+                    <div className="text-sm text-[var(--bg)]/80 mb-2">Battle Score</div>
+                    <div className="text-5xl font-bold text-[var(--bg)]">
+                      {Math.round(selectedSong.elo)}
                     </div>
                   </div>
                 </div>
 
+                {/* Resource Links Card */}
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-8 shadow-[var(--shadow)]">
                 {/* Resource Links */}
-                <div className="mt-10">
-                  <h3 className="text-2xl font-bold text-[var(--text)] mb-6">📚 Learning Resources</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-bold text-[var(--text)]">📚 Learn This Song</h3>
+                    <AddToWoodshed songId={selectedSong.id} variant="button" />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                    {/* Guitar Tabs */}
                     <a
-                      href={ultimateGuitarGuitar(selectedSong.artist, selectedSong.title)}
+                      href={selectedSong.ultimateGuitar || ultimateGuitarGuitar(selectedSong.artist, selectedSong.title)}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm border border-[var(--ring)]/20"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
                     >
-                      <div className="text-3xl mb-2">🎸</div>
-                      Guitar Tabs
+                      <span className="text-2xl">🎸</span>
+                      <div>
+                        <div className="font-bold text-[var(--text)]">Guitar Tabs</div>
+                        <div className="text-sm text-[var(--muted)]">Ultimate Guitar</div>
+                      </div>
                     </a>
+
+                    {/* Bass Tabs */}
                     <a
-                      href={songsterrBass(selectedSong.artist, selectedSong.title)}
+                      href={selectedSong.songsterr || songsterrBass(selectedSong.artist, selectedSong.title)}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm border border-[var(--ring)]/20"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
                     >
-                      <div className="text-3xl mb-2">🎵</div>
-                      Bass Tabs
+                      <span className="text-2xl">🎸</span>
+                      <div>
+                        <div className="font-bold text-[var(--text)]">Bass Tabs</div>
+                        <div className="text-sm text-[var(--muted)]">Songsterr</div>
+                      </div>
                     </a>
+
+                    {/* Lyrics (Genius) */}
                     <a
-                      href={youtube(selectedSong.artist, selectedSong.title)}
+                      href={selectedSong.lyrics || genius(selectedSong.artist, selectedSong.title)}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm border border-[var(--ring)]/20"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
                     >
-                      <div className="text-3xl mb-2">▶️</div>
-                      YouTube
+                      <span className="text-2xl">📝</span>
+                      <div>
+                        <div className="font-bold text-[var(--text)]">Lyrics</div>
+                        <div className="text-sm text-[var(--muted)]">Genius Lyrics</div>
+                      </div>
                     </a>
+
+                    {/* YouTube */}
                     <a
-                      href={lyrics(selectedSong.artist, selectedSong.title)}
+                      href={selectedSong.youtube || youtube(selectedSong.artist, selectedSong.title)}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="block bg-[var(--surface2)] hover:bg-[var(--surface)] text-[var(--text)] font-bold py-6 px-5 rounded-xl text-center transition-all text-sm border border-[var(--ring)]/20"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
                     >
-                      <div className="text-3xl mb-2">📝</div>
-                      Lyrics
+                      <span className="text-2xl">▶️</span>
+                      <div>
+                        <div className="font-bold text-[var(--text)]">YouTube</div>
+                        <div className="text-sm text-[var(--muted)]">Watch performances</div>
+                      </div>
+                    </a>
+
+                    {/* Spotify */}
+                    <a
+                      href={spotify(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
+                    >
+                      <span className="text-2xl">🎧</span>
+                      <div>
+                        <div className="font-bold text-[var(--text)]">Spotify</div>
+                        <div className="text-sm text-[var(--muted)]">Listen on Spotify</div>
+                      </div>
+                    </a>
+
+                    {/* Wikipedia */}
+                    <a
+                      href={wikipedia(selectedSong.artist, selectedSong.title)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
+                    >
+                      <span className="text-2xl">📚</span>
+                      <div>
+                        <div className="font-bold text-[var(--text)]">Wikipedia</div>
+                        <div className="text-sm text-[var(--muted)]">Artist or Song Info</div>
+                      </div>
+                    </a>
+
+                    {/* AllMusic */}
+                    <a
+                      href={allMusic(selectedSong.artist, selectedSong.album)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
+                    >
+                      <span className="text-2xl">💿</span>
+                      <div>
+                        <div className="font-bold text-[var(--text)]">AllMusic</div>
+                        <div className="text-sm text-[var(--muted)]">Album & Artist Info</div>
+                      </div>
                     </a>
                   </div>
                 </div>
+                </div>
+
+                {/* Readiness & Practice Tracking */}
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-8 shadow-[var(--shadow)]">
+                  <SongDetailClient
+                    songId={selectedSong.id}
+                    lastPracticedAt={selectedSong.lastPracticedAt?.toISOString() || null}
+                    keyNotes={selectedSong.keyNotes || null}
+                    tuningNotes={selectedSong.tuningNotes || null}
+                  />
+                </div>
 
                 {/* Comments Section */}
-                <div className="mt-10 pt-10 border-t border-[var(--ring)]/20">
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-8 shadow-[var(--shadow)]">
                   <Comments songId={selectedSong.id} />
                 </div>
               </div>
