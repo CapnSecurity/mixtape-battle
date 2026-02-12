@@ -267,9 +267,6 @@ export default function WoodshedPage() {
 
                         {/* Status Selector */}
                         <div className="mb-4">
-                          <label className="text-xs font-semibold text-[var(--muted)] block mb-2">
-                            STATUS
-                          </label>
                           <div className="flex gap-2">
                             {(["NOT_STARTED", "LEARNING", "CONFIDENT"] as PracticeStatus[]).map(
                               (s) => (
@@ -281,6 +278,7 @@ export default function WoodshedPage() {
                                       ? "bg-[var(--gold)] text-[var(--bg)]"
                                       : "bg-[var(--surface2)] text-[var(--muted)] hover:bg-[var(--surface)]"
                                   }`}
+                                  title={`${statusConfig[s].label}`}
                                 >
                                   {statusConfig[s].emoji} {s.replace("_", " ")}
                                 </button>
