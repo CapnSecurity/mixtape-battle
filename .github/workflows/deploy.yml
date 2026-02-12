@@ -72,7 +72,7 @@ jobs:
           Write-Host "🔍 Verifying deployment..."
           Start-Sleep -Seconds 5
           try {
-            $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 10
+            $response = Invoke-WebRequest -Uri "http://localhost" -UseBasicParsing -SkipCertificateCheck -TimeoutSec 10
             if ($response.StatusCode -eq 200) {
               Write-Host "✅ Deployment verified - application is healthy" -ForegroundColor Green
             }

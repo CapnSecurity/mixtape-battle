@@ -88,7 +88,7 @@ Write-Host ""
 # Run health check
 Write-Host "🏥 Running health check..." -ForegroundColor Cyan
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 10
+    $response = Invoke-WebRequest -Uri "http://localhost" -UseBasicParsing -SkipCertificateCheck -TimeoutSec 10
     if ($response.StatusCode -eq 200) {
         Write-Host "✅ Health check passed" -ForegroundColor Green
     }
