@@ -86,8 +86,8 @@ function SettingsContent() {
       const res = await fetch('/api/songs');
       if (res.ok) {
         const songs = await res.json();
-        const genres = [...new Set(songs.filter((s: any) => s.genre).map((s: any) => s.genre))].sort();
-        const artists = [...new Set(songs.map((s: any) => s.artist))].sort();
+        const genres = [...new Set(songs.filter((s: any) => s.genre).map((s: any) => s.genre))].sort() as string[];
+        const artists = [...new Set(songs.map((s: any) => s.artist))].sort() as string[];
         
         setAvailableGenres(genres);
         setAvailableArtists(artists);
