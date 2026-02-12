@@ -59,6 +59,22 @@ Write-Host "⏳ Waiting for services..." -ForegroundColor Cyan
 Start-Sleep -Seconds 15
 Write-Host ""
 
+Write-Host "🗄️  Syncing database schema..." -ForegroundColor Cyan
+try {
+    $dbOutput = docker exec mixtape-app node node_modules/prisma/build/index.js db push 2>&1
+    Write-Host $dbOutput
+    Write-Host "✅ Schema synced" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️  Schema sync failed: $_" -ForegroundColor Yellow
+}
+Write-Host ""
+
+Write-Host "🔄 Restarting app..." -ForegroundColor Cyan
+docker compose -f docker-compose.production.yml restart app
+Start-Sleep -Seconds 5
+Write-Host "✅ Restarted" -ForegroundColor Green
+Write-Host ""
+
 Write-Host "🏥 Health check..." -ForegroundColor Cyan
 try {
     $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 10

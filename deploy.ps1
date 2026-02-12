@@ -57,12 +57,30 @@ docker compose -f $COMPOSE_FILE up -d
 Write-Host "✅ Containers started" -ForegroundColor Green
 Write-Host ""
 
-# Wait for health checks
+# Wait for database to be ready
 Write-Host "⏳ Waiting for services to be healthy..." -ForegroundColor Cyan
 Start-Sleep -Seconds 10
 
-# Check container status
+# Sync database schema
+Write-Host "🗄️  Syncing database schema..." -ForegroundColor Cyan
+try {
+    $dbPushOutput = docker exec mixtape-app node node_modules/prisma/build/index.js db push 2>&1
+    Write-Host $dbPushOutput
+    Write-Host "✅ Database schema synced" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️  Schema sync failed - check logs" -ForegroundColor Red
+    Write-Host "Error: $_" -ForegroundColor Yellow
+}
 Write-Host ""
+
+# Restart app to refresh Prisma client
+Write-Host "🔄 Restarting app to apply schema changes..." -ForegroundColor Cyan
+docker compose -f $COMPOSE_FILE restart app
+Start-Sleep -Seconds 5
+Write-Host "✅ App restarted" -ForegroundColor Green
+Write-Host ""
+
+# Check container status
 Write-Host "📊 Container Status:" -ForegroundColor Cyan
 docker compose -f $COMPOSE_FILE ps
 Write-Host ""
@@ -70,23 +88,12 @@ Write-Host ""
 # Run health check
 Write-Host "🏥 Running health check..." -ForegroundColor Cyan
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 5
+    $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 10
     if ($response.StatusCode -eq 200) {
         Write-Host "✅ Health check passed" -ForegroundColor Green
     }
 } catch {
-    Write-Host "⚠️  Health check endpoint not responding yet (this may be normal during startup)" -ForegroundColor Yellow
-}
-Write-Host ""
-
-# Run database migrations
-Write-Host "🗄️  Running database migrations..." -ForegroundColor Cyan
-try {
-    docker exec mixtape-app node node_modules/prisma/build/index.js migrate deploy
-    Write-Host "✅ Migrations applied successfully" -ForegroundColor Green
-} catch {
-    Write-Host "⚠️  Migration step failed - check logs" -ForegroundColor Red
-    Write-Host "You may need to run manually: docker exec mixtape-app node node_modules/prisma/build/index.js migrate deploy" -ForegroundColor Yellow
+    Write-Host "⚠️  Health check failed: $_" -ForegroundColor Yellow
 }
 Write-Host ""
 

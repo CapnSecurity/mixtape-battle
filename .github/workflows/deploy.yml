@@ -66,6 +66,21 @@ jobs:
           Set-Location "C:\Users\tim\Desktop\Windsurf Projects\mixtape-battle"
           .\deploy.ps1
           
+      - name: Verify deployment
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Verifying deployment..."
+          Start-Sleep -Seconds 5
+          try {
+            $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 10
+            if ($response.StatusCode -eq 200) {
+              Write-Host "✅ Deployment verified - application is healthy" -ForegroundColor Green
+            }
+          } catch {
+            Write-Host "⚠️  Health check failed: $_" -ForegroundColor Yellow
+            exit 1
+          }
+          
       - name: Deployment Summary
         shell: pwsh
         run: |
