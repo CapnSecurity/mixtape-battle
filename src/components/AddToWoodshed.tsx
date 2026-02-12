@@ -18,7 +18,7 @@ export default function AddToWoodshed({
   onSuccess 
 }: AddToWoodshedProps) {
   const { data: session } = useSession();
-  const { token: csrfToken } = useCsrfToken();
+  const { token: csrfToken, loading: csrfLoading } = useCsrfToken();
   const [isInWoodshed, setIsInWoodshed] = useState(false);
   const [practiceItemId, setPracticeItemId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,10 +138,10 @@ export default function AddToWoodshed({
     return (
       <button
         onClick={isInWoodshed ? removeFromWoodshed : addToWoodshed}
-        disabled={actionLoading}
+        disabled={actionLoading || csrfLoading || !csrfToken}
         className={`text-2xl transition hover:scale-110 ${
           isInWoodshed ? "opacity-100" : "opacity-50 hover:opacity-100"
-        } ${actionLoading ? "cursor-not-allowed animate-pulse" : ""} ${className}`}
+        } ${(actionLoading || csrfLoading) ? "cursor-not-allowed animate-pulse" : ""} ${className}`}
         title={isInWoodshed ? "Remove from Woodshed" : "Add to Woodshed"}
       >
         🪵
@@ -154,14 +154,14 @@ export default function AddToWoodshed({
     return (
       <button
         onClick={isInWoodshed ? removeFromWoodshed : addToWoodshed}
-        disabled={actionLoading}
+        disabled={actionLoading || csrfLoading || !csrfToken}
         className={`px-2 py-1 rounded-lg text-xs font-semibold transition ${
           isInWoodshed
             ? "bg-[var(--gold)]/20 text-[var(--gold)] hover:bg-[var(--gold)]/30"
             : "bg-[var(--surface2)] text-[var(--text)] hover:bg-[var(--surface)]"
-        } ${actionLoading ? "cursor-not-allowed opacity-50" : ""} ${className}`}
+        } ${(actionLoading || csrfLoading) ? "cursor-not-allowed opacity-50" : ""} ${className}`}
       >
-        {actionLoading ? "..." : isInWoodshed ? "🪵 In Woodshed" : "🪵 Add"}
+        {(actionLoading || csrfLoading) ? "..." : isInWoodshed ? "🪵 In Woodshed" : "🪵 Add"}
       </button>
     );
   }
@@ -170,14 +170,14 @@ export default function AddToWoodshed({
   return (
     <button
       onClick={isInWoodshed ? removeFromWoodshed : addToWoodshed}
-      disabled={actionLoading}
+      disabled={actionLoading || csrfLoading || !csrfToken}
       className={`px-4 py-2 rounded-lg font-semibold transition ${
         isInWoodshed
           ? "bg-[var(--gold)]/20 text-[var(--gold)] hover:bg-[var(--gold)]/30 border border-[var(--gold)]/40"
           : "bg-[var(--surface2)] text-[var(--text)] hover:bg-[var(--surface)] border border-[var(--ring)]/20"
-      } ${actionLoading ? "cursor-not-allowed opacity-50" : ""} ${className}`}
+      } ${(actionLoading || csrfLoading) ? "cursor-not-allowed opacity-50" : ""} ${className}`}
     >
-      {actionLoading ? (
+      {(actionLoading || csrfLoading) ? (
         "Loading..."
       ) : isInWoodshed ? (
         <>✓ In Woodshed</>

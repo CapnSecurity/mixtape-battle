@@ -177,7 +177,7 @@ export default function WoodshedPage() {
 
   return (
     <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 text-[var(--text)]">
@@ -222,11 +222,11 @@ export default function WoodshedPage() {
                     <span className="text-[var(--muted)] text-lg">({items.length})</span>
                   </h2>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                  <div className="flex flex-col items-center gap-4 md:gap-6">
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-xl p-4 md:p-6"
+                        className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-xl p-4 md:p-6 w-full max-w-2xl"
                       >
                         {/* Song Header */}
                         <div className="flex items-start gap-4 mb-4">

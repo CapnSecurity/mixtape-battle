@@ -367,6 +367,12 @@ export default function BattlePage() {
               📖 Song Library
             </Link>
             <Link
+              href="/settings"
+              className="text-[var(--text)] hover:text-[var(--muted)] font-semibold transition"
+            >
+              ⚙️ Battle Preferences
+            </Link>
+            <Link
               href="/add-song"
               className="text-[var(--gold)] hover:text-[var(--pink)] font-semibold transition"
             >

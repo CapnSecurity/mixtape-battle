@@ -52,16 +52,24 @@ export default function Navbar() {
               </Link>
             )}
             <Link
-              href="/admin"
-              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
-            >
-              <span>⚙️</span> Admin
-            </Link>
-            <Link
               href="/songs"
               className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
             >
               <span>🎸</span> Songs
+            </Link>
+            {session && (
+              <Link
+                href="/settings"
+                className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
+              >
+                <span>⚙️</span> Settings
+              </Link>
+            )}
+            <Link
+              href="/admin"
+              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
+            >
+              <span>👥</span> Admin
             </Link>
           </div>
 
@@ -70,20 +78,17 @@ export default function Navbar() {
             {status === "loading" ? (
               <div className="text-[var(--muted)] text-sm">Loading...</div>
             ) : session ? (
-              <>
-                <div className="text-sm text-[var(--muted)] truncate max-w-[200px]">
-                  {session.user?.email}
-                </div>
-                <Button
-                  variant="surface"
-                  size="md"
-                  onClick={async () => {
-                    await signOut({ callbackUrl: "/login" });
-                  }}
-                >
-                  Sign Out
-                </Button>
-              </>
+              <Button
+                variant="surface"
+                size="md"
+                onClick={async () => {
+                  await signOut({ callbackUrl: "/login" });
+                }}
+                className="flex flex-col items-center py-2 leading-tight"
+              >
+                <span className="font-semibold">{session.user?.name || session.user?.email?.split('@')[0] || 'User'}</span>
+                <span className="text-xs text-[var(--muted)]">Sign out</span>
+              </Button>
             ) : (
               <Button asChild size="md">
                 <Link href="/login">Sign In</Link>
@@ -102,9 +107,10 @@ export default function Navbar() {
                 onClick={async () => {
                   await signOut({ callbackUrl: "/login" });
                 }}
-                className="min-h-[44px]"
+                className="min-h-[44px] flex flex-col items-center py-2 leading-tight"
               >
-                Sign Out
+                <span className="font-semibold">{session.user?.name || session.user?.email?.split('@')[0] || 'User'}</span>
+                <span className="text-xs text-[var(--muted)]">Sign out</span>
               </Button>
             ) : (
               <Button asChild size="md" className="min-h-[44px]">
@@ -114,14 +120,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile User Info Row */}
-        {session && (
-          <div className="md:hidden flex items-center justify-between py-2 border-t border-[var(--ring)]/10">
-            <div className="text-xs text-[var(--muted)] truncate">
-              Signed in as: {session.user?.email}
-            </div>
-          </div>
-        )}
+
 
         {/* Mobile Nav */}
         <div className="md:hidden flex gap-2 pb-3 overflow-x-auto border-t border-[var(--ring)]/20 pt-3 -mx-4 px-4">
@@ -162,11 +161,20 @@ export default function Navbar() {
             <span className="text-lg">🎸</span> 
             <span className="text-sm font-medium">Songs</span>
           </Link>
+          {session && (
+            <Link 
+              href="/settings" 
+              className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"
+            >
+              <span className="text-lg">⚙️</span> 
+              <span className="text-sm font-medium">Settings</span>
+            </Link>
+          )}
           <Link 
             href="/admin" 
             className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"
           >
-            <span className="text-lg">⚙️</span> 
+            <span className="text-lg">👥</span> 
             <span className="text-sm font-medium">Admin</span>
           </Link>
         </div>

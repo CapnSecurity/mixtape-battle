@@ -9,7 +9,6 @@ const DEFAULTS = {
     genre: 2,
     decade: 1.5,
     artist: 2,
-    energyMood: 1.5,
   },
 };
 
@@ -72,7 +71,6 @@ export async function GET() {
     let weight = 1;
     if (song.genre && prefs.genres.includes(song.genre)) weight += DEFAULTS.weights.genre;
     if (song.artist && prefs.artists.includes(song.artist)) weight += DEFAULTS.weights.artist;
-    if (song.energyMood && prefs.energyMoods.includes(song.energyMood)) weight += DEFAULTS.weights.energyMood;
     const decade = song.decade ?? (song.releaseDate ? Math.floor(song.releaseDate / 10) * 10 : null);
     if (decade && prefs.decades.includes(decade)) weight += DEFAULTS.weights.decade;
     return weight;

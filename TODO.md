@@ -30,12 +30,17 @@
 - [ ] Database connection SSL/TLS (deprioritized for Docker-only network)
 
 ### Medium Impact / Longer Time
-- [ ] **Battle System Revamp**
-  - User settings for battle preferences (genre, decade, etc.)
+- [ ] **Battle System Revamp** (In Progress)
+  - User settings for battle preferences (genre, decade, artist)
   - Weighted random selection based on preferences
   - Smart pairing algorithm (avoid repeat battles)
   - Battle history tracking
   - Skip functionality with cooldown
+- [ ] **Voting to Expel Songs**
+  - Community voting system to remove songs from battle pool
+  - Threshold-based expulsion (e.g., 10+ expel votes)
+  - Admin review interface for flagged songs
+  - Prevent abuse with rate limiting
 
 ### Low Impact / Longer Time
 - [ ] Battle vote limits (when user base grows)
@@ -94,4 +99,4 @@
 
 ---
 
-**Last Updated:** February 6, 2026
+**Last Updated:** February 10, 2026

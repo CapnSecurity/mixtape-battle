@@ -15,7 +15,7 @@ export default function DashboardPage() {
           <div className="text-7xl mb-6">🎵</div>
           <h1 className="text-6xl font-bold text-[var(--text)] mb-4">Mixtape Battle</h1>
           <p className="text-[var(--muted)] text-xl">
-            Welcome back, {session?.user?.email}
+            Welcome back, {session?.user?.name || session?.user?.email?.split('@')[0] || 'friend'}
           </p>
         </div>
 
@@ -57,20 +57,29 @@ export default function DashboardPage() {
           {/* Invite */}
           <Link href="/admin" className="group">
             <div className="p-8 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] hover:bg-[var(--surface)] transition">
-              <div className="text-5xl mb-4">✉️</div>
-              <h2 className="text-2xl font-bold text-[var(--text)] mb-2">Invite</h2>
+              <div className="text-5xl mb-4">👥</div>
+              <h2 className="text-2xl font-bold text-[var(--text)] mb-2">Admin</h2>
               <p className="text-[var(--muted)]">
-                Invite band members to participate
+                Invite band members and manage users
+              </p>
+            </div>
+          </Link>
+
+          {/* Settings */}
+          <Link href="/settings" className="group">
+            <div className="p-8 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] hover:bg-[var(--surface)] transition">
+              <div className="text-5xl mb-4">⚙️</div>
+              <h2 className="text-2xl font-bold text-[var(--text)] mb-2">Settings</h2>
+              <p className="text-[var(--muted)]">
+                Manage your account and battle preferences
               </p>
             </div>
           </Link>
         </div>
 
-        {/* Account Settings Link */}
-        <div className="text-center">
-          <Link href="/settings">
-            <Button variant="ghost">⚙️ Account Settings</Button>
-          </Link>
+        {/* Quick Stats or Info */}
+        <div className="text-center text-[var(--muted)] text-sm">
+          <p>Customize your battle experience in Settings</p>
         </div>
       </div>
     </div>

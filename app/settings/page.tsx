@@ -5,14 +5,27 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/src/components/ui/Button";
 import Input from "@/src/components/ui/Input";
-import { FaLock, FaCheck } from "react-icons/fa";
+import { FaLock, FaCheck, FaCog, FaMusic } from "react-icons/fa";
 import { useCsrfToken, withCsrfToken } from "@/lib/use-csrf";
 
+type Preferences = {
+  genres: string[];
+  decades: number[];
+  artists: string[];
+};
+
 function SettingsContent() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const resetToken = searchParams.get('token');
+
+  // Redirect to login if not authenticated and no reset token
+  useEffect(() => {
+    if (status !== "loading" && !session && !resetToken) {
+      router.push("/login");
+    }
+  }, [status, session, resetToken, router]);
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,11 +37,65 @@ function SettingsContent() {
   const [tokenEmail, setTokenEmail] = useState("");
   const { token: csrfToken } = useCsrfToken();
 
+  // Username state
+  const [username, setUsername] = useState("");
+  const [usernameLoading, setUsernameLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+  const [usernameSuccess, setUsernameSuccess] = useState(false);
+
+  // Battle preferences state
+  const [preferences, setPreferences] = useState<Preferences>({
+    genres: [],
+    decades: [],
+    artists: [],
+  });
+  const [prefLoading, setPrefLoading] = useState(false);
+  const [prefError, setPrefError] = useState("");
+  const [prefSuccess, setPrefSuccess] = useState(false);
+  const [availableGenres, setAvailableGenres] = useState<string[]>([]);
+  const [availableArtists, setAvailableArtists] = useState<string[]>([]);
+
   useEffect(() => {
     if (resetToken) {
       verifyResetToken();
     }
   }, [resetToken]);
+
+  useEffect(() => {
+    if (session && !resetToken) {
+      loadPreferences();
+      loadAvailableOptions();
+      setUsername(session.user?.name || "");
+    }
+  }, [session, resetToken]);
+
+  async function loadPreferences() {
+    try {
+      const res = await fetch('/api/preferences');
+      if (res.ok) {
+        const data = await res.json();
+        setPreferences(data.preferences);
+      }
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
+    }
+  }
+
+  async function loadAvailableOptions() {
+    try {
+      const res = await fetch('/api/songs');
+      if (res.ok) {
+        const songs = await res.json();
+        const genres = [...new Set(songs.filter((s: any) => s.genre).map((s: any) => s.genre))].sort();
+        const artists = [...new Set(songs.map((s: any) => s.artist))].sort();
+        
+        setAvailableGenres(genres);
+        setAvailableArtists(artists);
+      }
+    } catch (err) {
+      console.error('Failed to load available options:', err);
+    }
+  }
 
   async function verifyResetToken() {
     setVerifyingToken(true);
@@ -102,6 +169,89 @@ function SettingsContent() {
     }
   };
 
+  const handleUpdateUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUsernameError("");
+    setUsernameSuccess(false);
+
+    if (username.length > 8) {
+      setUsernameError("Username must be 8 characters or less");
+      return;
+    }
+
+    if (username && !/^[a-zA-Z0-9_-]+$/.test(username)) {
+      setUsernameError("Username can only contain letters, numbers, hyphens, and underscores");
+      return;
+    }
+
+    setUsernameLoading(true);
+    try {
+      const res = await fetch(
+        "/api/auth/update-username",
+        withCsrfToken(csrfToken, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: username.trim() }),
+        })
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        setUsernameError(data.error || "Failed to update username");
+        return;
+      }
+
+      setUsernameSuccess(true);
+      setTimeout(() => setUsernameSuccess(false), 3000);
+      
+      // Refresh session to update displayed name
+      window.location.reload();
+    } catch (err) {
+      setUsernameError("An unexpected error occurred");
+    } finally {
+      setUsernameLoading(false);
+    }
+  };
+
+  const handleSavePreferences = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPrefError("");
+    setPrefSuccess(false);
+    setPrefLoading(true);
+
+    try {
+      const res = await fetch(
+        "/api/preferences",
+        withCsrfToken(csrfToken, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(preferences),
+        })
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        setPrefError(data.error || "Failed to save preferences");
+        return;
+      }
+
+      setPrefSuccess(true);
+      setTimeout(() => setPrefSuccess(false), 3000);
+    } catch (err) {
+      setPrefError("An unexpected error occurred");
+    } finally {
+      setPrefLoading(false);
+    }
+  };
+
+  const updatePreferences = (key: keyof Preferences, value: any) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleArrayItem = (array: any[], item: any) => {
+    return array.includes(item) ? array.filter(i => i !== item) : [...array, item];
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg)] px-6 py-16">
       <div className="max-w-2xl mx-auto">
@@ -130,8 +280,167 @@ function SettingsContent() {
           </div>
         )}
 
-        {(!resetToken || (resetToken && tokenValid)) && !
-          verifyingToken && (
+        {/* Username - Only show when logged in and not resetting password */}
+        {!resetToken && session && (
+          <div className="p-10 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] backdrop-blur-xl mb-8">
+            <h2 className="text-3xl font-bold text-[var(--text)] mb-4 flex items-center gap-3">
+              <FaCog className="text-[var(--gold)] text-2xl" />
+              Display Name
+            </h2>
+            <p className="text-[var(--muted)] mb-8 leading-relaxed">
+              Set a custom username to display instead of your email. Maximum 8 characters.
+            </p>
+
+            <form onSubmit={handleUpdateUsername} className="space-y-6">
+              <div className="space-y-3">
+                <label htmlFor="username" className="block text-sm font-semibold text-[var(--text)]">
+                  Username (max 8 characters)
+                </label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g., rocker42"
+                  maxLength={8}
+                />
+                <p className="text-xs text-[var(--muted)]">
+                  {username.length}/8 characters • Letters, numbers, hyphens, and underscores only
+                </p>
+              </div>
+
+              {usernameError && (
+                <div className="p-5 bg-[var(--surface2)] border-2 border-[var(--pink)]/70 text-[var(--pink)] rounded-xl text-sm font-medium leading-relaxed">
+                  {usernameError}
+                </div>
+              )}
+
+              {usernameSuccess && (
+                <div className="p-5 bg-[var(--surface2)] border-2 border-[var(--gold)]/70 text-[var(--gold)] rounded-xl text-sm font-medium leading-relaxed flex items-center gap-2">
+                  <FaCheck /> Username updated successfully!
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={usernameLoading}
+                className="w-full text-lg font-bold"
+              >
+                {usernameLoading ? "Updating..." : "Update Username"}
+              </Button>
+            </form>
+          </div>
+        )}
+
+        {/* Battle Preferences - Only show when logged in and not resetting password */}
+        {!resetToken && session && (
+          <div className="p-10 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] backdrop-blur-xl mb-8">
+            <h2 className="text-3xl font-bold text-[var(--text)] mb-4 flex items-center gap-3">
+              <FaMusic className="text-[var(--gold)] text-2xl" />
+              Battle Preferences
+            </h2>
+            <p className="text-[var(--muted)] mb-8 leading-relaxed">
+              Customize your battle experience by selecting your preferred genres, decades, and artists.
+              Songs matching your preferences will appear more often in battles.
+            </p>
+
+            <form onSubmit={handleSavePreferences} className="space-y-8">
+              {/* Genres */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-[var(--text)]">
+                  Preferred Genres
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {availableGenres.map(genre => (
+                    <button
+                      key={genre}
+                      type="button"
+                      onClick={() => updatePreferences('genres', toggleArrayItem(preferences.genres, genre))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        preferences.genres.includes(genre)
+                          ? 'bg-[var(--gold)] text-[var(--bg)]'
+                          : 'bg-[var(--surface2)] text-[var(--text)] hover:bg-[var(--surface)]'
+                      }`}
+                    >
+                      {genre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Decades */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-[var(--text)]">
+                  Preferred Decades
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[1960, 1970, 1980, 1990, 2000, 2010, 2020].map(decade => (
+                    <button
+                      key={decade}
+                      type="button"
+                      onClick={() => updatePreferences('decades', toggleArrayItem(preferences.decades, decade))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        preferences.decades.includes(decade)
+                          ? 'bg-[var(--gold)] text-[var(--bg)]'
+                          : 'bg-[var(--surface2)] text-[var(--text)] hover:bg-[var(--surface)]'
+                      }`}
+                    >
+                      {decade}s
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Artists */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-[var(--text)]">
+                  Preferred Artists
+                </label>
+                <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto border border-[var(--ring)]/20 rounded-lg p-3">
+                  {availableArtists.map(artist => (
+                    <button
+                      key={artist}
+                      type="button"
+                      onClick={() => updatePreferences('artists', toggleArrayItem(preferences.artists, artist))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap ${
+                        preferences.artists.includes(artist)
+                          ? 'bg-[var(--gold)] text-[var(--bg)]'
+                          : 'bg-[var(--surface2)] text-[var(--text)] hover:bg-[var(--surface)]'
+                      }`}
+                    >
+                      {artist}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {prefError && (
+                <div className="p-5 bg-[var(--surface2)] border-2 border-[var(--pink)]/70 text-[var(--pink)] rounded-xl text-sm font-medium leading-relaxed">
+                  {prefError}
+                </div>
+              )}
+
+              {prefSuccess && (
+                <div className="p-5 bg-[var(--surface2)] border-2 border-[var(--gold)]/70 text-[var(--gold)] rounded-xl text-sm font-medium leading-relaxed flex items-center gap-2">
+                  <FaCheck /> Preferences saved successfully!
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={prefLoading}
+                className="w-full text-lg font-bold"
+              >
+                {prefLoading ? "Saving..." : "Save Preferences"}
+              </Button>
+            </form>
+          </div>
+        )}
+
+        {/* Set Password - Show for reset token OR logged in users */}
+        {(!resetToken || (resetToken && tokenValid)) && !verifyingToken && (
         <div className="p-10 rounded-3xl border border-[var(--ring)]/30 bg-[var(--surface)]/90 shadow-[var(--shadow)] backdrop-blur-xl mb-8">
           <h2 className="text-3xl font-bold text-[var(--text)] mb-4 flex items-center gap-3">
             <FaLock className="text-[var(--gold)] text-2xl" />
