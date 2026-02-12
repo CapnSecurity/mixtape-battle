@@ -39,8 +39,8 @@ if (-not $SkipPull) {
 
 # Build Docker image
 if (-not $SkipBuild) {
-    Write-Host "🔨 Building Docker image..." -ForegroundColor Cyan
-    docker build -t mixtape-battle-app:latest .
+    Write-Host "🔨 Building Docker image (no cache)..." -ForegroundColor Cyan
+    docker build --no-cache --pull -t mixtape-battle-app:latest .
     Write-Host "✅ Image built" -ForegroundColor Green
 }
 Write-Host ""
