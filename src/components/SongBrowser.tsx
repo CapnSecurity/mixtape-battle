@@ -16,7 +16,7 @@ type Song = {
   releaseDate: number | null;
   album: string | null;
   albumArtUrl?: string | null;
-  lastPracticedAt?: Date | null;
+  lastPracticedAt?: string | null;  // ISO string from JSON API
   keyNotes?: string | null;
   tuningNotes?: string | null;
   ultimateGuitar?: string | null;
@@ -543,7 +543,7 @@ export default function SongBrowser() {
                 <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-8 shadow-[var(--shadow)]">
                   <SongDetailClient
                     songId={selectedSong.id}
-                    lastPracticedAt={selectedSong.lastPracticedAt?.toISOString() || null}
+                    lastPracticedAt={selectedSong.lastPracticedAt || null}
                     keyNotes={selectedSong.keyNotes || null}
                     tuningNotes={selectedSong.tuningNotes || null}
                   />
