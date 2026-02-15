@@ -76,3 +76,4 @@ prisma/prisma/
 /backup-db.ps1
 /extract-db-data.js
 
+backup_prod_*.sql
