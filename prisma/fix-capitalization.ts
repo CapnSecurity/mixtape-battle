@@ -32,13 +32,19 @@ const prisma = new PrismaClient();
 function toTitleCase(text: string): string {
   if (!text) return text;
 
+  // Preserve leading/trailing whitespace
+  const leadingSpace = text.match(/^\s*/)?.[0] || '';
+  const trailingSpace = text.match(/\s*$/)?.[0] || '';
+  const trimmed = text.trim();
+  
+  if (!trimmed) return text;
+
   const minorWords = new Set([
     'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'from', 'in',
     'nor', 'of', 'on', 'or', 'the', 'to', 'with', 'vs', 'vs.'
   ]);
 
-  return text
-    .trim()
+  const capitalized = trimmed
     .split(/\s+/)
     .map((word, index) => {
       if (index === 0) {
@@ -53,6 +59,8 @@ function toTitleCase(text: string): string {
       return capitalizeWord(word);
     })
     .join(' ');
+  
+  return leadingSpace + capitalized + trailingSpace;
 }
 
 function capitalizeWord(word: string): string {

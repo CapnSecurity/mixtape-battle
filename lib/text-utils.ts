@@ -6,14 +6,20 @@
 export function toTitleCase(text: string): string {
   if (!text) return text;
 
+  // Preserve leading/trailing whitespace for live typing
+  const leadingSpace = text.match(/^\s*/)?.[0] || '';
+  const trailingSpace = text.match(/\s*$/)?.[0] || '';
+  const trimmed = text.trim();
+  
+  if (!trimmed) return text; // Only whitespace, return as-is
+
   // Words that should stay lowercase (unless they're the first word)
   const minorWords = new Set([
     'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'from', 'in',
     'nor', 'of', 'on', 'or', 'the', 'to', 'with', 'vs', 'vs.'
   ]);
 
-  return text
-    .trim()
+  const capitalized = trimmed
     .split(/\s+/)
     .map((word, index) => {
       // Always capitalize the first word
@@ -30,6 +36,8 @@ export function toTitleCase(text: string): string {
       return capitalizeWord(word);
     })
     .join(' ');
+  
+  return leadingSpace + capitalized + trailingSpace;
 }
 
 /**
