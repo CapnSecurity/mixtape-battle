@@ -48,15 +48,30 @@ export function toTitleCase(text: string): string {
 function capitalizeWord(word: string): string {
   if (!word) return word;
   
+  // Preserve common all-caps acronyms/abbreviations (band names, etc.)
+  const allCapsWords = new Set([
+    'CCR', 'AC/DC', 'ABBA', 'ELO', 'BTO', 'INXS', 'OMD', 'ZZ', 'LL',
+    'USA', 'UK', 'US', 'AI', 'DJ', 'MC', 'NYC', 'LA', 'DC'
+  ]);
+  
+  if (allCapsWords.has(word.toUpperCase())) {
+    return word.toUpperCase();
+  }
+  
   // Preserve content in parentheses if it's all caps (likely an acronym like "AI", "USA")
   const parenMatch = word.match(/^(.+?)(\([A-Z]+\))$/);
   if (parenMatch) {
     return capitalizeWord(parenMatch[1]) + parenMatch[2];
   }
 
-  // Preserve abbreviations with periods (L.A., U.S., etc.)
+  // Preserve abbreviations with periods (L.A., U.S., R.E.M., etc.)
   if (/^[A-Z](\.[A-Z])+\.?$/i.test(word)) {
     return word.toUpperCase();
+  }
+  
+  // Handle special band name patterns like "N'" (Guns N' Roses)
+  if (/^N'$/i.test(word)) {
+    return "N'";
   }
 
   // Handle Mc/Mac/O' prefixes (Scottish/Irish names)
@@ -69,7 +84,7 @@ function capitalizeWord(word: string): string {
     }
   }
 
-  // Handle hyphenated words (e.g., "Hip-Hop")
+  // Handle hyphenated words (e.g., "Hip-Hop", "Salt-N-Pepa")
   if (word.includes('-')) {
     return word
       .split('-')
@@ -77,12 +92,23 @@ function capitalizeWord(word: string): string {
       .join('-');
   }
 
-  // Handle apostrophes (e.g., "I'll", "You're", "Rock'n'Roll")
+  // Handle contractions and apostrophes (e.g., "You'll", "Don't", "Rock'n'Roll")
   if (word.includes("'")) {
+    // Common contractions: lowercase after the apostrophe
+    const contractionPattern = /^(you|i|we|they|he|she|it|that|who|what|there|here|don|can|won|doesn|didn|shouldn|wouldn|couldn|isn|aren|wasn|weren|hasn|haven|hadn)(')(ll|re|ve|d|t|s|m)$/i;
+    const contractionMatch = word.match(contractionPattern);
+    
+    if (contractionMatch) {
+      // It's a contraction: capitalize first part, lowercase after apostrophe
+      const firstPart = contractionMatch[1].charAt(0).toUpperCase() + contractionMatch[1].slice(1).toLowerCase();
+      const suffix = contractionMatch[3].toLowerCase();
+      return firstPart + "'" + suffix;
+    }
+    
+    // Otherwise split and capitalize each part (for things like "Rock'n'Roll")
     const parts = word.split("'");
     return parts
       .map((part, idx) => {
-        // Capitalize the first part and parts after apostrophe if they're pronouns (I'll, You're)
         if (idx === 0 || part.length > 1) {
           return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
         }
