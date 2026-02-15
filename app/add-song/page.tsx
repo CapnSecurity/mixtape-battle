@@ -6,6 +6,7 @@ import Input from '@/src/components/ui/Input';
 import Button from '@/src/components/ui/Button';
 import Link from 'next/link';
 import { useCsrfToken, withCsrfToken } from '@/lib/use-csrf';
+import { toTitleCase } from '@/lib/text-utils';
 
 export default function AddSongPage() {
   const router = useRouter();
@@ -20,7 +21,14 @@ export default function AddSongPage() {
   const { token: csrfToken } = useCsrfToken();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Auto-capitalize artist and title fields
+    const capitalizedValue = (name === 'artist' || name === 'title') 
+      ? toTitleCase(value) 
+      : value;
+    
+    setForm({ ...form, [name]: capitalizedValue });
   }
 
   async function handleSubmit(e: React.FormEvent) {
