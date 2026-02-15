@@ -23,8 +23,8 @@ export default function AddSongPage() {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     
-    // Auto-capitalize artist and title fields
-    const capitalizedValue = (name === 'artist' || name === 'title') 
+    // Auto-capitalize artist, title, and album fields
+    const capitalizedValue = (name === 'artist' || name === 'title' || name === 'album') 
       ? toTitleCase(value) 
       : value;
     
