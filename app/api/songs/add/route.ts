@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Song already exists" }, { status: 409 });
     }
 
-    // Fetch metadata from MusicBrainz if album/release date not provided
+    // Fetch metadata from iTunes/MusicBrainz/Last.fm if album/release date not provided
     let finalAlbum = sanitizedAlbum || null;
     let finalReleaseDate = sanitizedYear;
     let albumArtUrl = null;
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     let decade = null;
     
     if (!finalAlbum || !finalReleaseDate) {
-      console.log(`[ADD SONG] Fetching metadata (MusicBrainz → iTunes → Last.fm) for: ${sanitizedArtist} - ${sanitizedTitle}`);
+      console.log(`[ADD SONG] Fetching metadata (iTunes → MusicBrainz → Last.fm) for: ${sanitizedArtist} - ${sanitizedTitle}`);
       const metadata = await fetchSongMetadataWithFallbacks(sanitizedArtist, sanitizedTitle);
       
       if (metadata) {
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
         if (!finalReleaseDate && metadata.releaseDate) {
           finalReleaseDate = metadata.releaseDate;
         }
-        // Always use MusicBrainz data for these fields
+        // Always use metadata from API sources for these fields
         albumArtUrl = metadata.albumArtUrl;
         genre = metadata.genre;
         durationMs = metadata.durationMs;
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       }
     } else {
       // User provided album/year, but still fetch additional metadata
-      console.log(`[ADD SONG] Fetching additional metadata (MusicBrainz → iTunes → Last.fm) for: ${sanitizedArtist} - ${sanitizedTitle}`);
+      console.log(`[ADD SONG] Fetching additional metadata (iTunes → MusicBrainz → Last.fm) for: ${sanitizedArtist} - ${sanitizedTitle}`);
       const metadata = await fetchSongMetadataWithFallbacks(sanitizedArtist, sanitizedTitle);
       if (metadata) {
         albumArtUrl = metadata.albumArtUrl;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ultimateGuitarGuitar, ultimateGuitarBass, songsterrBass, youtube, lyrics, spotify, genius, wikipedia, allMusic } from "@/lib/links";
 import Comments from "@/src/components/Comments";
 import AddToWoodshed from "@/src/components/AddToWoodshed";
@@ -34,6 +35,7 @@ export default function SongBrowser() {
   const [sortBy, setSortBy] = useState<"title" | "artist" | "elo" | "year">("artist");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const songDetailsRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
 
   function handleSongSelect(song: Song) {
     setSelectedSong(song);
@@ -60,8 +62,22 @@ export default function SongBrowser() {
         });
         setSongs(sortedData);
         
-        // Select first song by default
-        if (sortedData.length > 0) {
+        // Check if there's a songId in the URL (e.g., from adding a new song)
+        const songIdParam = searchParams.get('songId');
+        if (songIdParam && sortedData.length > 0) {
+          const songToSelect = sortedData.find((s: Song) => s.id === parseInt(songIdParam));
+          if (songToSelect) {
+            setSelectedSong(songToSelect);
+            // Scroll to the song details after a delay
+            setTimeout(() => {
+              songDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
+          } else {
+            // If song not found, select first song
+            setSelectedSong(sortedData[0]);
+          }
+        } else if (sortedData.length > 0) {
+          // No songId parameter, select first song by default
           setSelectedSong(sortedData[0]);
         }
       }

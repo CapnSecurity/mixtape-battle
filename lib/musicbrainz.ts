@@ -348,22 +348,13 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
 
 /**
  * Comprehensive metadata fetcher with automatic fallbacks
- * Tries MusicBrainz first, then iTunes, then Last.fm
+ * Tries iTunes first (best for popular songs), then MusicBrainz, then Last.fm
  */
 export async function fetchSongMetadataWithFallbacks(artist: string, title: string): Promise<MusicBrainzMetadata | null> {
   console.log('[MetadataFetch] Starting comprehensive search for:', artist, '-', title);
   
-  // Try MusicBrainz first
-  const mbData = await fetchSongMetadata(artist, title);
-  
-  // If MusicBrainz found complete data with album art, we're done
-  if (mbData?.albumArtUrl) {
-    console.log('[MetadataFetch] ✅ MusicBrainz found complete data');
-    return mbData;
-  }
-  
-  // Initialize result with MusicBrainz data (if any)
-  let result: MusicBrainzMetadata = mbData || {
+  // Initialize empty result
+  let result: MusicBrainzMetadata = {
     album: null,
     releaseDate: null,
     decade: null,
@@ -374,28 +365,54 @@ export async function fetchSongMetadataWithFallbacks(artist: string, title: stri
     confidence: 0,
   };
   
-  // Try iTunes as fallback
-  if (!result.albumArtUrl) {
-    console.log('[MetadataFetch] 🔄 Trying iTunes fallback...');
-    const itunesData = await fetchFromiTunes(artist, title);
-    
-    if (itunesData?.albumArtUrl) {
-      console.log('[MetadataFetch] ✅ iTunes found album art!');
-      result.albumArtUrl = itunesData.albumArtUrl;
-      // Use iTunes data for missing fields
-      if (!result.album && itunesData.album) {
-        result.album = itunesData.album;
-      }
-      if (!result.releaseDate && itunesData.releaseDate) {
-        result.releaseDate = itunesData.releaseDate;
-        result.decade = Math.floor(itunesData.releaseDate / 10) * 10;
-      }
-      result.confidence = Math.max(result.confidence, 75); // iTunes is pretty reliable
-      
-      // Cache the combined result
-      saveCache(artist, title, result);
-      return result;
+  // Try iTunes FIRST - it has better data for popular songs
+  console.log('[MetadataFetch] 🔄 Trying iTunes...');
+  const itunesData = await fetchFromiTunes(artist, title);
+  
+  if (itunesData?.albumArtUrl) {
+    console.log('[MetadataFetch] ✅ iTunes found data!');
+    result.albumArtUrl = itunesData.albumArtUrl;
+    result.album = itunesData.album;
+    if (itunesData.releaseDate) {
+      result.releaseDate = itunesData.releaseDate;
+      result.decade = Math.floor(itunesData.releaseDate / 10) * 10;
     }
+    result.confidence = 85; // iTunes is quite reliable
+    
+    // Try to get additional metadata from MusicBrainz (genre, duration)
+    console.log('[MetadataFetch] 🔄 Getting additional metadata from MusicBrainz...');
+    const mbData = await fetchSongMetadata(artist, title);
+    if (mbData) {
+      // Use MusicBrainz for genre and duration if available
+      if (mbData.genre && !result.genre) {
+        result.genre = mbData.genre;
+      }
+      if (mbData.durationMs && !result.durationMs) {
+        result.durationMs = mbData.durationMs;
+      }
+      if (mbData.releaseId && !result.releaseId) {
+        result.releaseId = mbData.releaseId;
+      }
+    }
+    
+    // Cache the combined result
+    saveCache(artist, title, result);
+    return result;
+  }
+  
+  // If iTunes didn't find anything, try MusicBrainz
+  console.log('[MetadataFetch] 🔄 iTunes didn\'t find data, trying MusicBrainz...');
+  const mbData = await fetchSongMetadata(artist, title);
+  
+  if (mbData?.albumArtUrl) {
+    console.log('[MetadataFetch] ✅ MusicBrainz found complete data');
+    saveCache(artist, title, mbData);
+    return mbData;
+  }
+  
+  // Use MusicBrainz data for what we have
+  if (mbData) {
+    result = { ...mbData };
   }
   
   // Try Last.fm as final fallback
