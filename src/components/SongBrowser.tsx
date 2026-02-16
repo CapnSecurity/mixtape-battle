@@ -173,7 +173,7 @@ export default function SongBrowser() {
             </div>
             <Link 
               href="/add-song"
-              className="flex-shrink-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-bold px-8 py-4 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2 text-lg"
+              className="flex-shrink-0 bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-white font-bold px-8 py-4 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2 text-lg"
             >
               <span>➕</span> Add Song
             </Link>

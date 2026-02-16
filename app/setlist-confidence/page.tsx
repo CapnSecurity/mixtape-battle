@@ -107,7 +107,7 @@ export default async function SetlistConfidencePage() {
             <div className="flex-1 flex justify-end">
               <Link 
                 href="/add-song"
-                className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2"
+                className="bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2"
               >
                 <span>➕</span> Add Song
               </Link>
