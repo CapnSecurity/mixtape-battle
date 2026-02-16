@@ -77,3 +77,24 @@ prisma/prisma/
 /extract-db-data.js
 
 backup_prod_*.sql
+
+# One-time/temporary scripts (DO NOT COMMIT)
+tmp-*.js
+tmp-*.ts
+update-*.js
+update-*.ts
+backfill-*.js
+backfill-*.ts
+migrate-*.js
+migrate-*.ts
+test-*.sql
+debug-*.sql
+quick-*.sql
+quick-*.js
+
+# Root-level SQL files (except migrations)
+/*.sql
+!prisma/migrations/**/*.sql
+
+# Root-level database files
+/*.db
