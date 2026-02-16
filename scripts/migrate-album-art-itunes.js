@@ -5,7 +5,7 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
-const { fetchSongMetadataWithFallbacks } = require('../lib/musicbrainz.ts');
+const { fetchSongMetadataWithFallbacks } = require('../lib/musicbrainz');
 
 const prisma = new PrismaClient();
 
