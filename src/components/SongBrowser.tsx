@@ -164,10 +164,20 @@ export default function SongBrowser() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-16">
-          <h1 className="text-7xl font-bold text-[var(--text)] mb-6">Song Library</h1>
-          <p className="text-2xl text-[var(--muted)] max-w-3xl">
-            Browse all songs and access tabs, lyrics, and videos for learning
-          </p>
+          <div className="flex items-start justify-between gap-6 mb-6">
+            <div>
+              <h1 className="text-7xl font-bold text-[var(--text)] mb-6">Song Library</h1>
+              <p className="text-2xl text-[var(--muted)] max-w-3xl">
+                Browse all songs and access tabs, lyrics, and videos for learning
+              </p>
+            </div>
+            <Link 
+              href="/add-song"
+              className="flex-shrink-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-bold px-8 py-4 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2 text-lg"
+            >
+              <span>➕</span> Add Song
+            </Link>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-12">

@@ -101,7 +101,18 @@ export default async function SetlistConfidencePage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold mb-3">🎯 Setlist Confidence</h1>
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <div className="flex-1"></div>
+            <h1 className="text-5xl md:text-6xl font-bold">🎯 Setlist Confidence</h1>
+            <div className="flex-1 flex justify-end">
+              <Link 
+                href="/add-song"
+                className="bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-bold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity shadow-lg flex items-center gap-2"
+              >
+                <span>➕</span> Add Song
+              </Link>
+            </div>
+          </div>
           <p className="text-xl text-[var(--muted)]">
             Top 20 songs ranked by popularity and practice readiness
           </p>
