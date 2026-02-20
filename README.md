@@ -1,6 +1,20 @@
-# Mixtape Battle — Local Development
+# Mixtape Battle
 
 A collaborative band song voting and rehearsal management system.
+
+**🌐 Live Production:** https://themixtape.me
+
+## Production Deployment
+
+The app is hosted on [Render](https://render.com) with:
+- PostgreSQL database (Render managed)
+- Auto-deploy on push to `main` branch
+- SSL certificates via Let's Encrypt
+- Email via Zoho Mail (admin@themixtape.me)
+
+---
+
+## Local Development
 
 ## Features
 
