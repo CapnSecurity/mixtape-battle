@@ -8,7 +8,7 @@ import { fetchFromLastFm } from './lastfm';
 
 const MUSICBRAINZ_API = 'https://musicbrainz.org/ws/2';
 const COVERART_API = 'https://coverartarchive.org';
-const USER_AGENT = 'MixtapeBattle/1.0.0 (https://mixtape.levesques.net)';
+const USER_AGENT = 'MixtapeBattle/1.0.0 (https://themixtape.me)';
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'musicbrainz');
 const RATE_LIMIT_MS = 1000; // MusicBrainz asks for 1 request per second
 

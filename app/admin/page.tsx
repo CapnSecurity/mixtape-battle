@@ -14,7 +14,7 @@ type User = {
 };
 
 export default function AdminPage() {
-  const rootAdminEmail = 'tim@levesques.net';
+  const rootAdminEmail = 'admin@themixtape.me';
   const { data: session, status } = useSession();
   const [email, setEmail] = useState('');
   const [statusMsg, setStatusMsg] = useState<'idle'|'sending'|'sent'|'error'>('idle');

@@ -9,7 +9,7 @@ import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
   try {
-    const rootAdminEmail = "tim@levesques.net";
+    const rootAdminEmail = "admin@themixtape.me";
     // Rate limiting
     const rateLimitResult = await rateLimiters.admin(req);
     if (!rateLimitResult.success) {

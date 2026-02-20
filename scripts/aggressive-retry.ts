@@ -5,7 +5,7 @@ import path from 'path';
 const prisma = new PrismaClient();
 const MUSICBRAINZ_API = 'https://musicbrainz.org/ws/2';
 const COVERART_API = 'https://coverartarchive.org';
-const USER_AGENT = 'MixtapeBattle/1.0.0 (https://mixtape.levesques.net)';
+const USER_AGENT = 'MixtapeBattle/1.0.0 (https://themixtape.me)';
 const CACHE_DIR = path.join(process.cwd(), '.cache', 'musicbrainz');
 
 let lastRequestTime = 0;
