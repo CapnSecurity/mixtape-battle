@@ -1,10 +1,9 @@
 name: Build and Deploy
 
+# DISABLED - Using Render auto-deploy instead
+# Render automatically deploys when changes are pushed to main
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Manual trigger only if needed
 
 jobs:
   build-verify:
