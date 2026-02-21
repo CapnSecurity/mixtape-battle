@@ -7,6 +7,8 @@ import { ultimateGuitarGuitar, ultimateGuitarBass, songsterrBass, youtube, lyric
 import Comments from "@/src/components/Comments";
 import AddToWoodshed from "@/src/components/AddToWoodshed";
 import SongDetailClient from "@/src/components/SongDetailClient";
+import { EditSongButton } from "@/app/components/EditSongButton";
+import { SetlistButton } from "@/app/components/SetlistButton";
 
 type Song = {
   id: number;
@@ -451,6 +453,24 @@ export default function SongBrowser() {
                     <div className="text-5xl font-bold text-[var(--bg)]">
                       {Math.round(selectedSong.elo)}
                     </div>
+                  </div>
+                </div>
+
+                {/* Edit Song Button (Admin Only) */}
+                <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-6 shadow-[var(--shadow)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <EditSongButton 
+                      song={{
+                        id: selectedSong.id,
+                        title: selectedSong.title,
+                        artist: selectedSong.artist,
+                        album: selectedSong.album,
+                        releaseDate: selectedSong.releaseDate,
+                        genre: selectedSong.genre,
+                      }}
+                      onUpdate={fetchSongs}
+                    />
+                    <SetlistButton songId={selectedSong.id} variant="button" />
                   </div>
                 </div>
 

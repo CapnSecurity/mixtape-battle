@@ -5,6 +5,8 @@ import Button from "@/src/components/ui/Button";
 import Comments from "@/src/components/Comments";
 import SongDetailClient from "@/src/components/SongDetailClient";
 import AddToWoodshed from "@/src/components/AddToWoodshed";
+import { SetlistButton } from "@/app/components/SetlistButton";
+import { EditSongButton } from "@/app/components/EditSongButton";
 
 type Params = Promise<{ id: string }>;
 
@@ -93,13 +95,30 @@ export default async function SongPage({ params }: { params: Params }) {
           </div>
         </div>
 
+        {/* Edit Song Button (Admin Only) */}
+        <div className="mt-6">
+          <EditSongButton 
+            song={{
+              id: song.id,
+              title: song.title,
+              artist: song.artist,
+              album: song.album,
+              releaseDate: song.releaseDate,
+              genre: song.genre,
+            }}
+          />
+        </div>
+
         {/* Resource Links */}
-        <div className="bg-[var(--surface)] rounded-2xl shadow-[var(--shadow)] p-8 border border-[var(--ring)]/20">
+        <div className="bg-[var(--surface)] rounded-2xl shadow-[var(--shadow)] p-8 border border-[var(--ring)]/20 mt-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-[var(--text)]">
               Learn This Song
             </h2>
-            <AddToWoodshed songId={songId} variant="button" />
+            <div className="flex items-center gap-3">
+              <SetlistButton songId={songId} variant="button" />
+              <AddToWoodshed songId={songId} variant="button" />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

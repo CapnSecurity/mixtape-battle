@@ -42,9 +42,23 @@ model Song {
   comments  Comment[]
   readiness SongReadiness[]
   practiceListItems PracticeListItem[]
+  setlistEntries SetlistEntry[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SetlistEntry {
+  id          Int      @id @default(autoincrement())
+  songId      Int
+  song        Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  position    Int      // Manual ordering (1, 2, 3, etc.)
+  notes       String?  // "Opening song", "Encore", etc.
+  addedAt     DateTime @default(now())
+  addedBy     String   // User email who added it
+  
+  @@unique([songId]) // A song can only be in the setlist once
+  @@index([position])
 }
 
 model BattleVote {

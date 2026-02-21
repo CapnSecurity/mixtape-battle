@@ -38,10 +38,10 @@ export default function Navbar() {
               <span>🏆</span> Rankings
             </Link>
             <Link
-              href="/setlist-confidence"
+              href="/setlist"
               className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
             >
-              <span>🎯</span> Setlist
+              <span>📋</span> Setlist
             </Link>
             {session && (
               <Link
@@ -139,10 +139,10 @@ export default function Navbar() {
             <span className="text-sm font-medium">Rankings</span>
           </Link>
           <Link 
-            href="/setlist-confidence" 
+            href="/setlist" 
             className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"
           >
-            <span className="text-lg">🎯</span> 
+            <span className="text-lg">📋</span> 
             <span className="text-sm font-medium">Setlist</span>
           </Link>
           {session && (

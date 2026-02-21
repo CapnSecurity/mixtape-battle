@@ -14,36 +14,44 @@ async function main() {
   console.log('🌱 Seeding dev test accounts...');
 
   // Test admin account
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  const adminPassword = await bcrypt.hash('admin1234', 10);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@test.local' },
-    update: {},
+    update: {
+      password: adminPassword,
+      isAdmin: true,
+      emailVerified: new Date(),
+    },
     create: {
       email: 'admin@test.local',
-      name: 'Dev Admin',
       password: adminPassword,
       isAdmin: true,
       emailVerified: new Date(),
     },
   });
-  console.log('✅ Created admin account:', admin.email);
+  console.log('✅ Admin account:', admin.email, '(isAdmin:', admin.isAdmin, ') - Password: admin1234');
 
-  // Test user account
+  // Test regular user account
   const userPassword = await bcrypt.hash('user1234', 10);
   const user = await prisma.user.upsert({
     where: { email: 'user@test.local' },
-    update: {},
+    update: {
+      password: userPassword,
+      isAdmin: false,
+      emailVerified: new Date(),
+    },
     create: {
       email: 'user@test.local',
-      name: 'Dev User',
       password: userPassword,
       isAdmin: false,
       emailVerified: new Date(),
     },
   });
-  console.log('✅ Created user account:', user.email);
+  console.log('✅ Regular user:', user.email, '(isAdmin:', user.isAdmin, ') - Password: user1234');
 
-  console.log('Dev accounts ready');
+  console.log('\n🔐 Dev accounts ready!');
+  console.log('   Admin: admin@test.local / admin1234');
+  console.log('   User: user@test.local / user1234\n');
 }
 
 main()
