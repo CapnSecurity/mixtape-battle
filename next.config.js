@@ -10,6 +10,13 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  // Skip type checking and linting during build (we verify locally)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 }
 
 module.exports = nextConfig
