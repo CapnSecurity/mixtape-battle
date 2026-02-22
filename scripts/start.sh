@@ -1,6 +1,9 @@
 #!/bin/sh
 # Production start script - runs migrations then starts the app
 
+echo "Checking for failed migrations..."
+npx prisma migrate resolve --rolled-back "20260221023952_add_setlist_table" || echo "No failed migration to resolve"
+
 echo "Running Prisma migrations..."
 npx prisma migrate deploy
 
