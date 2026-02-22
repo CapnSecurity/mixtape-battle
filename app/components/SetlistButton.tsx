@@ -48,15 +48,25 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
 
   const handleToggleSetlist = async () => {
     if (!csrfToken) {
-      console.error('No CSRF token available');
+      console.error('[SetlistButton] No CSRF token available');
       alert('Security token not available. Please refresh the page and try again.');
       return;
     }
     
+    console.log('[SetlistButton] Token present:', csrfToken.substring(0, 20) + '...');
+    console.log('[SetlistButton] Session:', { hasUser: !!session?.user, isAdmin: !!(session?.user as any)?.isAdmin });
+    
     setIsLoading(true);
     try {
       const endpoint = isInSetlist ? '/api/setlist/remove' : '/api/setlist/add';
-      console.log(`[SetlistButton] ${isInSetlist ? 'Removing' : 'Adding'} song ${songId}`);
+      console.log(`[SetlistButton] Calling ${endpoint} for song ${songId}`);
+      
+      const requestBody = { songId };
+      console.log('[SetlistButton] Request body:', requestBody);
+      console.log('[SetlistButton] Request headers:', {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken.substring(0, 20) + '...'
+      });
       
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -64,19 +74,21 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken,
         },
-        body: JSON.stringify({ songId }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('[SetlistButton] Response status:', res.status);
+      
       if (res.ok) {
         console.log(`[SetlistButton] Successfully ${isInSetlist ? 'removed' : 'added'} song ${songId}`);
         setIsInSetlist(!isInSetlist);
       } else {
         const data = await res.json();
-        console.error('[SetlistButton] Error response:', data);
+        console.error('[SetlistButton] Error response:', { status: res.status, data });
         alert(data.error || 'Failed to update setlist');
       }
     } catch (error) {
-      console.error('[SetlistButton] Error updating setlist:', error);
+      console.error('[SetlistButton] Exception:', error);
       alert('Failed to update setlist');
     } finally {
       setIsLoading(false);

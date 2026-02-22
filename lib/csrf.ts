@@ -4,6 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 const CSRF_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-change-in-production';
 const CSRF_TOKEN_LENGTH = 32;
 
+// Log secret status on module load (only first few characters for security)
+if (typeof window === 'undefined') { // Server-side only
+  console.log('[CSRF-MODULE] Secret configured:', CSRF_SECRET ? CSRF_SECRET.substring(0, 8) + '...' : 'NONE');
+  console.log('[CSRF-MODULE] Using fallback:', !process.env.NEXTAUTH_SECRET);
+}
+
 /**
  * Generate a CSRF token
  * Token format: timestamp.randomBytes.signature
@@ -17,7 +23,15 @@ export function generateCsrfToken(): string {
     .update(data)
     .digest('hex');
   
-  return `${data}.${signature}`;
+  const token = `${data}.${signature}`;
+  console.log('[CSRF-GEN] Generated token parts:', {
+    timestamp,
+    randomLength: randomData.length,
+    signaturePrefix: signature.substring(0, 8),
+    fullTokenLength: token.length
+  });
+  
+  return token;
 }
 
 /**
@@ -38,11 +52,23 @@ export function validateCsrfToken(token: string | null | undefined): boolean {
 
   const [timestamp, randomData, signature] = parts;
   
+  console.log('[CSRF-VAL] Token parts:', {
+    timestamp,
+    randomDataLength: randomData?.length,
+    signaturePrefix: signature?.substring(0, 8)
+  });
+  
   // Verify signature
   const data = `${timestamp}.${randomData}`;
   const expectedSignature = createHmac('sha256', CSRF_SECRET)
     .update(data)
     .digest('hex');
+  
+  console.log('[CSRF-VAL] Signature comparison:', {
+    received: signature?.substring(0, 8),
+    expected: expectedSignature.substring(0, 8),
+    match: signature === expectedSignature
+  });
   
   if (signature !== expectedSignature) {
     console.log('[CSRF] Token validation failed: invalid signature');
@@ -50,8 +76,18 @@ export function validateCsrfToken(token: string | null | undefined): boolean {
   }
 
   // Check token age (max 1 hour)
-  const tokenAge = Date.now() - parseInt(timestamp, 10);
+  const tokenTimestamp = parseInt(timestamp, 10);
+  const tokenAge = Date.now() - tokenTimestamp;
   const ONE_HOUR = 60 * 60 * 1000;
+  
+  console.log('[CSRF-VAL] Token age:', {
+    tokenTimestamp,
+    currentTime: Date.now(),
+    ageMs: tokenAge,
+    ageMinutes: Math.round(tokenAge / 60000),
+    maxMinutes: 60,
+    expired: tokenAge > ONE_HOUR
+  });
   
   if (tokenAge > ONE_HOUR) {
     console.log('[CSRF] Token validation failed: token expired (age:', tokenAge, 'ms)');

@@ -7,21 +7,30 @@ import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 // POST /api/setlist/add - Add a song to the setlist (admin only)
 export async function POST(req: NextRequest) {
   try {
+    console.log('[SETLIST-ADD] === Request started ===');
+    
     // Check authentication
     const session = await getServerSession(authOptions);
     const user = session?.user as any;
     
+    console.log('[SETLIST-ADD] Session:', { hasSession: !!session, hasUser: !!user, isAdmin: !!user?.isAdmin });
+    
     if (!user?.isAdmin) {
+      console.log('[SETLIST-ADD] Rejected - not admin');
       return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
     const body = await req.json();
+    console.log('[SETLIST-ADD] Request body:', body);
+    console.log('[SETLIST-ADD] Headers:', Object.fromEntries(req.headers.entries()));
 
     // Verify CSRF token
+    console.log('[SETLIST-ADD] Verifying CSRF token...');
     if (!verifyCsrfToken(req, body)) {
-      console.log('[SETLIST-ADD] Invalid CSRF token');
+      console.log('[SETLIST-ADD] CSRF verification FAILED');
       return csrfErrorResponse();
     }
+    console.log('[SETLIST-ADD] CSRF verification PASSED');
 
     const { songId, notes } = body;
 
