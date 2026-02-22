@@ -14,7 +14,22 @@ type Params = Promise<{ id: string }>;
 export default async function SongPage({ params }: { params: Params }) {
   const { id } = await params;
   const songId = Number(id);
-  const song = await prisma.song.findUnique({ where: { id: songId } });
+  
+  let song;
+  try {
+    console.log('[SongPage] Fetching song with id:', songId);
+    song = await prisma.song.findUnique({ where: { id: songId } });
+    console.log('[SongPage] Song found:', song ? 'yes' : 'no');
+    if (song) {
+      console.log('[SongPage] Song title:', song.title);
+      console.log('[SongPage] lastPracticedAt type:', typeof song.lastPracticedAt);
+      console.log('[SongPage] lastPracticedAt value:', song.lastPracticedAt);
+    }
+  } catch (error) {
+    console.error('[SongPage] Error fetching song:', error);
+    throw error;
+  }
+  
   if (!song)
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg)] text-[var(--text)]">
@@ -239,9 +254,9 @@ export default async function SongPage({ params }: { params: Params }) {
         <div className="mt-8">
           <SongDetailClient
             songId={songId}
-            lastPracticedAt={song.lastPracticedAt?.toISOString() || null}
-            keyNotes={song.keyNotes}
-            tuningNotes={song.tuningNotes}
+            lastPracticedAt={song.lastPracticedAt ? song.lastPracticedAt.toISOString() : null}
+            keyNotes={song.keyNotes || null}
+            tuningNotes={song.tuningNotes || null}
           />
         </div>
 
