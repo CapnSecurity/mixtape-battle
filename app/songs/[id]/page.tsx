@@ -67,13 +67,6 @@ export default async function SongPage({ params }: { params: Params }) {
                 src={song.albumArtUrl} 
                 alt={`${song.album || song.title} album art`}
                 className="w-64 h-64 object-cover rounded-xl shadow-2xl"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  const fallback = document.createElement('div');
-                  fallback.className = 'text-7xl mb-6 text-center';
-                  fallback.textContent = '🎶';
-                  e.currentTarget.parentNode?.appendChild(fallback);
-                }}
               />
             </div>
           ) : (
