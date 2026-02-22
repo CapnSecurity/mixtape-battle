@@ -91,7 +91,7 @@ export function DeleteSongButton({
       onClick={handleDelete}
       disabled={isDeleting || csrfLoading || !csrfToken}
       variant="destructive"
-      size="sm"
+      size="md"
     >
       {csrfLoading ? 'Loading...' : 
        isDeleting ? 'Deleting...' : 
