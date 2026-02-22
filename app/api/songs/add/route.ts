@@ -7,6 +7,7 @@ import { fetchSongMetadataWithFallbacks } from "../../../../lib/musicbrainz";
 import { validateSongInput } from "../../../../lib/input-sanitization";
 import { sanitizeError, logError } from "../../../../lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { findSimilarSongs } from "@/lib/string-similarity";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,16 +39,34 @@ export async function POST(req: NextRequest) {
 
     const { title: sanitizedTitle, artist: sanitizedArtist, album: sanitizedAlbum, releaseDate: sanitizedYear } = validation.sanitized;
 
-    // Check if song already exists
-    const existingSong = await prisma.song.findFirst({
+    // Check for exact match first
+    const exactMatch = await prisma.song.findFirst({
       where: {
         artist: sanitizedArtist,
         title: sanitizedTitle,
       },
     });
 
-    if (existingSong) {
-      return NextResponse.json({ error: "Song already exists" }, { status: 409 });
+    if (exactMatch) {
+      return NextResponse.json({ 
+        error: `This song already exists: "${exactMatch.title}" by ${exactMatch.artist}` 
+      }, { status: 409 });
+    }
+
+    // Check for fuzzy duplicates (similar titles/artists)
+    const allSongs = await prisma.song.findMany({
+      select: { id: true, title: true, artist: true },
+    });
+
+    const similarSongs = findSimilarSongs(sanitizedTitle, sanitizedArtist, allSongs, 0.85);
+
+    if (similarSongs.length > 0) {
+      const topMatch = similarSongs[0];
+      console.log('[ADD SONG] Found similar song:', topMatch);
+      return NextResponse.json({ 
+        error: `A similar song may already exist: "${topMatch.title}" by ${topMatch.artist}. If this is a different song, please verify the spelling.`,
+        similarSong: topMatch,
+      }, { status: 409 });
     }
 
     // Fetch metadata from iTunes/MusicBrainz/Last.fm if album/release date not provided

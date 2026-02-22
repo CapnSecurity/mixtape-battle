@@ -26,11 +26,13 @@ export function generateCsrfToken(): string {
  */
 export function validateCsrfToken(token: string | null | undefined): boolean {
   if (!token || typeof token !== 'string') {
+    console.log('[CSRF] Token validation failed: token is null/undefined or not string');
     return false;
   }
 
   const parts = token.split('.');
   if (parts.length !== 3) {
+    console.log('[CSRF] Token validation failed: invalid format (expected 3 parts, got', parts.length, ')');
     return false;
   }
 
@@ -43,6 +45,7 @@ export function validateCsrfToken(token: string | null | undefined): boolean {
     .digest('hex');
   
   if (signature !== expectedSignature) {
+    console.log('[CSRF] Token validation failed: invalid signature');
     return false;
   }
 
@@ -51,9 +54,11 @@ export function validateCsrfToken(token: string | null | undefined): boolean {
   const ONE_HOUR = 60 * 60 * 1000;
   
   if (tokenAge > ONE_HOUR) {
+    console.log('[CSRF] Token validation failed: token expired (age:', tokenAge, 'ms)');
     return false;
   }
 
+  console.log('[CSRF] Token validation successful');
   return true;
 }
 
@@ -64,15 +69,27 @@ export function validateCsrfToken(token: string | null | undefined): boolean {
 export function verifyCsrfToken(req: NextRequest, body?: any): boolean {
   // Check header first
   const headerToken = req.headers.get('X-CSRF-Token');
-  if (headerToken && validateCsrfToken(headerToken)) {
-    return true;
+  console.log('[CSRF] Header token present:', !!headerToken);
+  
+  if (headerToken) {
+    const isValid = validateCsrfToken(headerToken);
+    console.log('[CSRF] Header token valid:', isValid);
+    if (isValid) {
+      return true;
+    }
   }
 
   // Check body if provided
-  if (body?.csrfToken && validateCsrfToken(body.csrfToken)) {
-    return true;
+  if (body?.csrfToken) {
+    console.log('[CSRF] Body token present: true');
+    const isValid = validateCsrfToken(body.csrfToken);
+    console.log('[CSRF] Body token valid:', isValid);
+    if (isValid) {
+      return true;
+    }
   }
 
+  console.log('[CSRF] No valid token found in header or body');
   return false;
 }
 
