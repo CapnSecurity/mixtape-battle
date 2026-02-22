@@ -412,6 +412,13 @@ export default function SongBrowser() {
                         src={selectedSong.albumArtUrl} 
                         alt={`${selectedSong.album || selectedSong.title} album art`}
                         className="w-64 h-64 object-cover rounded-xl shadow-2xl"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = document.createElement('div');
+                          fallback.className = 'text-7xl mb-6 text-center';
+                          fallback.textContent = '🎶';
+                          e.currentTarget.parentNode?.appendChild(fallback);
+                        }}
                       />
                     </div>
                   ) : (

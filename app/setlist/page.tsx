@@ -226,12 +226,23 @@ export default function SetlistPage() {
               </div>
 
               {/* Album Art */}
-              {entry.song.albumArtUrl && (
+              {entry.song.albumArtUrl ? (
                 <img
                   src={entry.song.albumArtUrl}
                   alt={`${entry.song.title} album art`}
                   className="w-16 h-16 rounded-lg object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.className = 'w-16 h-16 rounded-lg flex items-center justify-center text-3xl bg-[var(--surface)] border border-[var(--ring)]/20';
+                    fallback.textContent = '🎶';
+                    e.currentTarget.parentNode?.appendChild(fallback);
+                  }}
                 />
+              ) : (
+                <div className="w-16 h-16 rounded-lg flex items-center justify-center text-3xl bg-[var(--surface)] border border-[var(--ring)]/20">
+                  🎶
+                </div>
               )}
 
               {/* Song Info */}
