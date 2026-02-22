@@ -1,6 +1,6 @@
 import React from "react";
 
-type ButtonVariant = "primary" | "surface" | "ghost";
+type ButtonVariant = "primary" | "surface" | "ghost" | "destructive";
 type ButtonSize = "md" | "lg";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -29,6 +29,8 @@ export default function Button({
       ? "bg-[linear-gradient(135deg,var(--gold),var(--pink))] text-[var(--bg)] shadow-[var(--shadow)] hover:brightness-110 active:brightness-95"
       : variant === "surface"
       ? "bg-[var(--surface2)] text-[var(--text)] border border-[var(--ring)]/20 shadow-[var(--shadow)] hover:bg-[var(--surface)]"
+      : variant === "destructive"
+      ? "bg-red-600 text-white shadow-[var(--shadow)] hover:bg-red-700 active:bg-red-800"
       : "bg-transparent text-[var(--text)] border border-[var(--ring)]/30 hover:bg-[var(--surface2)]";
 
   const classes = [base, sizeClass, variantClass, className]

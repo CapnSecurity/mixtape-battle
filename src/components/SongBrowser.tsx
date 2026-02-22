@@ -8,6 +8,7 @@ import Comments from "@/src/components/Comments";
 import AddToWoodshed from "@/src/components/AddToWoodshed";
 import SongDetailClient from "@/src/components/SongDetailClient";
 import { EditSongButton } from "@/app/components/EditSongButton";
+import { DeleteSongButton } from "@/app/components/DeleteSongButton";
 import { SetlistButton } from "@/app/components/SetlistButton";
 
 type Song = {
@@ -456,9 +457,9 @@ export default function SongBrowser() {
                   </div>
                 </div>
 
-                {/* Edit Song Button (Admin Only) */}
+                {/* Admin Controls */}
                 <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-6 shadow-[var(--shadow)]">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center gap-3">
                     <EditSongButton 
                       song={{
                         id: selectedSong.id,
@@ -471,6 +472,12 @@ export default function SongBrowser() {
                       onUpdate={fetchSongs}
                     />
                     <SetlistButton songId={selectedSong.id} variant="button" />
+                    <DeleteSongButton
+                      songId={selectedSong.id}
+                      songTitle={selectedSong.title}
+                      songArtist={selectedSong.artist}
+                      redirectAfterDelete="/songs"
+                    />
                   </div>
                 </div>
 

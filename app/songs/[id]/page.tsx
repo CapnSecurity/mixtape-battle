@@ -7,6 +7,7 @@ import SongDetailClient from "@/src/components/SongDetailClient";
 import AddToWoodshed from "@/src/components/AddToWoodshed";
 import { SetlistButton } from "@/app/components/SetlistButton";
 import { EditSongButton } from "@/app/components/EditSongButton";
+import { DeleteSongButton } from "@/app/components/DeleteSongButton";
 
 type Params = Promise<{ id: string }>;
 
@@ -95,8 +96,8 @@ export default async function SongPage({ params }: { params: Params }) {
           </div>
         </div>
 
-        {/* Edit Song Button (Admin Only) */}
-        <div className="mt-6">
+        {/* Admin Controls */}
+        <div className="mt-6 flex flex-wrap gap-3">
           <EditSongButton 
             song={{
               id: song.id,
@@ -106,6 +107,11 @@ export default async function SongPage({ params }: { params: Params }) {
               releaseDate: song.releaseDate,
               genre: song.genre,
             }}
+          />
+          <DeleteSongButton
+            songId={song.id}
+            songTitle={song.title}
+            songArtist={song.artist}
           />
         </div>
 
