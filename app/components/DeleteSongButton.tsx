@@ -63,8 +63,8 @@ export function DeleteSongButton({
     }
   };
 
-  // Only show for admins
-  if (!(session?.user as any)?.isAdmin) {
+  // Only show for root account
+  if (session?.user?.email !== 'tim@levesques.net') {
     return null;
   }
 

@@ -8,10 +8,10 @@ export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     console.log('[DELETE SONG] Session:', JSON.stringify(session, null, 2));
-    console.log('[DELETE SONG] isAdmin:', (session.user as any)?.isAdmin);
+    console.log('[DELETE SONG] User email:', session?.user?.email);
     
-    if (!session || !(session.user as any)?.isAdmin) {
-      console.log('[DELETE SONG] Unauthorized - session or not admin');
+    if (!session || session.user?.email !== 'tim@levesques.net') {
+      console.log('[DELETE SONG] Unauthorized - not root account');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
