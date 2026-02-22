@@ -12,10 +12,19 @@ interface SetlistButtonProps {
 
 export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps) {
   const { data: session } = useSession();
-  const { token: csrfToken } = useCsrfToken();
+  const { token: csrfToken, loading: csrfLoading } = useCsrfToken();
   const [isInSetlist, setIsInSetlist] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[SetlistButton] CSRF token status:', { 
+      hasToken: !!csrfToken, 
+      loading: csrfLoading,
+      isAdmin: !!(session?.user as any)?.isAdmin 
+    });
+  }, [csrfToken, csrfLoading, session]);
 
   // Check if song is in setlist on mount
   useEffect(() => {
@@ -38,11 +47,17 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
   }, [songId]);
 
   const handleToggleSetlist = async () => {
-    if (!csrfToken) return;
+    if (!csrfToken) {
+      console.error('No CSRF token available');
+      alert('Security token not available. Please refresh the page and try again.');
+      return;
+    }
     
     setIsLoading(true);
     try {
       const endpoint = isInSetlist ? '/api/setlist/remove' : '/api/setlist/add';
+      console.log(`[SetlistButton] ${isInSetlist ? 'Removing' : 'Adding'} song ${songId}`);
+      
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -53,13 +68,15 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
       });
 
       if (res.ok) {
+        console.log(`[SetlistButton] Successfully ${isInSetlist ? 'removed' : 'added'} song ${songId}`);
         setIsInSetlist(!isInSetlist);
       } else {
         const data = await res.json();
+        console.error('[SetlistButton] Error response:', data);
         alert(data.error || 'Failed to update setlist');
       }
     } catch (error) {
-      console.error('Error updating setlist:', error);
+      console.error('[SetlistButton] Error updating setlist:', error);
       alert('Failed to update setlist');
     } finally {
       setIsLoading(false);
@@ -79,11 +96,15 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
     return (
       <button
         onClick={handleToggleSetlist}
-        disabled={isLoading}
+        disabled={isLoading || csrfLoading || !csrfToken}
         className={`text-2xl transition ${
           isInSetlist ? 'opacity-100' : 'opacity-30 hover:opacity-60'
-        }`}
-        title={isInSetlist ? 'Remove from setlist' : 'Add to setlist'}
+        } ${(isLoading || csrfLoading || !csrfToken) ? 'cursor-not-allowed opacity-50' : ''}`}
+        title={
+          csrfLoading ? 'Loading...' : 
+          !csrfToken ? 'Security token unavailable' :
+          isInSetlist ? 'Remove from setlist' : 'Add to setlist'
+        }
       >
         {isLoading ? '⏳' : '📋'}
       </button>
@@ -93,11 +114,13 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
   return (
     <Button
       onClick={handleToggleSetlist}
-      disabled={isLoading}
+      disabled={isLoading || csrfLoading || !csrfToken}
       variant={isInSetlist ? 'surface' : 'primary'}
       size="md"
     >
-      {isLoading ? '...' : isInSetlist ? 'Remove from Setlist' : 'Add to Setlist'}
+      {csrfLoading ? 'Loading...' : 
+       isLoading ? '...' : 
+       isInSetlist ? 'Remove from Setlist' : 'Add to Setlist'}
     </Button>
   );
 }
