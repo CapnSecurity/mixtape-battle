@@ -7,7 +7,7 @@ npx prisma migrate deploy
 if [ $? -eq 0 ]; then
   echo "Migrations completed successfully"
   echo "Starting Next.js application..."
-  npm start
+  node server.js
 else
   echo "Migration failed!"
   exit 1
