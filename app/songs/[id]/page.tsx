@@ -236,7 +236,7 @@ export default async function SongPage({ params }: { params: Params }) {
 
             {/* AllMusic */}
             <a
-              href={allMusic(song.artist, song.album)}
+              href={allMusic(song.artist, song.album || undefined)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 p-4 border border-[var(--ring)]/20 rounded-xl hover:bg-[var(--surface2)] transition min-h-[84px]"
