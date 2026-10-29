@@ -139,22 +139,59 @@ const health = await call('GET', '/api/health');
 info('GET /api/health unauthenticated', String(health.status));
 
 // ---- Account creation and login ----
-const signupResults = [];
-for (const email of [adminEmail, userEmail, otherEmail]) {
-  signupResults.push((await call('POST', '/api/auth/signup', { json: { email, password } })).status);
+// Default (ALLOW_PUBLIC_SIGNUP unset): signup must be refused and accounts come from invites.
+// With --public-signup the target is expected to have ALLOW_PUBLIC_SIGNUP=true.
+const publicSignup = args.includes('--public-signup');
+const probeEmail = `smoke-probe-${run}@example.test`;
+const probe = await call('POST', '/api/auth/signup', { json: { email: probeEmail, password } });
+let admin;
+let adminCsrf;
+if (publicSignup) {
+  record('public signup works when ALLOW_PUBLIC_SIGNUP=true', probe.status === 200, String(probe.status));
+  for (const email of [adminEmail, userEmail, otherEmail]) {
+    await call('POST', '/api/auth/signup', { json: { email, password } });
+  }
+  if (db) psql(`UPDATE "User" SET "isAdmin"=true WHERE email='${adminEmail}'`);
+} else {
+  record('public signup is rejected by default', probe.status === 403, String(probe.status));
+  if (db) {
+    record('rejected signup created no user', psql(`SELECT count(*) FROM "User" WHERE email='${probeEmail}'`) === '0');
+    // Bootstrap an admin directly in the throwaway database (the first user cannot be invited).
+    const { createRequire } = await import('node:module');
+    const bcrypt = createRequire(import.meta.url)('bcryptjs');
+    const hash = bcrypt.hashSync(password, 10);
+    psql(`INSERT INTO "User"(id, email, password, "isAdmin") VALUES ('smoke-${run}', '${adminEmail}', '${hash}', true)`);
+  }
 }
-info('public signup (no invite) statuses', signupResults.join(','));
-
-if (db) {
-  psql(`UPDATE "User" SET "isAdmin"=true WHERE email='${adminEmail}'`);
-  psql(`INSERT INTO "Song"(title, artist, "updatedAt") VALUES ('Smoke Song', 'Smoke Artist', now())`);
-}
+if (db) psql(`INSERT INTO "Song"(title, artist, "updatedAt") VALUES ('Smoke Song', 'Smoke Artist', now())`);
 const songId = db ? Number(psql(`SELECT id FROM "Song" ORDER BY id DESC LIMIT 1`)) : 1;
+
+admin = await login(adminEmail, password);
+adminCsrf = (await call('GET', '/api/csrf', { jar: admin.jar })).data.csrfToken;
+
+if (!publicSignup && db) {
+  // Invite flow: admin invites -> token redeemed once -> password policy enforced.
+  for (const email of [userEmail, otherEmail]) {
+    const inv = await call('POST', '/api/invite', { jar: admin.jar, json: { email, csrfToken: adminCsrf } });
+    record(`admin can invite ${email.split('@')[0]}`, inv.status === 200, String(inv.status));
+  }
+  const tokenFor = (email) => psql(`SELECT token FROM "Invite" WHERE email='${email}' ORDER BY "createdAt" DESC LIMIT 1`);
+  const weak = await call('POST', '/api/invite/accept', { json: { token: tokenFor(userEmail), password: 'weak' } });
+  record('invite acceptance enforces password policy', weak.status === 400, String(weak.status));
+  const bogus = await call('POST', '/api/invite/accept', { json: { token: 'not-a-real-token', password } });
+  record('invalid invite token is rejected', bogus.status === 400, String(bogus.status));
+  for (const email of [userEmail, otherEmail]) {
+    const t = tokenFor(email);
+    const ok = await call('POST', '/api/invite/accept', { json: { token: t, password } });
+    record(`valid invite creates account for ${email.split('@')[0]}`, ok.status === 200, String(ok.status));
+    const again = await call('POST', '/api/invite/accept', { json: { token: t, password } });
+    record('invite token cannot be redeemed twice', again.status === 400, String(again.status));
+  }
+}
 
 const bad = await login(userEmail, 'definitely-wrong');
 record('wrong password does not create a session', !bad.session?.user, JSON.stringify(bad.session));
 
-const admin = await login(adminEmail, password);
 const user = await login(userEmail, password);
 record('admin login creates session', admin.session?.user?.email === adminEmail, admin.session?.user?.email ?? 'none');
 record('user login creates session', user.session?.user?.email === userEmail, user.session?.user?.email ?? 'none');
@@ -165,7 +202,6 @@ info('session cookie names', [...user.jar.cookies.keys()].join(', '));
 const anonCsrf = await call('GET', '/api/csrf');
 record('GET /api/csrf requires a session', anonCsrf.status !== 200, String(anonCsrf.status));
 const csrf = async (s) => (await call('GET', '/api/csrf', { jar: s.jar })).data.csrfToken;
-const adminCsrf = await csrf(admin);
 const userCsrf = await csrf(user);
 record('authenticated user receives CSRF token', typeof userCsrf === 'string' && userCsrf.split('.').length === 3);
 
@@ -245,20 +281,22 @@ try {
 }
 
 // ---- Login rate limiting (kept last: it consumes the shared "auth" bucket) ----
+// A forged left-most X-Forwarded-For value must not change the bucket: a trusted proxy appends the
+// real client address on the right, which is simulated here with a fixed right-most entry.
 const statuses = [];
 for (let i = 0; i < 8; i++) {
   const jar = new Jar();
   const c = await call('GET', '/api/auth/csrf', { jar });
   const r = await call('POST', '/api/auth/callback/credentials', {
     jar,
-    headers: { 'x-forwarded-for': '192.0.2.50' },
+    headers: { 'x-forwarded-for': `203.0.113.${i + 1}, 192.0.2.50` },
     form: { csrfToken: c.data.csrfToken, email: userEmail, password: 'wrong-' + i, json: 'true' },
   });
   statuses.push(r.status);
 }
-record('repeated failed logins from one client are rate limited', statuses.includes(429), statuses.join(','));
-const spoof = await login(userEmail, 'wrong-spoof', { 'x-forwarded-for': `203.0.113.${Math.floor(Math.random() * 200) + 1}` });
-info('rate-limit bypass attempt via spoofed X-Forwarded-For (200/non-429 means bypassable)', String(spoof.res.status));
+record('failed logins are rate limited even when X-Forwarded-For is forged', statuses.slice(5).every((s) => s === 429), statuses.join(','));
+const spoof = await login(userEmail, 'wrong-spoof', { 'x-forwarded-for': `203.0.113.${Math.floor(Math.random() * 200) + 1}, 192.0.2.50` });
+record('forged X-Forwarded-For cannot reset the rate limit', spoof.res.status === 429, String(spoof.res.status));
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n== ${results.length - failed.length}/${results.length} checks passed ==`);

@@ -25,22 +25,28 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 /**
- * Get client identifier from request
- * Uses IP address from various headers or falls back to unknown
+ * Get client identifier from request.
+ *
+ * X-Forwarded-For is only trustworthy from the right: each trusted proxy appends the address
+ * it saw, while everything to the left can be forged by the client. TRUSTED_PROXY_HOPS is the
+ * number of trusted proxies that append to the header (default 1 = rightmost entry, which
+ * cannot be spoofed but may identify the proxy rather than the end user).
  */
 function getClientId(req: NextRequest): string {
-  // Try x-forwarded-for first (from proxies like nginx)
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    if (parts.length > 0) {
+      const hops = Math.max(1, Number.parseInt(process.env.TRUSTED_PROXY_HOPS || '1', 10) || 1);
+      return parts[Math.max(0, parts.length - hops)];
+    }
   }
-  
-  // Try x-real-ip (alternative proxy header)
+
   const realIp = req.headers.get('x-real-ip');
   if (realIp) {
     return realIp;
   }
-  
+
   // Fall back to unknown for local development
   return 'unknown';
 }

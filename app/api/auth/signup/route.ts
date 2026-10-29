@@ -14,6 +14,16 @@ export async function POST(req: NextRequest) {
       return rateLimitResult.response;
     }
 
+    // Public registration is opt-in; otherwise accounts are created via the invite flow
+    // (/signup?token=... -> /api/invite/accept).
+    if (process.env.ALLOW_PUBLIC_SIGNUP !== 'true') {
+      console.log("[SIGNUP] Rejected: public signup is disabled");
+      return NextResponse.json(
+        { error: 'Public sign-up is disabled. Please use the link in your invitation email.' },
+        { status: 403 }
+      );
+    }
+
     const { email, password } = await req.json();
     console.log("[SIGNUP] Signup attempt for:", email);
     
