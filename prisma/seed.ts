@@ -52,16 +52,6 @@ async function main() {
   }
   console.log(`Seeded ${songs.length} songs.`);
 }
-  if (count > 0) {
-    console.log(`Songs already exist (${count}). Skipping song seed.`);
-    return;
-  }
-
-  for (const song of songs) {
-    await prisma.song.create({ data: song });
-  }
-  console.log(`Seeded ${songs.length} songs.`);
-}
 
 main()
   .catch((e) => {

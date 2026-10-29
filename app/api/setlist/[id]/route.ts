@@ -7,7 +7,7 @@ import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 // PATCH /api/setlist/[id] - Update setlist entry notes (admin only)
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -26,7 +26,8 @@ export async function PATCH(
       return csrfErrorResponse();
     }
 
-    const entryId = parseInt(params.id);
+    const { id } = await params;
+    const entryId = parseInt(id);
     if (isNaN(entryId)) {
       return NextResponse.json({ error: 'Invalid entry ID' }, { status: 400 });
     }
