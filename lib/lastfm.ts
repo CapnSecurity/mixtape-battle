@@ -2,14 +2,19 @@
 // Free API, requires API key but we can use track.getInfo method
 
 const LASTFM_API = 'https://ws.audioscrobbler.com/2.0/';
-const LASTFM_API_KEY = '43693f63705cd4ede3aeff8755d96965'; // Public demo key for testing
-
 export interface LastFmResult {
   albumArtUrl: string | null;
   album: string | null;
 }
 
 export async function fetchFromLastFm(artist: string, title: string): Promise<LastFmResult | null> {
+  // Read at call time; metadata enrichment is optional, so degrade gracefully without a key.
+  const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
+  if (!LASTFM_API_KEY) {
+    console.warn('[Last.fm] LASTFM_API_KEY is not set; skipping Last.fm lookup');
+    return null;
+  }
+
   try {
     const url = `${LASTFM_API}?method=track.getInfo&artist=${encodeURIComponent(artist)}&track=${encodeURIComponent(title)}&api_key=${LASTFM_API_KEY}&format=json`;
     
