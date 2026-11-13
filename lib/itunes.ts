@@ -7,6 +7,50 @@ export interface iTunesResult {
   albumArtUrl: string | null;
   album: string | null;
   releaseDate: number | null;
+  genre: string | null;
+}
+
+const squash = (s: string | undefined | null) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Acts and albums that re-record someone else's songs; matching them returns the wrong album and year.
+// Checked against artist and album names only, so legitimate song titles are never rejected.
+const IMITATION = /\b(tribute|karaoke|made famous|originally performed|in the style of|lullaby|renditions?|covers)\b/i;
+// Alternate takes of the same song; the original studio version should win.
+const ALT_TAKE = /\b(live|remaster(ed)?|re-?recorded|demo|acoustic|remix|version|instrumental)\b/i;
+
+/**
+ * Pick the iTunes result that is the original recording by the requested artist.
+ * Exact artist and title matches win, imitation acts are rejected, and ties go to the earliest release.
+ */
+export function pickBestItunesResult(results: any[], artist: string, title: string): any | null {
+  const wantArtist = squash(artist);
+  const wantTitle = squash(title);
+  let best: any = null;
+  let bestScore = 0;
+  let bestYear = Infinity;
+
+  for (const result of results) {
+    if (IMITATION.test(`${result.artistName || ''} ${result.collectionName || ''}`) && !IMITATION.test(`${artist} ${title}`)) continue;
+
+    const gotArtist = squash(result.artistName);
+    const gotTitle = squash(result.trackName);
+    const artistExact = gotArtist === wantArtist;
+    const artistPartial = !artistExact && !!gotArtist && (gotArtist.includes(wantArtist) || wantArtist.includes(gotArtist));
+    const titleExact = gotTitle === wantTitle;
+    const titlePartial = !titleExact && !!gotTitle && (gotTitle.includes(wantTitle) || wantTitle.includes(gotTitle));
+    if (!(artistExact || artistPartial) || !(titleExact || titlePartial)) continue;
+
+    let score = (artistExact ? 60 : 30) + (titleExact ? 40 : 20);
+    if (ALT_TAKE.test(`${result.trackName || ''} ${result.collectionName || ''}`) && !ALT_TAKE.test(title)) score -= 15;
+
+    const year = result.releaseDate ? parseInt(String(result.releaseDate).split('-')[0], 10) : Infinity;
+    if (score > bestScore || (score === bestScore && year < bestYear)) {
+      best = result;
+      bestScore = score;
+      bestYear = Number.isNaN(year) ? Infinity : year;
+    }
+  }
+  return best;
 }
 
 export async function fetchFromiTunes(artist: string, title: string): Promise<iTunesResult | null> {
@@ -37,28 +81,7 @@ export async function fetchFromiTunes(artist: string, title: string): Promise<iT
 
     console.log(`[iTunes] Found ${data.results.length} results`);
     
-    // Find best match
-    const normalizedArtist = artist.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const normalizedTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
-    
-    let bestMatch = null;
-    let bestScore = 0;
-    
-    for (const result of data.results) {
-      const resultArtist = (result.artistName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const resultTitle = (result.trackName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      
-      const artistMatch = resultArtist.includes(normalizedArtist) || normalizedArtist.includes(resultArtist);
-      const titleMatch = resultTitle.includes(normalizedTitle) || normalizedTitle.includes(resultTitle);
-      
-      if (artistMatch && titleMatch) {
-        const score = (artistMatch ? 50 : 0) + (titleMatch ? 50 : 0);
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = result;
-        }
-      }
-    }
+    const bestMatch = pickBestItunesResult(data.results, artist, title);
     
     if (!bestMatch) {
       console.log('[iTunes] No good match found');
@@ -86,6 +109,10 @@ export async function fetchFromiTunes(artist: string, title: string): Promise<iT
       albumArtUrl,
       album: bestMatch.collectionName || null,
       releaseDate,
+      // lower-case to match the MusicBrainz tag style already stored on songs
+      genre: typeof bestMatch.primaryGenreName === 'string' && bestMatch.primaryGenreName.trim()
+        ? bestMatch.primaryGenreName.trim().toLowerCase()
+        : null,
     };
   } catch (error) {
     console.error('[iTunes] Error:', error);
