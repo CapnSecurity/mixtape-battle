@@ -54,6 +54,20 @@ rules:
             ...
           }
 
+  - id: mixtape-unguarded-json-body
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Do not call req.json() directly in a route handler: malformed or non-object bodies become 500s.
+      Use readJsonObject() from lib/http.ts (returns a 400 response for bad input).
+    paths:
+      include:
+        - "app/api/**/route.ts"
+    patterns:
+      - pattern-either:
+          - pattern: await $REQ.json()
+      - pattern-not: await $REQ.json().catch(...)
+
   - id: mixtape-no-dangerously-set-inner-html
     languages: [typescript, javascript]
     severity: ERROR
