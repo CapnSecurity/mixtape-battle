@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     });
 
     console.log('[toggle-admin] Successfully toggled admin status:', {
-      email: updatedUser.email,
+      user: userRef(updatedUser.email),
       isAdmin: updatedUser.isAdmin
     });
 
