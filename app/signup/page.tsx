@@ -61,7 +61,7 @@ function SignupForm() {
           <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Password</label>
           <Input type="password" required placeholder="Set a password" value={password} onChange={e => setPassword(e.target.value)} />
         </div>
-        <Button type="submit" className="w-full" disabled={status!=="ready"}>Create Account</Button>
+        <Button type="submit" className="w-full" disabled={status!=="ready" && status!=="error"}>Create Account</Button>
       </form>
       {status === "error" && <div className="text-[var(--pink)] mt-4">{errorMessage}</div>}
     </div>
