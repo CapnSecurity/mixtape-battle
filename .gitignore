@@ -106,3 +106,5 @@ quick-*.js
 /cache-backup.*
 /*.zip
 /*.tar.gz
+
+*.tsbuildinfo
