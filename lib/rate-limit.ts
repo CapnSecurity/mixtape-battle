@@ -15,8 +15,8 @@ interface RateLimitEntry {
 // In-memory store for rate limiting (consider Redis for production scaling)
 const limitStore = new Map<string, RateLimitEntry>();
 
-// Cleanup old entries every 5 minutes
-setInterval(() => {
+// Cleanup old entries every 5 minutes (unref'd so it never keeps a process alive on its own)
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of limitStore.entries()) {
     if (entry.resetTime < now) {
@@ -24,6 +24,7 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+cleanupTimer.unref?.();
 
 /**
  * Get client identifier from request.
@@ -33,7 +34,7 @@ setInterval(() => {
  * number of trusted proxies that append to the header (default 1 = rightmost entry, which
  * cannot be spoofed but may identify the proxy rather than the end user).
  */
-function getClientId(req: NextRequest): string {
+export function getClientId(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
     const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);

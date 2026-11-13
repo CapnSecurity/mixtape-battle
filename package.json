@@ -8,8 +8,11 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "start:prod": "sh scripts/start.sh",
-    "lint": "next lint",
-    "security:audit": "npm audit --audit-level=high",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "security:audit": "npm audit --omit=dev --audit-level=high",
     "security:scan": "npm run security:audit"
   },
   "dependencies": {
@@ -27,10 +30,13 @@
     "react-icons": "^5.5.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "25.2.2",
     "@types/react": "19.2.10",
     "autoprefixer": "^10.4.24",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.28",
     "pg": "^8.18.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
