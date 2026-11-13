@@ -16,6 +16,7 @@ const config = [
       'nginx-logs/**',
       'ssl/**',
       'security-tests/**',
+      '.semgrep/**',
       'prisma/**',
       'scripts/**',
       '**/*.js',
