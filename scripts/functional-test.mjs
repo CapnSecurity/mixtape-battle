@@ -135,8 +135,8 @@ const u1Id = u1.session.user.id; const u2Id = u2.session.user.id;
 
 // ------------------------------------------------------------------ public/utility routes
 section('utility routes');
-const csrfNoAuth = await call('GET', '/api/csrf');
-record('GET /api/csrf without a session is redirected/blocked', csrfNoAuth.status !== 200, String(csrfNoAuth.status));
+const anonUtility = await call('GET', '/api/csrf');
+record('GET /api/csrf without a session is redirected/blocked', anonUtility.status !== 200, String(anonUtility.status));
 const inviteValidateBad = await call('GET', '/api/invite/validate?token=nope');
 record('GET /api/invite/validate with a bad token returns ok:false', inviteValidateBad.data?.ok === false);
 const inviteValidateNone = await call('GET', '/api/invite/validate');
