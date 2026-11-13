@@ -18,7 +18,8 @@ LOG_DIR="${SMOKE_LOG_DIR:-smoke-logs}"
 
 case "$BASE" in
   *@localhost:*|*@127.0.0.1:*|*@postgres:*) ;;
-  *) echo "Refusing to run: SMOKE_PG_BASE must point at localhost or the CI postgres service." >&2; exit 2 ;;
+  *@"${SMOKE_ALLOW_PG_HOST:-__none__}":*) ;;
+  *) echo "Refusing to run: SMOKE_PG_BASE must point at localhost or the CI postgres service (or SMOKE_ALLOW_PG_HOST)." >&2; exit 2 ;;
 esac
 
 mkdir -p "$LOG_DIR"

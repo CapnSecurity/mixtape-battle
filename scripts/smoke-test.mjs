@@ -33,8 +33,9 @@ if (db && !db.startsWith('mixtape_validation_')) {
 }
 if (psqlUrl) {
   const u = new URL(psqlUrl);
-  if (!['localhost', '127.0.0.1'].includes(u.hostname) || !u.pathname.slice(1).startsWith('mixtape_validation_')) {
-    console.error('Refusing to run: SMOKE_PSQL_URL must point at localhost and a mixtape_validation_* database.');
+  const allowedHosts = ['localhost', '127.0.0.1', 'postgres', process.env.SMOKE_ALLOW_PG_HOST].filter(Boolean);
+  if (!allowedHosts.includes(u.hostname) || !u.pathname.slice(1).startsWith('mixtape_validation_')) {
+    console.error('Refusing to run: SMOKE_PSQL_URL must point at a local/CI postgres host and a mixtape_validation_* database.');
     process.exit(2);
   }
 }
