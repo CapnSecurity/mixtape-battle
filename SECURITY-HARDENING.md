@@ -1,6 +1,6 @@
 # Security hardening report: The Mixtape
 
-Branch `security/hardening-and-ci` (16 commits ahead of `main`; 59 files, mostly small edits plus new CI,
+Branch `security/hardening-and-ci` (16 commits ahead of `main`; 60 files, mostly small edits plus new CI,
 rules and tests). **Nothing has been deployed.** `main` and production are unchanged. Phase 2 work is
 committed locally only; `origin/security/hardening-and-ci` is still at the earlier push (`16c73f3`).
 
