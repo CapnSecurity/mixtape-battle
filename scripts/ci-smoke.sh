@@ -42,14 +42,14 @@ run_mode() {
   local db="mixtape_validation_${name}"
   local db_url="${BASE}/${db}"
   echo "::group::smoke ${name}"
-  psql "${BASE}/postgres" -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS ${db}" -c "CREATE DATABASE ${db}" >/dev/null
+  psql "${BASE}/postgres" -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS ${db} WITH (FORCE)" -c "CREATE DATABASE ${db}" >/dev/null
   DATABASE_URL="$db_url" npx prisma db push --skip-generate >/dev/null
 
   env NODE_ENV=production DATABASE_URL="$db_url" \
     NEXTAUTH_URL="https://localhost:${port}" NEXTAUTH_SECRET="$(openssl rand -base64 32)" \
     EMAIL_SERVER_HOST="$SMTP_HOST" EMAIL_SERVER_PORT="$SMTP_PORT" EMAIL_SERVER_USER=ci EMAIL_SERVER_PASSWORD=ci \
     EMAIL_FROM=ci@example.test "${env_extra[@]}" \
-    npx next start -p "$port" >"${LOG_DIR}/server-${name}.log" 2>&1 &
+    node node_modules/next/dist/bin/next start -p "$port" >"${LOG_DIR}/server-${name}.log" 2>&1 &
   SERVER_PID=$!
 
   for _ in $(seq 1 60); do
@@ -73,7 +73,8 @@ run_mode() {
   fi
 
   kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true; SERVER_PID=""
-  psql "${BASE}/postgres" -c "DROP DATABASE IF EXISTS ${db}" >/dev/null
+  # FORCE drops lingering connections; cleanup problems must not mask the test result.
+  psql "${BASE}/postgres" -c "DROP DATABASE IF EXISTS ${db} WITH (FORCE)" >/dev/null || true
   echo "::endgroup::"
 }
 

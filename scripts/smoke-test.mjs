@@ -57,14 +57,20 @@ function psql(sql) {
 
 class Jar {
   cookies = new Map();
+  raw = new Map();
   absorb(res) {
     for (const line of res.headers.getSetCookie?.() ?? []) {
       const [pair] = line.split(';');
       const eq = pair.indexOf('=');
       const name = pair.slice(0, eq).trim();
       const value = pair.slice(eq + 1).trim();
-      if (value === '' || /max-age=0/i.test(line)) this.cookies.delete(name);
-      else this.cookies.set(name, value);
+      if (value === '' || /max-age=0/i.test(line)) {
+        this.cookies.delete(name);
+        this.raw.delete(name);
+      } else {
+        this.cookies.set(name, value);
+        this.raw.set(name, line);
+      }
     }
   }
   header() {
@@ -238,6 +244,20 @@ record('admin login creates session', admin.session?.user?.email === adminEmail,
 record('user login creates session', user.session?.user?.email === userEmail, user.session?.user?.email ?? 'none');
 record('session reflects isAdmin only for promoted account', admin.session?.user?.isAdmin === true && !user.session?.user?.isAdmin);
 info('session cookie names', [...user.jar.cookies.keys()].join(', '));
+
+// ---- Session cookie attributes (read from the raw Set-Cookie headers) ----
+const sessionCookieName = [...user.jar.raw.keys()].find((n) => /session-token$/.test(n)) ?? '';
+const sessionCookie = user.jar.raw.get(sessionCookieName) ?? '';
+record('session cookie uses the __Secure- prefix', sessionCookieName.startsWith('__Secure-'), sessionCookieName);
+record('session cookie is HttpOnly', /;\s*HttpOnly/i.test(sessionCookie));
+record('session cookie is Secure', /;\s*Secure/i.test(sessionCookie));
+record('session cookie is SameSite=Lax', /;\s*SameSite=Lax/i.test(sessionCookie));
+record('session cookie path is /', /;\s*Path=\//i.test(sessionCookie));
+const expires = /;\s*Expires=([^;]+)/i.exec(sessionCookie)?.[1];
+const lifetimeDays = expires ? (new Date(expires).getTime() - Date.now()) / 86_400_000 : NaN;
+record('session cookie lifetime is at most 7 days', lifetimeDays > 0 && lifetimeDays <= 7.01, `${lifetimeDays.toFixed(2)} days`);
+const csrfCookie = [...user.jar.raw].find(([n]) => /csrf-token$/.test(n))?.[1] ?? '';
+record('NextAuth CSRF cookie is HttpOnly, Secure, SameSite=Lax', /HttpOnly/i.test(csrfCookie) && /Secure/i.test(csrfCookie) && /SameSite=Lax/i.test(csrfCookie));
 
 // ---- CSRF tokens ----
 const anonCsrf = await call('GET', '/api/csrf');
