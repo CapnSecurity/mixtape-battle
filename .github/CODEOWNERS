@@ -1,0 +1,17 @@
+# Code owners: with the ruleset option "Require review from Code Owners" enabled, changes to these
+# paths need an approving review from the listed owner. Update the handle if ownership changes.
+* @CapnSecurity
+
+# Security-sensitive code, CI and deployment configuration
+/lib/auth*.ts @CapnSecurity
+/lib/csrf.ts @CapnSecurity
+/lib/rate-limit.ts @CapnSecurity
+/middleware.ts @CapnSecurity
+/next.config.js @CapnSecurity
+/app/api/ @CapnSecurity
+/.github/ @CapnSecurity
+/.semgrep/ @CapnSecurity
+/.pr_agent.toml @CapnSecurity
+/Dockerfile @CapnSecurity
+/scripts/start.sh @CapnSecurity
+/prisma/ @CapnSecurity

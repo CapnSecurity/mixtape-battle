@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
+import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { readJsonObject, parseIdParam } from '@/lib/http';
 
 // GET /api/songs/[id]/comments - Get all comments for a song
 export async function GET(
@@ -9,10 +11,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const songId = parseInt(id);
+    // Explicit check: do not rely on middleware alone for authentication.
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (isNaN(songId)) {
+    const { id } = await params;
+    const songId = parseIdParam(id);
+
+    if (songId === null) {
       return NextResponse.json(
         { error: 'Invalid song ID' },
         { status: 400 }
@@ -61,19 +69,25 @@ export async function POST(
     }
 
     const { id } = await params;
-    const songId = parseInt(id);
+    const songId = parseIdParam(id);
 
-    if (isNaN(songId)) {
+    if (songId === null) {
       return NextResponse.json(
         { error: 'Invalid song ID' },
         { status: 400 }
       );
     }
 
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (body instanceof NextResponse) return body;
+
+    if (!verifyCsrfToken(request, body)) {
+      return csrfErrorResponse();
+    }
+
     const { content } = body;
 
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== 'string' || content.includes('\u0000')) {
       return NextResponse.json(
         { error: 'Comment content is required' },
         { status: 400 }

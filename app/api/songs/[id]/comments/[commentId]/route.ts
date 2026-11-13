@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
+import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { parseIdParam } from '@/lib/http';
 
 // DELETE /api/songs/[id]/comments/[commentId] - Delete a comment
 export async function DELETE(
@@ -18,10 +20,14 @@ export async function DELETE(
       );
     }
 
-    const { commentId } = await params;
-    const commentIdNum = parseInt(commentId);
+    if (!verifyCsrfToken(request)) {
+      return csrfErrorResponse();
+    }
 
-    if (isNaN(commentIdNum)) {
+    const { commentId } = await params;
+    const commentIdNum = parseIdParam(commentId);
+
+    if (commentIdNum === null) {
       return NextResponse.json(
         { error: 'Invalid comment ID' },
         { status: 400 }

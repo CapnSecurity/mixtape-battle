@@ -3,39 +3,36 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { userRef } from '@/lib/log';
+import { readJsonObject, isDbInt, cleanText } from '@/lib/http';
 
 // POST /api/setlist/add - Add a song to the setlist (admin only)
 export async function POST(req: NextRequest) {
   try {
-    console.log('[SETLIST-ADD] === Request started ===');
-    
     // Check authentication
     const session = await getServerSession(authOptions);
     const user = session?.user as any;
-    
-    console.log('[SETLIST-ADD] Session:', { hasSession: !!session, hasUser: !!user, isAdmin: !!user?.isAdmin });
-    
+
     if (!user?.isAdmin) {
-      console.log('[SETLIST-ADD] Rejected - not admin');
       return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const body = await req.json();
-    console.log('[SETLIST-ADD] Request body:', body);
-    console.log('[SETLIST-ADD] Headers:', Object.fromEntries(req.headers.entries()));
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
-    console.log('[SETLIST-ADD] Verifying CSRF token...');
     if (!verifyCsrfToken(req, body)) {
-      console.log('[SETLIST-ADD] CSRF verification FAILED');
       return csrfErrorResponse();
     }
-    console.log('[SETLIST-ADD] CSRF verification PASSED');
 
     const { songId, notes } = body;
 
-    if (!songId || typeof songId !== 'number') {
+    if (!isDbInt(songId)) {
       return NextResponse.json({ error: 'Invalid songId' }, { status: 400 });
+    }
+    const notesCheck = cleanText(notes, 500);
+    if (!notesCheck.ok) {
+      return NextResponse.json({ error: 'Invalid notes' }, { status: 400 });
     }
 
     // Check if song exists
@@ -69,7 +66,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`[SETLIST-ADD] Added song ${songId} at position ${nextPosition} by ${user.email}`);
+    console.log(`[SETLIST-ADD] Added song ${songId} at position ${nextPosition} by ${userRef(user.email)}`);
     return NextResponse.json({ entry });
   } catch (error) {
     console.error('[SETLIST-ADD] Error:', error);

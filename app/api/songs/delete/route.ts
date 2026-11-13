@@ -3,23 +3,21 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isDbInt, parseIdParam } from "@/lib/http";
 
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    console.log('[DELETE SONG] Session:', JSON.stringify(session, null, 2));
-    console.log('[DELETE SONG] User email:', session?.user?.email);
-    
+
     if (!session || session.user?.email !== 'tim@levesques.net') {
-      console.log('[DELETE SONG] Unauthorized - not root account');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
-      console.log('[DELETE SONG] Invalid CSRF token');
       return csrfErrorResponse();
     }
 
@@ -28,13 +26,17 @@ export async function DELETE(req: NextRequest) {
     if (!songId) {
       return NextResponse.json({ error: "Song ID is required" }, { status: 400 });
     }
+    const id = typeof songId === 'string' ? parseIdParam(songId) : songId;
+    if (!isDbInt(id)) {
+      return NextResponse.json({ error: "Invalid song ID" }, { status: 400 });
+    }
 
     // Delete the song
     const deletedSong = await prisma.song.delete({
-      where: { id: parseInt(songId) },
+      where: { id },
     });
 
-    console.log(`[DELETE SONG] Admin deleted: "${deletedSong.title}" by ${deletedSong.artist}`);
+    console.log(`[DELETE SONG] Song ${deletedSong.id} deleted by root account`);
 
     return NextResponse.json({ 
       success: true, 

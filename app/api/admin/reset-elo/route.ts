@@ -3,7 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject } from "@/lib/http";
 import { sanitizeError, logError } from "@/lib/error-handler";
+import { userRef } from "@/lib/log";
 
 const DEFAULT_ELO = 1500;
 
@@ -22,7 +24,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest) {
       return csrfErrorResponse();
     }
 
-    console.log(`[RESET ELO] Admin ${user.email} is resetting all ELO ratings to ${DEFAULT_ELO}`);
+    console.log(`[RESET ELO] Admin ${userRef(user.email)} is resetting all ELO ratings to ${DEFAULT_ELO}`);
 
     // Reset all songs to default ELO
     const result = await prisma.song.updateMany({

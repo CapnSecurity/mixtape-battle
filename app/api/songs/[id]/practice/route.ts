@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, parseIdParam, cleanText } from "@/lib/http";
 
 type Params = Promise<{ id: string }>;
 
@@ -48,9 +49,10 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { id } = await params;
-    const songId = parseInt(id);
+    const songId = parseIdParam(id);
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -58,6 +60,14 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { markPracticed, keyNotes, tuningNotes } = body;
+    const keyCheck = cleanText(keyNotes, 500);
+    const tuningCheck = cleanText(tuningNotes, 500);
+    if (!keyCheck.ok || !tuningCheck.ok) {
+      return NextResponse.json({ error: "Invalid notes" }, { status: 400 });
+    }
+    if (songId === null) {
+      return NextResponse.json({ error: "Song not found" }, { status: 404 });
+    }
 
     // Verify song exists
     const song = await prisma.song.findUnique({ where: { id: songId } });
@@ -77,11 +87,11 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     }
 
     if (keyNotes !== undefined) {
-      updateData.keyNotes = keyNotes || null;
+      updateData.keyNotes = keyCheck.value || null;
     }
 
     if (tuningNotes !== undefined) {
-      updateData.tuningNotes = tuningNotes || null;
+      updateData.tuningNotes = tuningCheck.value || null;
     }
 
     // Update song

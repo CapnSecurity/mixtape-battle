@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, parseIdParam } from "@/lib/http";
 
 type Params = Promise<{ id: string }>;
 
@@ -25,7 +26,10 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { id } = await params;
-    const songId = parseInt(id);
+    const songId = parseIdParam(id);
+    if (songId === null) {
+      return NextResponse.json({ error: "Song not found" }, { status: 404 });
+    }
     const userId = (session.user as { id?: string })?.id;
 
     if (!userId) {
@@ -171,14 +175,15 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { id } = await params;
-    const songId = parseInt(id);
+    const songId = parseIdParam(id);
     const userId = (session.user as { id?: string })?.id;
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -190,6 +195,9 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     // Validate status
     if (!["SOLID", "NEEDS_WORK", "NOT_READY"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    if (songId === null) {
+      return NextResponse.json({ error: "Song not found" }, { status: 404 });
     }
 
     // Verify song exists

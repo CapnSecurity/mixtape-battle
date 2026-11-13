@@ -7,22 +7,28 @@ import { Session } from "next-auth";
 import { validatePassword } from "@/lib/password-validation";
 import { sanitizeError, logError, ErrorMessages } from "@/lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { userRef } from "@/lib/log";
+import { readJsonObject, isCleanString } from "@/lib/http";
 
 export async function POST(req: NextRequest) {
   try {
-    console.log("[SET-PASSWORD] Request received");
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
     const { password, resetToken } = body;
-    console.log("[SET-PASSWORD] Has resetToken:", !!resetToken);
+
+    if (resetToken !== undefined && resetToken !== null && !isCleanString(resetToken, 200)) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+    if (password !== undefined && !isCleanString(password, 200)) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 400 });
+    }
 
     // Require CSRF token for session-based password changes
     if (!resetToken && !verifyCsrfToken(req, body)) {
-      console.log('[SET-PASSWORD] Invalid CSRF token');
       return csrfErrorResponse();
     }
 
     if (!password) {
-      console.log("[SET-PASSWORD] Password missing");
       return NextResponse.json(
         { error: "Password is required" },
         { status: 400 }
@@ -32,7 +38,6 @@ export async function POST(req: NextRequest) {
     // Validate password strength
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      console.log("[SET-PASSWORD] Password validation failed:", passwordValidation.errors);
       return NextResponse.json(
         { 
           error: "Password does not meet requirements",
@@ -46,28 +51,23 @@ export async function POST(req: NextRequest) {
 
     // Handle password reset via token
     if (resetToken) {
-      console.log("[SET-PASSWORD] Processing reset token");
       const passwordReset = await prisma.passwordReset.findUnique({
         where: { token: resetToken },
       });
 
       if (!passwordReset) {
-        console.log("[SET-PASSWORD] Invalid reset token");
         return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
       }
 
       if (passwordReset.expiresAt < new Date()) {
-        console.log("[SET-PASSWORD] Reset token expired");
         return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
       }
 
       if (passwordReset.usedAt) {
-        console.log("[SET-PASSWORD] Reset token already used");
         return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
       }
 
       userEmail = passwordReset.email;
-      console.log("[SET-PASSWORD] Valid token for:", userEmail);
 
       // Mark token as used
       await prisma.passwordReset.update({
@@ -76,28 +76,23 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // Handle password set via authenticated session
-      console.log("[SET-PASSWORD] Processing session-based request");
       const session = (await getServerSession(authOptions as any)) as Session | null;
 
       if (!session?.user?.email) {
-        console.log("[SET-PASSWORD] No session found");
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
       userEmail = session.user.email;
-      console.log("[SET-PASSWORD] Session user:", userEmail);
     }
 
-    console.log("[SET-PASSWORD] Hashing password for:", userEmail);
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    console.log("[SET-PASSWORD] Updating user password");
     await prisma.user.update({
       where: { email: userEmail },
       data: { password: hashedPassword },
     });
 
-    console.log("[SET-PASSWORD] Success for:", userEmail);
+    console.log("[SET-PASSWORD] Password changed for", userRef(userEmail), resetToken ? "(reset link)" : "(session)");
     return NextResponse.json({ success: true });
   } catch (error: any) {
     logError('[SET-PASSWORD]', error);

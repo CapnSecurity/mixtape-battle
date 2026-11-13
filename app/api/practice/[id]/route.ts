@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isSafeId, cleanText } from "@/lib/http";
 
 // PATCH /api/practice/[id] - Update practice item
 export async function PATCH(
@@ -27,7 +28,8 @@ export async function PATCH(
       return rateLimitResult.response;
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -35,7 +37,14 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    if (!isSafeId(id)) {
+      return NextResponse.json({ error: "Practice item not found" }, { status: 404 });
+    }
     const { status, priority, notes } = body;
+    const notesCheck = cleanText(notes, 2000);
+    if (!notesCheck.ok) {
+      return NextResponse.json({ error: "Invalid notes" }, { status: 400 });
+    }
 
     // Verify ownership
     const existing = await prisma.practiceListItem.findUnique({
@@ -71,12 +80,12 @@ export async function PATCH(
       }
     }
     
-    if (priority !== undefined && typeof priority === 'number' && priority >= 1 && priority <= 5) {
+    if (priority !== undefined && typeof priority === 'number' && Number.isInteger(priority) && priority >= 1 && priority <= 5) {
       updateData.priority = priority;
     }
     
     if (notes !== undefined) {
-      updateData.notes = notes || null;
+      updateData.notes = notesCheck.value || null;
     }
 
     // Update practice item
@@ -148,7 +157,8 @@ export async function DELETE(
       return rateLimitResult.response;
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -156,6 +166,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    if (!isSafeId(id)) {
+      return NextResponse.json({ error: "Practice item not found" }, { status: 404 });
+    }
 
     // Verify ownership
     const existing = await prisma.practiceListItem.findUnique({

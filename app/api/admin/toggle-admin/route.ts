@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 import { sanitizeError, logError } from "@/lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isCleanString } from "@/lib/http";
+import { userRef } from "@/lib/log";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,12 +35,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (!currentUser?.isAdmin) {
-      console.log('[toggle-admin] Forbidden - user is not admin:', session.user.email);
+      console.log('[toggle-admin] Forbidden - user is not admin:', userRef(session.user.email));
       return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
     }
 
     // Parse request body
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -47,12 +50,12 @@ export async function POST(req: NextRequest) {
     }
     const { email } = body;
 
-    if (!email) {
+    if (!isCleanString(email, 254) || !email) {
       console.log('[toggle-admin] Bad request - missing email');
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    console.log('[toggle-admin] Toggling admin status for:', email);
+    console.log('[toggle-admin] Toggling admin status for:', userRef(email));
 
     // Find the target user
     const targetUser = await prisma.user.findUnique({
@@ -61,12 +64,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (!targetUser) {
-      console.log('[toggle-admin] User not found:', email);
+      console.log('[toggle-admin] User not found:', userRef(email));
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     if (targetUser.email === rootAdminEmail && targetUser.isAdmin) {
-      console.log('[toggle-admin] Prevented root admin demotion:', email);
+      console.log('[toggle-admin] Prevented root admin demotion:', userRef(email));
       return NextResponse.json({
         error: "Cannot remove root admin privileges"
       }, { status: 400 });
@@ -74,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     // Prevent self-demotion (optional safety check)
     if (targetUser.email === currentUser.email && targetUser.isAdmin) {
-      console.log('[toggle-admin] Prevented self-demotion:', email);
+      console.log('[toggle-admin] Prevented self-demotion:', userRef(email));
       return NextResponse.json({ 
         error: "Cannot remove your own admin privileges" 
       }, { status: 400 });
@@ -88,7 +91,7 @@ export async function POST(req: NextRequest) {
     });
 
     console.log('[toggle-admin] Successfully toggled admin status:', {
-      email: updatedUser.email,
+      user: userRef(updatedUser.email),
       isAdmin: updatedUser.isAdmin
     });
 

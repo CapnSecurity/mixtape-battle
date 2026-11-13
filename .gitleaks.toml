@@ -1,0 +1,12 @@
+title = "mixtape-battle"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and documented placeholders (no real credentials)"
+paths = [
+  '''\.semgrep/mixtape\.tsx$''',
+  '''(^|/)\.env(\.[A-Za-z]+)*\.example$''',
+  '''(^|/)package-lock\.json$''',
+]

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useCsrfToken } from "@/lib/use-csrf";
 
 interface Comment {
   id: number;
@@ -21,6 +22,7 @@ interface CommentsProps {
 
 export default function Comments({ songId }: CommentsProps) {
   const { data: session, status } = useSession();
+  const { token: csrfToken } = useCsrfToken();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +52,10 @@ export default function Comments({ songId }: CommentsProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
+    if (!csrfToken) {
+      setError("Security token not ready. Please wait a moment and try again.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");
@@ -57,7 +63,7 @@ export default function Comments({ songId }: CommentsProps) {
     try {
       const res = await fetch(`/api/songs/${songId}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
         body: JSON.stringify({ content: newComment }),
       });
 
@@ -79,10 +85,15 @@ export default function Comments({ songId }: CommentsProps) {
   // Delete comment
   const handleDelete = async (commentId: number) => {
     if (!confirm("Delete this comment?")) return;
+    if (!csrfToken) {
+      alert("Security token not ready. Please wait a moment and try again.");
+      return;
+    }
 
     try {
       const res = await fetch(`/api/songs/${songId}/comments/${commentId}`, {
         method: "DELETE",
+        headers: { "X-CSRF-Token": csrfToken },
       });
 
       if (res.ok) {

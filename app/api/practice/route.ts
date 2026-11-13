@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isDbInt, cleanText } from "@/lib/http";
 
 // GET /api/practice - Fetch user's practice list
 export async function GET(req: NextRequest) {
@@ -77,7 +78,8 @@ export async function POST(req: NextRequest) {
       return rateLimitResult.response;
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -86,11 +88,18 @@ export async function POST(req: NextRequest) {
 
     const { songId, priority, notes } = body;
 
-    if (!songId || typeof songId !== 'number') {
+    if (!isDbInt(songId)) {
       return NextResponse.json(
         { error: "Invalid songId" },
         { status: 400 }
       );
+    }
+    if (priority !== undefined && priority !== null && !(Number.isInteger(priority) && priority >= 1 && priority <= 5)) {
+      return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    }
+    const notesCheck = cleanText(notes, 2000);
+    if (!notesCheck.ok) {
+      return NextResponse.json({ error: "Invalid notes" }, { status: 400 });
     }
 
     // Check if song exists
@@ -120,7 +129,7 @@ export async function POST(req: NextRequest) {
         userId,
         songId,
         priority: priority || 3,
-        notes: notes || null,
+        notes: notesCheck.value || null,
         status: 'NOT_STARTED',
       },
       include: {

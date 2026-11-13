@@ -10,13 +10,9 @@ import { generateCsrfToken } from '@/lib/csrf';
  */
 export async function GET() {
   try {
-    console.log('[CSRF-GET] Request for CSRF token');
     const session = await getServerSession(authOptions);
-    
-    console.log('[CSRF-GET] Session:', { hasSession: !!session, user: session?.user?.email });
-    
+
     if (!session) {
-      console.log('[CSRF-GET] No session - unauthorized');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -24,9 +20,8 @@ export async function GET() {
     }
 
     const token = generateCsrfToken();
-    console.log('[CSRF-GET] Generated token:', token.substring(0, 20) + '...');
-    
-    return NextResponse.json({ csrfToken: token });
+
+    return NextResponse.json({ csrfToken: token }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('[CSRF] Error generating token:', error);
     return NextResponse.json(

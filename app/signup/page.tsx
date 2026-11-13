@@ -10,6 +10,7 @@ function SignupForm() {
   const token = searchParams.get("token") || "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("Failed to create account.");
   const [status, setStatus] = useState<"idle"|"validating"|"invalid"|"ready"|"submitting"|"success"|"error">("idle");
 
   useEffect(() => {
@@ -39,6 +40,8 @@ function SignupForm() {
       setStatus("success");
       setTimeout(() => router.push("/login"), 2000);
     } else {
+      const data = await res.json().catch(() => ({}));
+      setErrorMessage(Array.isArray(data?.details) ? data.details.join(" ") : data?.error || "Failed to create account.");
       setStatus("error");
     }
   }
@@ -58,9 +61,9 @@ function SignupForm() {
           <label className="block text-sm font-medium mb-1 text-[var(--muted)]">Password</label>
           <Input type="password" required placeholder="Set a password" value={password} onChange={e => setPassword(e.target.value)} />
         </div>
-        <Button type="submit" className="w-full" disabled={status!=="ready"}>Create Account</Button>
+        <Button type="submit" className="w-full" disabled={status!=="ready" && status!=="error"}>Create Account</Button>
       </form>
-      {status === "error" && <div className="text-[var(--pink)] mt-4">Failed to create account.</div>}
+      {status === "error" && <div className="text-[var(--pink)] mt-4">{errorMessage}</div>}
     </div>
   );
 }

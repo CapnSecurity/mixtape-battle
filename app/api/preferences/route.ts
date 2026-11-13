@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 import { sanitizeError, logError } from "@/lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isCleanString } from "@/lib/http";
 
 export async function GET() {
   try {
@@ -46,7 +47,8 @@ export async function POST(req: NextRequest) {
       return rateLimitResult.response;
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -59,9 +61,15 @@ export async function POST(req: NextRequest) {
     if (!Array.isArray(genres) || !Array.isArray(decades) || !Array.isArray(artists)) {
       return NextResponse.json({ error: "Invalid input format" }, { status: 400 });
     }
+    if (genres.length > 100 || decades.length > 20 || artists.length > 200) {
+      return NextResponse.json({ error: "Too many preference values" }, { status: 400 });
+    }
+    if (![...genres, ...artists].every((v) => typeof v !== 'string' || isCleanString(v, 100))) {
+      return NextResponse.json({ error: "Invalid preference value" }, { status: 400 });
+    }
 
     // Validate decades are reasonable years
-    if (decades.some(d => typeof d !== 'number' || d < 1900 || d > 2030)) {
+    if (decades.some(d => typeof d !== 'number' || !Number.isInteger(d) || d < 1900 || d > 2030)) {
       return NextResponse.json({ error: "Invalid decades" }, { status: 400 });
     }
 

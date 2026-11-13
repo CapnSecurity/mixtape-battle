@@ -83,7 +83,8 @@ export default function AddSongResourcePage() {
         setStatus('✅ Successfully updated!');
         setTimeout(() => setStatus(''), 3000);
       } else {
-        setStatus('❌ Failed to update');
+        const data = await res.json().catch(() => ({}));
+        setStatus(`❌ ${data?.error || 'Failed to update'}`);
       }
     } catch (error) {
       console.error('Error updating links:', error);

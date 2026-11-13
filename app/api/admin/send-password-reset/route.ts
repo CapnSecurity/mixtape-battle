@@ -7,6 +7,9 @@ import nodemailer from 'nodemailer';
 import { rateLimiters } from '@/lib/rate-limit';
 import { sanitizeError, logError, ErrorMessages } from '@/lib/error-handler';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { readJsonObject } from '@/lib/http';
+import { userRef } from '@/lib/log';
+import { isValidEmail } from '@/lib/input-sanitization';
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +29,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -35,16 +39,13 @@ export async function POST(req: NextRequest) {
     }
 
     const { email } = body;
-    console.log("[SEND-RESET] Sending reset to:", email);
-    if (!email || typeof email !== 'string') {
-      console.log("[SEND-RESET] Invalid email format");
+    if (!isValidEmail(email)) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
     }
 
     // Check if user exists
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      console.log("[SEND-RESET] User not found:", email);
       // Return success anyway to prevent account enumeration
       // Timing attack mitigation: still generate token and do work
       const dummyToken = randomBytes(32).toString('hex');
@@ -53,12 +54,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate secure token
-    console.log("[SEND-RESET] Generating token");
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
 
     // Store password reset token in DB
-    console.log("[SEND-RESET] Storing token in database");
     await prisma.passwordReset.create({
       data: {
         email,
@@ -102,9 +101,8 @@ export async function POST(req: NextRequest) {
     `
   };
 
-  console.log("[SEND-RESET] Sending email to:", email);
   await transporter.sendMail(mailOptions);
-  console.log('[SEND-RESET] Email sent successfully');
+  console.log('[SEND-RESET] Reset email sent to', userRef(email));
   return NextResponse.json({ ok: true });
   } catch (error: any) {
     logError('[SEND-RESET]', error);

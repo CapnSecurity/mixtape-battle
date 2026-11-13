@@ -1,13 +1,23 @@
-import { randomBytes, createHmac } from 'crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import { debug } from './log';
 
-const CSRF_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-change-in-production';
 const CSRF_TOKEN_LENGTH = 32;
+const ONE_HOUR = 60 * 60 * 1000;
 
-// Log secret status on module load (only first few characters for security)
-if (typeof window === 'undefined') { // Server-side only
-  console.log('[CSRF-MODULE] Secret configured:', CSRF_SECRET ? CSRF_SECRET.substring(0, 8) + '...' : 'NONE');
-  console.log('[CSRF-MODULE] Using fallback:', !process.env.NEXTAUTH_SECRET);
+// Resolved lazily so `next build` can import this module without runtime secrets.
+// In production a missing secret must fail closed instead of signing with a well-known value.
+function getSecret(): string {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('NEXTAUTH_SECRET is required to sign CSRF tokens');
+  }
+  return 'dev-only-csrf-secret';
+}
+
+function sign(data: string): string {
+  return createHmac('sha256', getSecret()).update(data).digest('hex');
 }
 
 /**
@@ -18,20 +28,7 @@ export function generateCsrfToken(): string {
   const timestamp = Date.now().toString();
   const randomData = randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
   const data = `${timestamp}.${randomData}`;
-  
-  const signature = createHmac('sha256', CSRF_SECRET)
-    .update(data)
-    .digest('hex');
-  
-  const token = `${data}.${signature}`;
-  console.log('[CSRF-GEN] Generated token parts:', {
-    timestamp,
-    randomLength: randomData.length,
-    signaturePrefix: signature.substring(0, 8),
-    fullTokenLength: token.length
-  });
-  
-  return token;
+  return `${data}.${sign(data)}`;
 }
 
 /**
@@ -40,61 +37,30 @@ export function generateCsrfToken(): string {
  */
 export function validateCsrfToken(token: string | null | undefined): boolean {
   if (!token || typeof token !== 'string') {
-    console.log('[CSRF] Token validation failed: token is null/undefined or not string');
+    debug('[CSRF] validation failed: missing token');
     return false;
   }
 
   const parts = token.split('.');
   if (parts.length !== 3) {
-    console.log('[CSRF] Token validation failed: invalid format (expected 3 parts, got', parts.length, ')');
+    debug('[CSRF] validation failed: malformed token');
     return false;
   }
 
   const [timestamp, randomData, signature] = parts;
-  
-  console.log('[CSRF-VAL] Token parts:', {
-    timestamp,
-    randomDataLength: randomData?.length,
-    signaturePrefix: signature?.substring(0, 8)
-  });
-  
-  // Verify signature
-  const data = `${timestamp}.${randomData}`;
-  const expectedSignature = createHmac('sha256', CSRF_SECRET)
-    .update(data)
-    .digest('hex');
-  
-  console.log('[CSRF-VAL] Signature comparison:', {
-    received: signature?.substring(0, 8),
-    expected: expectedSignature.substring(0, 8),
-    match: signature === expectedSignature
-  });
-  
-  if (signature !== expectedSignature) {
-    console.log('[CSRF] Token validation failed: invalid signature');
+  const expected = Buffer.from(sign(`${timestamp}.${randomData}`));
+  const received = Buffer.from(signature);
+  if (received.length !== expected.length || !timingSafeEqual(received, expected)) {
+    debug('[CSRF] validation failed: bad signature');
     return false;
   }
 
-  // Check token age (max 1 hour)
-  const tokenTimestamp = parseInt(timestamp, 10);
-  const tokenAge = Date.now() - tokenTimestamp;
-  const ONE_HOUR = 60 * 60 * 1000;
-  
-  console.log('[CSRF-VAL] Token age:', {
-    tokenTimestamp,
-    currentTime: Date.now(),
-    ageMs: tokenAge,
-    ageMinutes: Math.round(tokenAge / 60000),
-    maxMinutes: 60,
-    expired: tokenAge > ONE_HOUR
-  });
-  
-  if (tokenAge > ONE_HOUR) {
-    console.log('[CSRF] Token validation failed: token expired (age:', tokenAge, 'ms)');
+  const tokenAge = Date.now() - parseInt(timestamp, 10);
+  if (!Number.isFinite(tokenAge) || tokenAge < 0 || tokenAge > ONE_HOUR) {
+    debug('[CSRF] validation failed: expired or invalid timestamp');
     return false;
   }
 
-  console.log('[CSRF] Token validation successful');
   return true;
 }
 
@@ -103,29 +69,16 @@ export function validateCsrfToken(token: string | null | undefined): boolean {
  * Checks X-CSRF-Token header or csrfToken in body
  */
 export function verifyCsrfToken(req: NextRequest, body?: any): boolean {
-  // Check header first
   const headerToken = req.headers.get('X-CSRF-Token');
-  console.log('[CSRF] Header token present:', !!headerToken);
-  
-  if (headerToken) {
-    const isValid = validateCsrfToken(headerToken);
-    console.log('[CSRF] Header token valid:', isValid);
-    if (isValid) {
-      return true;
-    }
+  if (headerToken && validateCsrfToken(headerToken)) {
+    return true;
   }
 
-  // Check body if provided
-  if (body?.csrfToken) {
-    console.log('[CSRF] Body token present: true');
-    const isValid = validateCsrfToken(body.csrfToken);
-    console.log('[CSRF] Body token valid:', isValid);
-    if (isValid) {
-      return true;
-    }
+  if (body?.csrfToken && validateCsrfToken(body.csrfToken)) {
+    return true;
   }
 
-  console.log('[CSRF] No valid token found in header or body');
+  console.warn('[CSRF] rejected request: no valid token', req.method, req.nextUrl.pathname);
   return false;
 }
 

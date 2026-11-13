@@ -6,6 +6,7 @@ import { expectedScore, newRating, kFactor } from "../../../../lib/elo";
 import { rateLimiters } from "@/lib/rate-limit";
 import { sanitizeError, logError } from "@/lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isDbInt } from "@/lib/http";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +28,8 @@ export async function POST(req: NextRequest) {
       return rateLimitResult.response;
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -35,6 +37,9 @@ export async function POST(req: NextRequest) {
       return csrfErrorResponse();
     }
     const { winnerId, loserId, skipped } = body;
+    if (!isDbInt(winnerId) || !isDbInt(loserId) || winnerId === loserId) {
+      return NextResponse.json({ error: "Invalid song IDs" }, { status: 400 });
+    }
     const userId = (session.user as { id?: string } | undefined)?.id;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

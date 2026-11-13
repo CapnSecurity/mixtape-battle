@@ -5,6 +5,12 @@ import { prisma } from '@/lib/prisma';
 
 // GET /api/setlist - Get all setlist entries ordered by position
 export async function GET() {
+  // Explicit check: do not rely on middleware alone for authentication.
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const entries = await prisma.setlistEntry.findMany({
       include: {

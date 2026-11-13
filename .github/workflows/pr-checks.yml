@@ -1,0 +1,197 @@
+name: PR checks
+
+# Runs on every pull request using GitHub-hosted runners only. No secrets are used, so fork PRs
+# are safe. This workflow must never be switched to `pull_request_target`, and must never run on
+# the self-hosted deployment runner.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+  SEMGREP_VERSION: "1.184.0"
+
+jobs:
+  # ---------------------------------------------------------------- mandatory
+  static-checks:
+    name: Lint, types, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - name: ESLint (errors block; warnings are reported)
+        run: npm run lint
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: npm audit (production dependencies, high and critical block)
+        run: npm audit --omit=dev --audit-level=high
+      - name: npm audit (all dependencies, advisory)
+        continue-on-error: true
+        run: |
+          {
+            echo "### npm audit (all dependencies, advisory)"
+            echo '```'
+            npm audit --audit-level=moderate 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Dependency review (new/changed dependencies in this PR)
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: never
+
+  secret-scan:
+    name: Secret scan (Gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Gitleaks (pinned, checksum-verified)
+        run: |
+          curl -sSfL -o gitleaks.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tgz" | sha256sum -c -
+          tar -xzf gitleaks.tgz gitleaks
+      - name: Scan commits introduced by this PR
+        run: |
+          ./gitleaks git . --config .gitleaks.toml --gitleaks-ignore-path .gitleaksignore \
+            --redact --no-banner \
+            --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+      - name: Scan the checked-out tree
+        run: ./gitleaks dir . --config .gitleaks.toml --redact --no-banner
+
+  sast:
+    name: SAST (Semgrep CE, project rules)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Semgrep Community Edition (pinned)
+        run: pipx install "semgrep==${SEMGREP_VERSION}"
+      - name: Rule self-tests
+        run: |
+          # Semgrep skips hidden directories, so test a copy of the rules.
+          mkdir -p "$RUNNER_TEMP/semgrep-rules"
+          cp .semgrep/mixtape.yml .semgrep/mixtape.tsx "$RUNNER_TEMP/semgrep-rules/"
+          semgrep --test --metrics=off "$RUNNER_TEMP/semgrep-rules"
+      - name: Scan with project rules (ERROR findings block)
+        run: |
+          semgrep scan --config .semgrep/mixtape.yml --metrics=off --severity ERROR --error \
+            --exclude .semgrep --exclude tests --exclude scripts --exclude security-tests --exclude prisma
+      - name: Project rules, warnings (advisory)
+        continue-on-error: true
+        run: |
+          semgrep scan --config .semgrep/mixtape.yml --metrics=off --severity WARNING \
+            --exclude .semgrep --exclude tests --exclude scripts --exclude security-tests --exclude prisma \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Semgrep registry rules (advisory, opt-in via repository variable)
+        if: ${{ vars.ENABLE_SEMGREP_REGISTRY == 'true' }}
+        continue-on-error: true
+        run: |
+          # Downloads rules from semgrep.dev; no source code is uploaded. Disabled unless opted in.
+          semgrep scan --config p/typescript --config p/nextjs --config p/jwt --metrics=off \
+            --exclude node_modules --exclude .next | tee -a "$GITHUB_STEP_SUMMARY"
+
+  integration:
+    name: Production build + smoke tests
+    needs: [static-checks, dependency-audit, secret-scan, sast]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+      mailhog:
+        image: mailhog/mailhog:v1.0.1
+        ports: ["1025:1025", "8025:8025"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Production build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/build_only
+          NEXTAUTH_SECRET: ci-build-only-not-a-secret
+      - name: Smoke tests (closed signup, open signup, proxy hops=2)
+        run: bash scripts/ci-smoke.sh
+        env:
+          SMOKE_PG_BASE: postgresql://postgres:postgres@localhost:5432
+      - name: Upload smoke logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: smoke-logs
+          path: smoke-logs/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  docker-build:
+    name: Docker image build (no push)
+    needs: [integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the production image
+        run: docker build --tag mixtape-battle-app:pr-${{ github.event.pull_request.number }} .
+
+  # One stable status to require in branch protection / rulesets.
+  all-required-checks:
+    name: All required checks
+    if: ${{ always() }}
+    needs: [static-checks, dependency-audit, secret-scan, sast, integration, docker-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail unless every required job succeeded
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo '${{ toJSON(needs) }}' | jq -e 'all(.[]; .result == "success")' > /dev/null

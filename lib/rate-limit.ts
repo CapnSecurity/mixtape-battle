@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { debug } from './log';
 
 interface RateLimitConfig {
   maxRequests: number;
@@ -14,8 +15,8 @@ interface RateLimitEntry {
 // In-memory store for rate limiting (consider Redis for production scaling)
 const limitStore = new Map<string, RateLimitEntry>();
 
-// Cleanup old entries every 5 minutes
-setInterval(() => {
+// Cleanup old entries every 5 minutes (unref'd so it never keeps a process alive on its own)
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of limitStore.entries()) {
     if (entry.resetTime < now) {
@@ -23,24 +24,31 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+cleanupTimer.unref?.();
 
 /**
- * Get client identifier from request
- * Uses IP address from various headers or falls back to unknown
+ * Get client identifier from request.
+ *
+ * X-Forwarded-For is only trustworthy from the right: each trusted proxy appends the address
+ * it saw, while everything to the left can be forged by the client. TRUSTED_PROXY_HOPS is the
+ * number of trusted proxies that append to the header (default 1 = rightmost entry, which
+ * cannot be spoofed but may identify the proxy rather than the end user).
  */
-function getClientId(req: NextRequest): string {
-  // Try x-forwarded-for first (from proxies like nginx)
+export function getClientId(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
-    return forwarded.split(',')[0].trim();
+    const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    if (parts.length > 0) {
+      const hops = Math.max(1, Number.parseInt(process.env.TRUSTED_PROXY_HOPS || '1', 10) || 1);
+      return parts[Math.max(0, parts.length - hops)];
+    }
   }
-  
-  // Try x-real-ip (alternative proxy header)
+
   const realIp = req.headers.get('x-real-ip');
   if (realIp) {
     return realIp;
   }
-  
+
   // Fall back to unknown for local development
   return 'unknown';
 }
@@ -68,14 +76,14 @@ export function createRateLimit(config: RateLimitConfig, keyPrefix: string = 'gl
       };
       limitStore.set(key, entry);
       
-      console.log(`[RATE-LIMIT] ${keyPrefix} - New window for ${clientId}: 1/${config.maxRequests}`);
+      debug(`[RATE-LIMIT] ${keyPrefix} - new window: 1/${config.maxRequests}`);
       return { success: true };
     }
 
     if (entry.count >= config.maxRequests) {
       const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
       const resetTimeSeconds = Math.ceil(entry.resetTime / 1000);
-      console.log(`[RATE-LIMIT] ${keyPrefix} - BLOCKED ${clientId}: ${entry.count}/${config.maxRequests} (retry in ${retryAfter}s)`);
+      console.warn(`[RATE-LIMIT] ${keyPrefix} - BLOCKED ${clientId}: ${entry.count}/${config.maxRequests} (retry in ${retryAfter}s)`);
       
       return {
         success: false,
@@ -101,7 +109,7 @@ export function createRateLimit(config: RateLimitConfig, keyPrefix: string = 'gl
     entry.count++;
     limitStore.set(key, entry);
     
-    console.log(`[RATE-LIMIT] ${keyPrefix} - ${clientId}: ${entry.count}/${config.maxRequests}`);
+    debug(`[RATE-LIMIT] ${keyPrefix}: ${entry.count}/${config.maxRequests}`);
     return { success: true };
   };
 }

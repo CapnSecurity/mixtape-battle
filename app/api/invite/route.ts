@@ -7,6 +7,9 @@ import nodemailer from 'nodemailer';
 import { rateLimiters } from '@/lib/rate-limit';
 import { sanitizeError, logError } from '@/lib/error-handler';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { readJsonObject } from '@/lib/http';
+import { userRef } from '@/lib/log';
+import { isValidEmail } from '@/lib/input-sanitization';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,7 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -34,17 +38,12 @@ export async function POST(req: NextRequest) {
     }
 
     const { email } = body;
-    console.log("[INVITE] Invite request for:", email);
-    
-    if (!email || typeof email !== 'string') {
-      console.log("[INVITE] Invalid email format");
+
+    if (!isValidEmail(email)) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
     }
 
-    // Only allow admin to invite
-
     // Generate secure token
-    console.log("[INVITE] Generating invite token");
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 3); // 3 days
 
@@ -61,14 +60,7 @@ export async function POST(req: NextRequest) {
     // Email invite link
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const inviteUrl = `${baseUrl}/signup?token=${token}`;
-    
-    console.log('[INVITE] Email config:', {
-      host: process.env.EMAIL_SERVER_HOST,
-      port: process.env.EMAIL_SERVER_PORT,
-      user: process.env.EMAIL_SERVER_USER,
-      from: process.env.EMAIL_FROM,
-    });
-    
+
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
       port: Number(process.env.EMAIL_SERVER_PORT),
@@ -86,12 +78,8 @@ export async function POST(req: NextRequest) {
       html: `<p>You have been invited to join <b>Mixtape Battle</b>!<br/>Click here to sign up: <a href="${inviteUrl}">${inviteUrl}</a></p>`
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('[INVITE] Email sent successfully to:', email);
-    console.log('[INVITE] Response:', info.response);
-    console.log('[INVITE] MessageId:', info.messageId);
-    console.log('[INVITE] Accepted:', info.accepted);
-    console.log('[INVITE] Rejected:', info.rejected);
+    await transporter.sendMail(mailOptions);
+    console.log('[INVITE] Invite email sent to', userRef(email));
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     logError('[INVITE]', error);

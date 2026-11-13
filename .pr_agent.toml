@@ -1,0 +1,27 @@
+# PR-Agent configuration. Read from the repository's default branch, so a pull request cannot
+# weaken the reviewer that is reviewing it. Only keys documented by PR-Agent are used here.
+[config]
+publish_output = true
+# The AI reviewer comments only. It must never approve, merge or push.
+enable_auto_approval = false
+
+[pr_reviewer]
+require_tests_review = true
+require_security_review = true
+require_estimate_effort_to_review = true
+num_max_findings = 8
+extra_instructions = """
+You are reviewing "The Mixtape" (Next.js 15 App Router, NextAuth credentials + JWT sessions, Prisma 4 on
+Postgres, deployed on Render behind Cloudflare). Follow the repository's .github/REVIEW_RULES.md.
+Prioritise, in order: authentication/authorization regressions, CSRF gaps on state-changing routes,
+secrets or personal data in logs, input validation, injection and XSS, caching of authenticated data,
+dependency risk, missing tests. Be concise and cite file and line. Do not suggest large refactors or
+new services. If the change is fine, say so briefly.
+"""
+
+[pr_code_suggestions]
+extra_instructions = """
+Suggest only small, local fixes consistent with .github/REVIEW_RULES.md. Never suggest weakening a
+security control, adding 'unsafe-inline'/'unsafe-eval', disabling CSRF or rate limiting, or logging
+sensitive data.
+"""
