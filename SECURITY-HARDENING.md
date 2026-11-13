@@ -1,6 +1,6 @@
 # Security hardening report: The Mixtape
 
-Branch `security/hardening-and-ci` (16 commits ahead of `main`; 60 files, mostly small edits plus new CI,
+Branch `security/hardening-and-ci` (25 commits ahead of `main`; 76 files, mostly small edits plus new CI,
 rules and tests). **Nothing has been deployed.** `main` and production are unchanged. Phase 2 work is
 committed locally only; `origin/security/hardening-and-ci` is still at the earlier push (`16c73f3`).
 
@@ -37,6 +37,10 @@ Everything else is ready to merge behind the checks in `docs/CI-AND-REVIEW.md`. 
 | 10 | Low | Hardcoded Last.fm key in `lib/lastfm.ts` | Code, history | Env var; lookups skipped if unset; **you created and set a new key**; old key to delete |
 | 11 | Info | Three read endpoints relied on middleware alone for authentication | Semgrep rule | Explicit `getServerSession` check added |
 | 12 | Info | `prisma/seed.ts` had a duplicated tail (broke type checking and seeding); one route used the pre-Next-15 `params` type | `tsc` | Fixed |
+| 13 | Medium | **Mail header injection**: `POST /api/invite` accepted an address containing CR/LF; MailHog showed the message delivered to a second, attacker-chosen recipient (admin-only route) | Functional test, confirmed in MailHog | `isValidEmail` rejects control characters; regression test |
+| 14 | Medium | **Stored `javascript:`/`data:` URLs**: `songs/update-links` saved any string as a link, later rendered as an `href` | Functional test | Only `http(s)` URLs accepted (`normalizeHttpUrl`); the UI now shows the server's message |
+| 15 | Low | About 300 of 1,159 hostile requests returned HTTP 500 (malformed or non-object JSON, wrong types, NUL bytes, out-of-range or non-numeric IDs; `battle/submit` accepted the same song on both sides) | Hostile-input suite, first run | Shared helpers in `lib/http.ts` applied to every mutating route; now **0 5xx**; Semgrep rule `mixtape-unguarded-json-body` stops regressions |
+| 16 | Low | `toggle-admin` still logged a raw email in its success line (missed by the first logging pass; caught by the CI log-hygiene scan in the new deep mode) | CI simulation | Uses `userRef()` |
 
 Mitigated but **not measured**: login timing now runs a bcrypt comparison for unknown accounts too. I did not
 benchmark response times, so I do not claim user enumeration is eliminated.
@@ -45,8 +49,8 @@ benchmark response times, so I do not claim user enumeration is eliminated.
 
 | # | Severity | Type | Item | Recommendation |
 |---|---|---|---|---|
-| R1 | High if reused | Confirmed exposure | `NEXTAUTH_SECRET` in public git history (initial commit) | Rotate in Render now. Fingerprint recorded in `.gitleaksignore`; history not rewritten |
-| R2 | Medium | Confirmed (code) | Admin demotion and user deletion are not effective until the 7-day JWT expires, because most routes trust `token.isAdmin`. A deleted user's still-valid session can also re-create their user row via the comment endpoint's `upsert` | Re-check the DB on privileged routes or shorten `maxAge`; remove the `upsert`. Auth change, so not done without approval |
+| R1 | High if reused | Confirmed exposure | `NEXTAUTH_SECRET` in public git history (initial commit). Test proof of impact: a session token minted with that secret is accepted as admin; every tampered, truncated, `alg:none`, wrong-secret and expired token was rejected | Rotate in Render now. Fingerprint recorded in `.gitleaksignore`; history not rewritten |
+| R2 | Medium | Confirmed (code and test: a deleted user's session still returned 200) | Admin demotion and user deletion are not effective until the 7-day JWT expires, because most routes trust `token.isAdmin`. A deleted user's still-valid session can also re-create their user row via the comment endpoint's `upsert` | Re-check the DB on privileged routes or shorten `maxAge`; remove the `upsert`. Auth change, so not done without approval |
 | R3 | Medium | Design | CSRF tokens are not bound to a user or session (any valid token works for any signed-in user for 1 h) | Bind to the session id; low urgency given `SameSite=Lax` |
 | R4 | Medium | Config | Rate limiter is in-memory: resets on restart, per instance | Fine for one Render instance; use a shared store if you scale out |
 | R5 | Medium | Unverified | Real client-IP chain behind Cloudflare → Render | Section 7 |
@@ -87,11 +91,15 @@ multi-tenancy are in section 12.
   `app/api/invite`, comments routes + `src/components/Comments.tsx`, `app/signup/page.tsx` (error state fix),
   `lib/rate-limit.ts`, GET session checks on songs/setlist/comments.
 - **Logging**: new `lib/log.ts`; edits across ~15 route handlers, `lib/use-csrf.ts`, `SetlistButton.tsx`.
+- **Input validation**: new `lib/http.ts` (`readJsonObject`, ID/text helpers) and `lib/input-sanitization.ts`
+  (`isValidEmail`, `normalizeHttpUrl`, type guards) used by all mutating routes (admin, auth, battle, invite,
+  practice, preferences, setlist, songs, comments); Semgrep rule `mixtape-unguarded-json-body`.
 - **Repo hygiene**: untracked `auth-dump.txt`, `mixtape-battle-share.zip`, `cache-backup.*` (local copies kept,
   history untouched; scan found no credentials, but the zip embeds a dev SQLite DB with two email addresses);
   `.gitignore`, `.gitattributes` (LF for `*.sh`).
-- **Quality gates and CI**: `eslint.config.mjs`, `tests/` (18 unit tests), `.semgrep/`, `.gitleaks.toml`,
-  `.gitleaksignore`, `scripts/smoke-test.mjs`, `scripts/ci-smoke.sh`, `.github/workflows/{pr-checks,codeql,pr-agent}.yml`,
+- **Quality gates and CI**: `eslint.config.mjs`, `tests/` (26 unit tests), `.semgrep/`, `.gitleaks.toml`,
+  `.gitleaksignore`, `scripts/smoke-test.mjs`, `scripts/functional-test.mjs`, `scripts/hostile-test.mjs`,
+  `scripts/ci-smoke.sh` (four modes: closed, open, hops=2, deep), `.github/workflows/{pr-checks,codeql,pr-agent}.yml`,
   `.github/{dependabot.yml,CODEOWNERS,REVIEW_RULES.md}`, `.pr_agent.toml`, `docs/CI-AND-REVIEW.md`.
 - **Env docs**: `.env.render.example` (new variables below).
 - **Separate local branch** `diag/proxy-chain` (1 commit, **not merged, not pushed**): a token-gated endpoint that
@@ -128,16 +136,22 @@ fonts local.
 
 | Check | Result |
 |---|---|
-| ESLint | exit 0: **0 errors, 110 warnings** (style rules are warnings; `react/no-danger`, `no-eval` etc. are errors) |
+| ESLint | exit 0: **0 errors, 113 warnings** (mostly `no-explicit-any`; `react/no-danger`, `no-eval` etc. are errors) |
 | TypeScript (`tsc --noEmit`) | clean |
-| Unit tests (`node:test` via `tsx`) | **18/18** on Windows (Node 24) and in a Linux container (Node 20) |
+| Unit tests (`node:test` via `tsx`) | **26/26** on Windows (Node 24) and in a Linux container (Node 20) |
+| **Functional suite** (every route: happy path, validation, authorization, DB state) | **139/139** |
+| **Hostile-input suite** (fuzzing of every mutating route except `songs/add`, forged/expired/`alg:none` tokens) | **19/19, 1,159 requests, 0 HTTP 5xx, 0 leaked internals** |
+| Legacy `security-tests/` | `password-policy-test` 7/7, `test-valid-password` pass, `rate-limit-pen-test` 3/3; `session-security-test` is not runnable as written (covered by the smoke cookie-flag checks) |
+| Browser E2E on the fixed build | battle votes, rankings, song page (setlist, woodshed, comment with `<b>` shown as literal text, edit, readiness, notes), resource links (`javascript:` rejected with 400, https accepted), settings (username, preferences, password), admin (invite, reset ELO, send reset): all returned 200 with no console or CSP errors |
+| `next dev` (no `.env*` files, throwaway DB) | pages load; all headers present; `unsafe-eval` in CSP only in dev; no `X-Powered-By` |
 | `npm audit --omit=dev --audit-level=high` | **0 vulnerabilities** |
 | Semgrep CE 1.184.0 | rule self-tests **5/5**; CSRF rule mutation-tested (flags a missing check, ignores a protected route); **0 findings** on the code (2 files unparseable, R11) |
 | Gitleaks 8.30.1 | **0 new findings** in `main..HEAD` and with the ignore file over full history; 6 historical findings (R1, R7, Last.fm) recorded as fingerprints |
 | actionlint | new workflows clean (only style notes on the pre-existing `deploy.yml`) |
 | Production build | succeeds (43 static pages) |
 | **Smoke tests on the production Docker image** | **closed signup 91/91, open signup 86/86, `TRUSTED_PROXY_HOPS=2` 91/91** |
-| Same smoke tests, clean Linux container simulating CI (`ci-smoke.sh`) | **91/91, 86/86, 91/91**, server-log hygiene OK in each |
+| Clean Linux container simulating CI (`npm ci`, lint, `tsc`, tests, build, then `ci-smoke.sh`) | **smoke 91/91, 86/86, 91/91; functional 139/139; hostile 19/19**; server-log hygiene OK in all four modes |
+| Smoke tests re-run on the final Docker image (fresh DBs and containers) | **91/91, 86/86, 91/91** |
 | Browser (integrated browser, local image) | 9 pages load with no console/network errors; vote, comment, admin invite, invite signup (weak password rejected, strong accepted, reuse refused) all work; non-admin sees "Admin Access Required" and `/api/admin/users` is 401; CSP violation for an untrusted image host appears in the console **and** the server log |
 | MailHog | invite and reset emails captured in all runs; no real SMTP used |
 | No production access | confirmed: no production DB, secrets, deploy or push; `.env.development` never read by tooling |
@@ -149,7 +163,8 @@ privileged route; CSRF on admin and comment routes; object-level authorization o
 caching headers on API and logged-in pages; rate limits with forged `X-Forwarded-For` at 1 and 2 hops; distinct
 clients not grouped.
 
-**Not run or not verifiable here:** the GitHub Actions themselves (nothing is pushed, so CodeQL, Dependency Review and
+**Not run or not verifiable here:** `songs/add` was not fuzzed and its live metadata lookups (Last.fm, iTunes,
+MusicBrainz) were not exercised, to avoid calling third-party APIs from tests; the GitHub Actions themselves (nothing is pushed, so CodeQL, Dependency Review and
 the aggregate check have **not run**; I validated them with actionlint and a local simulation); the PR-Agent job
 (inert by design); real Cloudflare/Render header behavior and HSTS (HTTPS only); login-timing measurements; load
 tests; the Semgrep registry packs (opt-in).

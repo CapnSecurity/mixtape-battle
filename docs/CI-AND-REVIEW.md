@@ -15,7 +15,7 @@ no secrets, actions pinned to commit SHAs, `pull_request` trigger only).
 | Dependency audit | `npm audit --omit=dev --audit-level=high`, Dependency Review | **Yes** | Known vulnerable production dependencies; risky dependency changes in the PR |
 | Secret scan | Gitleaks 8.30.1 (pinned binary, SHA-256 verified) | **Yes** | New secrets in the PR's commits or tree |
 | SAST | Semgrep CE 1.184.0 with `.semgrep/mixtape.yml` | **Yes** (ERROR rules) | Mutating route without CSRF check, session/header/token logging, `dangerouslySetInnerHTML`, raw SQL, left-most `X-Forwarded-For`, hardcoded credentials |
-| Production build + smoke tests | `npm run build`, `scripts/ci-smoke.sh` (Postgres + MailHog service containers) | **Yes** | Build breaks; auth, authorization, CSRF, caching, security headers, invites, rate limits (3 configurations) |
+| Production build + smoke tests | `npm run build`, `scripts/ci-smoke.sh` (Postgres + MailHog service containers) | **Yes** | Build breaks; auth, authorization, CSRF, caching, security headers, invites, rate limits (3 configurations), plus a "deep" run of the functional (139 checks) and hostile-input (1,159 requests) suites and a server-log hygiene scan |
 | Docker image build | `docker build` (no push) | **Yes** | Dockerfile / production image breakage |
 | **All required checks** | aggregate | **This is the one status to require** | |
 | CodeQL (`codeql.yml`) | GitHub CodeQL, `security-extended` | Optional (see below) | Data-flow vulnerabilities; results in the Security tab |
