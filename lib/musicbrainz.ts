@@ -139,6 +139,29 @@ interface MusicBrainzMetadata {
 }
 
 /**
+ * Most popular tag across the given recordings (tag counts are summed per tag name).
+ * Returns null when none of them carry tags. Ties resolve to the tag seen first.
+ */
+export function pickGenre(recordings: Array<{ tags?: Array<{ name?: string; count?: number }> } | null | undefined>): string | null {
+  const totals = new Map<string, number>();
+  for (const recording of recordings) {
+    for (const tag of recording?.tags ?? []) {
+      if (!tag?.name || typeof tag.name !== 'string') continue;
+      totals.set(tag.name, (totals.get(tag.name) ?? 0) + (typeof tag.count === 'number' ? tag.count : 0));
+    }
+  }
+  let best: string | null = null;
+  let bestTotal = -1;
+  for (const [name, total] of totals) {
+    if (total > bestTotal) {
+      best = name;
+      bestTotal = total;
+    }
+  }
+  return best;
+}
+
+/**
  * Fetch album art from Cover Art Archive
  */
 async function fetchAlbumArt(releaseId: string): Promise<string | null> {
@@ -228,6 +251,7 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
     
     let bestMatch = null;
     let bestScore = 0;
+    const matchedRecordings: any[] = [];
     
     for (const recording of data.recordings) {
       // Check if this recording matches our search
@@ -243,6 +267,7 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
       console.log(`[MusicBrainz] Title match: ${titleMatch}, Artist match: ${artistMatch}`);
       
       if (titleMatch && artistMatch) {
+        matchedRecordings.push(recording);
         const score = (recording.score || 0) + (titleMatch && artistMatch ? 100 : 0);
         console.log(`[MusicBrainz] Match found! Score: ${score}`);
         if (score > bestScore) {
@@ -293,13 +318,12 @@ export async function fetchSongMetadata(artist: string, title: string): Promise<
       console.log('[MusicBrainz] Found album:', album, 'year:', releaseDate, 'decade:', decade);
     }
 
-    // Extract genre from tags (MusicBrainz has user-submitted tags)
-    let genre = null;
-    if (bestMatch.tags && bestMatch.tags.length > 0) {
-      // Sort by count (most popular tag first) and pick the first one
-      const sortedTags = [...bestMatch.tags].sort((a: any, b: any) => (b.count || 0) - (a.count || 0));
-      genre = sortedTags[0].name;
-      console.log('[MusicBrainz] Found genre:', genre, 'from', bestMatch.tags.length, 'tags');
+    // Extract genre from tags (MusicBrainz has user-submitted tags). Duplicate recordings of the same
+    // song often carry no tags, so aggregate the tag counts across every matching recording instead
+    // of relying on the single best-scoring one.
+    const genre = pickGenre(matchedRecordings.length > 0 ? matchedRecordings : [bestMatch]);
+    if (genre) {
+      console.log('[MusicBrainz] Found genre:', genre, 'from', matchedRecordings.length, 'matching recordings');
     }
 
     // Extract duration (in milliseconds)

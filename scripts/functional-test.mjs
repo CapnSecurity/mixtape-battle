@@ -171,6 +171,7 @@ record('songs/add without CSRF is rejected', addNoCsrf.status === 403, String(ad
 const edit = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: 'Yellow (Edited)', artist: 'Coldplay', album: 'Parachutes', releaseDate: 2000, genre: 'Rock', csrfToken: adminCsrf } });
 record('admin can edit a song', edit.status === 200, String(edit.status));
 record('edit persisted', psql(`SELECT title FROM "Song" WHERE id=${s1}`) === 'Yellow (Edited)');
+record('edit keeps decade in step with the year', psql(`SELECT decade FROM "Song" WHERE id=${s1}`) === '2000', psql(`SELECT decade FROM "Song" WHERE id=${s1}`));
 const editBad = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: '', artist: '', csrfToken: adminCsrf } });
 record('edit rejects empty title/artist', editBad.status === 400, String(editBad.status));
 const editMissing = await call('PATCH', '/api/songs/999999/edit', { jar: admin.jar, json: { title: 'a', artist: 'b', csrfToken: adminCsrf } });
