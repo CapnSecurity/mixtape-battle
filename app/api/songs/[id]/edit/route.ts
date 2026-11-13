@@ -61,6 +61,8 @@ export async function PATCH(
         artist: artist.trim(),
         album: albumCheck.value?.trim() || null,
         releaseDate: year,
+        // battle weighting prefers the stored decade, so keep it in step with the year
+        decade: year === null ? null : Math.floor(year / 10) * 10,
         genre: genreCheck.value?.trim() || null,
       },
     });
