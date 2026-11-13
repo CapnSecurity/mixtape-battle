@@ -7,11 +7,8 @@ import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    console.log('[DELETE SONG] Session:', JSON.stringify(session, null, 2));
-    console.log('[DELETE SONG] User email:', session?.user?.email);
-    
+
     if (!session || session.user?.email !== 'tim@levesques.net') {
-      console.log('[DELETE SONG] Unauthorized - not root account');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -19,7 +16,6 @@ export async function DELETE(req: NextRequest) {
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
-      console.log('[DELETE SONG] Invalid CSRF token');
       return csrfErrorResponse();
     }
 
@@ -34,7 +30,7 @@ export async function DELETE(req: NextRequest) {
       where: { id: parseInt(songId) },
     });
 
-    console.log(`[DELETE SONG] Admin deleted: "${deletedSong.title}" by ${deletedSong.artist}`);
+    console.log(`[DELETE SONG] Song ${deletedSong.id} deleted by root account`);
 
     return NextResponse.json({ 
       success: true, 

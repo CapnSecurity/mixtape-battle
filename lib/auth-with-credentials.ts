@@ -2,6 +2,11 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
+import { debug, userRef } from "./log";
+
+// Real bcrypt hash of a random value, used to equalise timing when the account does not exist.
+const DUMMY_HASH = bcrypt.hashSync(randomBytes(16).toString("hex"), 10);
 
 export const authOptions: NextAuthOptions = {
   session: { 
@@ -18,33 +23,19 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          console.log("[AUTH] Missing email or password");
+          debug("[AUTH] Missing email or password");
           return null;
         }
-        console.log("[AUTH] Attempting to find user:", credentials.email);
-        console.log("[AUTH] Password provided length:", credentials.password?.length);
-        
+        const ref = userRef(credentials.email);
+
         const user = await prisma.user.findUnique({ where: { email: credentials.email } });
-        if (!user) {
-          console.log("[AUTH] User not found:", credentials.email);
+        // Always run a bcrypt comparison so response time does not reveal whether the account exists.
+        const valid = await bcrypt.compare(credentials.password, user?.password ?? DUMMY_HASH);
+        if (!user || !user.password || !valid) {
+          console.warn("[AUTH] Login failed for", ref);
           return null;
         }
-        if (!user.password) {
-          console.log("[AUTH] User has no password:", credentials.email);
-          return null;
-        }
-        console.log("[AUTH] User found, password hash exists (length:", user.password?.length, ")");
-        console.log("[AUTH] Password hash starts with:", user.password?.substring(0, 7));
-        console.log("[AUTH] Comparing passwords for:", credentials.email);
-        
-        const valid = await bcrypt.compare(credentials.password, user.password);
-        console.log("[AUTH] Password comparison result:", valid);
-        
-        if (!valid) {
-          console.log("[AUTH] Invalid password for:", credentials.email);
-          return null;
-        }
-        console.log("[AUTH] Login successful for:", credentials.email);
+        console.log("[AUTH] Login successful for", ref);
         return { id: user.id, email: user.email, isAdmin: user.isAdmin };
       },
     }),
@@ -66,7 +57,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      console.log("[SIGNIN] User signed in:", user.email);
+      debug("[SIGNIN] User signed in:", userRef(user.email));
       return true;
     },
     async redirect({ url, baseUrl }) {
@@ -94,7 +85,6 @@ export const authOptions: NextAuthOptions = {
       const updateAge = 24 * 60 * 60;
 
       if (user) {
-        console.log("[JWT] Creating token for user:", user.email, "isAdmin:", (user as any).isAdmin);
         token.id = user.id;
         token.email = user.email;
         token.isAdmin = (user as any).isAdmin || false;
@@ -108,7 +98,6 @@ export const authOptions: NextAuthOptions = {
           token.exp = now + maxAge;
         }
       }
-      console.log("[JWT] Final token:", JSON.stringify({ id: token.id, email: token.email, isAdmin: token.isAdmin, exp: token.exp }));
       // Track if this was an email provider login
       if (account?.provider === "email") {
         token.isEmailProvider = true;
@@ -116,7 +105,6 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log("[SESSION] Building session. Token:", JSON.stringify(token));
       if (session?.user) {
         const sessionUser = session.user as {
           id?: string;
@@ -127,7 +115,6 @@ export const authOptions: NextAuthOptions = {
         sessionUser.email = token.email as string;
         sessionUser.isAdmin = (token as any).isAdmin || false;
       }
-      console.log("[SESSION] Final session:", JSON.stringify(session));
       return session;
     },
   },

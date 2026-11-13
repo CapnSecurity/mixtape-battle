@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { userRef } from '@/lib/log';
 
 // POST /api/setlist/remove - Remove a song from the setlist and reorder positions (admin only)
 export async function POST(req: NextRequest) {
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       });
     });
 
-    console.log(`[SETLIST-REMOVE] Removed song ${songId} from position ${entry.position} by ${user.email}`);
+    console.log(`[SETLIST-REMOVE] Removed song ${songId} from position ${entry.position} by ${userRef(user.email)}`);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[SETLIST-REMOVE] Error:', error);

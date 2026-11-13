@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { userRef } from '@/lib/log';
 
 // PATCH /api/setlist/[id] - Update setlist entry notes (admin only)
 export async function PATCH(
@@ -41,7 +42,7 @@ export async function PATCH(
       include: { song: true },
     });
 
-    console.log(`[SETLIST-UPDATE] Updated notes for entry ${entryId} by ${user.email}`);
+    console.log(`[SETLIST-UPDATE] Updated notes for entry ${entryId} by ${userRef(user.email)}`);
     return NextResponse.json({ entry });
   } catch (error: any) {
     if (error.code === 'P2025') {

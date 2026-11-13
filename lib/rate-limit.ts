@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { debug } from './log';
 
 interface RateLimitConfig {
   maxRequests: number;
@@ -74,14 +75,14 @@ export function createRateLimit(config: RateLimitConfig, keyPrefix: string = 'gl
       };
       limitStore.set(key, entry);
       
-      console.log(`[RATE-LIMIT] ${keyPrefix} - New window for ${clientId}: 1/${config.maxRequests}`);
+      debug(`[RATE-LIMIT] ${keyPrefix} - new window: 1/${config.maxRequests}`);
       return { success: true };
     }
 
     if (entry.count >= config.maxRequests) {
       const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
       const resetTimeSeconds = Math.ceil(entry.resetTime / 1000);
-      console.log(`[RATE-LIMIT] ${keyPrefix} - BLOCKED ${clientId}: ${entry.count}/${config.maxRequests} (retry in ${retryAfter}s)`);
+      console.warn(`[RATE-LIMIT] ${keyPrefix} - BLOCKED ${clientId}: ${entry.count}/${config.maxRequests} (retry in ${retryAfter}s)`);
       
       return {
         success: false,
@@ -107,7 +108,7 @@ export function createRateLimit(config: RateLimitConfig, keyPrefix: string = 'gl
     entry.count++;
     limitStore.set(key, entry);
     
-    console.log(`[RATE-LIMIT] ${keyPrefix} - ${clientId}: ${entry.count}/${config.maxRequests}`);
+    debug(`[RATE-LIMIT] ${keyPrefix}: ${entry.count}/${config.maxRequests}`);
     return { success: true };
   };
 }

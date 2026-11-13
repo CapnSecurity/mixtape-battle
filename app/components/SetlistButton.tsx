@@ -17,15 +17,6 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
   const [isLoading, setIsLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('[SetlistButton] CSRF token status:', { 
-      hasToken: !!csrfToken, 
-      loading: csrfLoading,
-      isAdmin: !!(session?.user as any)?.isAdmin 
-    });
-  }, [csrfToken, csrfLoading, session]);
-
   // Check if song is in setlist on mount
   useEffect(() => {
     async function checkSetlist() {
@@ -48,26 +39,16 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
 
   const handleToggleSetlist = async () => {
     if (!csrfToken) {
-      console.error('[SetlistButton] No CSRF token available');
       alert('Security token not available. Please refresh the page and try again.');
       return;
     }
-    
-    console.log('[SetlistButton] Token present:', csrfToken.substring(0, 20) + '...');
-    console.log('[SetlistButton] Session:', { hasUser: !!session?.user, isAdmin: !!(session?.user as any)?.isAdmin });
-    
+
     setIsLoading(true);
     try {
       const endpoint = isInSetlist ? '/api/setlist/remove' : '/api/setlist/add';
-      console.log(`[SetlistButton] Calling ${endpoint} for song ${songId}`);
-      
+
       const requestBody = { songId };
-      console.log('[SetlistButton] Request body:', requestBody);
-      console.log('[SetlistButton] Request headers:', {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken.substring(0, 20) + '...'
-      });
-      
+
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -77,10 +58,7 @@ export function SetlistButton({ songId, variant = 'button' }: SetlistButtonProps
         body: JSON.stringify(requestBody),
       });
 
-      console.log('[SetlistButton] Response status:', res.status);
-      
       if (res.ok) {
-        console.log(`[SetlistButton] Successfully ${isInSetlist ? 'removed' : 'added'} song ${songId}`);
         setIsInSetlist(!isInSetlist);
       } else {
         const data = await res.json();

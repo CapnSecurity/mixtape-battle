@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { userRef } from '@/lib/log';
 
 type Params = Promise<{ id: string }>;
 
@@ -48,7 +49,7 @@ export async function PATCH(
       },
     });
 
-    console.log('[SONG-EDIT] Updated song:', songId, 'by', session.user.email);
+    console.log('[SONG-EDIT] Updated song:', songId, 'by', userRef(session.user.email));
     return NextResponse.json({ song: updatedSong });
   } catch (error) {
     console.error('[SONG-EDIT] Error:', error);

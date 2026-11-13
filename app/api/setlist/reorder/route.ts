@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { userRef } from '@/lib/log';
 
 // POST /api/setlist/reorder - Reorder setlist positions (admin only)
 // Accepts array of { songId, position } objects
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       )
     );
 
-    console.log(`[SETLIST-REORDER] Reordered ${order.length} songs by ${user.email}`);
+    console.log(`[SETLIST-REORDER] Reordered ${order.length} songs by ${userRef(user.email)}`);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[SETLIST-REORDER] Error:', error);
