@@ -22,6 +22,14 @@ const psqlUrl = process.env.SMOKE_PSQL_URL;
 
 if (!/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(base)) { console.error('Refusing: base URL must be localhost.'); process.exit(2); }
 if (!db || !db.startsWith('mixtape_validation_')) { console.error('Refusing: --db must start with mixtape_validation_.'); process.exit(2); }
+if (psqlUrl) {
+  const u = new URL(psqlUrl);
+  const allowedHosts = ['localhost', '127.0.0.1', 'postgres', process.env.SMOKE_ALLOW_PG_HOST].filter(Boolean);
+  if (!allowedHosts.includes(u.hostname) || !u.pathname.slice(1).startsWith('mixtape_validation_')) {
+    console.error('Refusing: SMOKE_PSQL_URL must point at a local/CI postgres host and a mixtape_validation_* database.');
+    process.exit(2);
+  }
+}
 
 const results = [];
 const record = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  [${detail}]` : ''}`); };

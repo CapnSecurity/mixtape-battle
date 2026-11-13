@@ -31,10 +31,11 @@ trap cleanup EXIT
 
 run_mode() {
   local name="$1" port="$2"; shift 2
-  local smoke_flags=() env_extra=()
+  local smoke_flags=() env_extra=() deep=0
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --env) env_extra+=("$2"); shift 2 ;;
+      --deep) deep=1; shift ;;
       *) smoke_flags+=("$1"); shift ;;
     esac
   done
@@ -45,8 +46,10 @@ run_mode() {
   psql "${BASE}/postgres" -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS ${db} WITH (FORCE)" -c "CREATE DATABASE ${db}" >/dev/null
   DATABASE_URL="$db_url" npx prisma db push --skip-generate >/dev/null
 
+  local secret
+  secret="$(openssl rand -base64 32)"
   env NODE_ENV=production DATABASE_URL="$db_url" \
-    NEXTAUTH_URL="https://localhost:${port}" NEXTAUTH_SECRET="$(openssl rand -base64 32)" \
+    NEXTAUTH_URL="https://localhost:${port}" NEXTAUTH_SECRET="$secret" \
     EMAIL_SERVER_HOST="$SMTP_HOST" EMAIL_SERVER_PORT="$SMTP_PORT" EMAIL_SERVER_USER=ci EMAIL_SERVER_PASSWORD=ci \
     EMAIL_FROM=ci@example.test "${env_extra[@]}" \
     node node_modules/next/dist/bin/next start -p "$port" >"${LOG_DIR}/server-${name}.log" 2>&1 &
@@ -57,7 +60,18 @@ run_mode() {
     sleep 1
   done
 
-  if SMOKE_PSQL_URL="$db_url" node scripts/smoke-test.mjs "http://localhost:${port}" \
+  if [ "$deep" = 1 ]; then
+    # Per-route functional checks and hostile-input fuzzing (closed-signup configuration only).
+    for suite in functional hostile; do
+      if SMOKE_PSQL_URL="$db_url" FUNCTIONAL_NEXTAUTH_SECRET="$secret" \
+           node "scripts/${suite}-test.mjs" "http://localhost:${port}" \
+           --db "$db" --mailhog "$MAILHOG" | tee "${LOG_DIR}/${suite}-${name}.log"; then
+        echo "${suite} ${name}: OK"
+      else
+        echo "::error::${suite} ${name} failed"; FAILED=1
+      fi
+    done
+  elif SMOKE_PSQL_URL="$db_url" node scripts/smoke-test.mjs "http://localhost:${port}" \
        --db "$db" --mailhog "$MAILHOG" "${smoke_flags[@]}" | tee "${LOG_DIR}/smoke-${name}.log"; then
     echo "smoke ${name}: OK"
   else
@@ -81,5 +95,6 @@ run_mode() {
 run_mode closed 3103
 run_mode open   3104 --public-signup --env ALLOW_PUBLIC_SIGNUP=true
 run_mode hops2  3105 --hops 2 --env TRUSTED_PROXY_HOPS=2
+run_mode deep   3106 --deep
 
 exit "$FAILED"
