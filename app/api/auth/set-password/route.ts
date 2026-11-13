@@ -8,11 +8,20 @@ import { validatePassword } from "@/lib/password-validation";
 import { sanitizeError, logError, ErrorMessages } from "@/lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
 import { userRef } from "@/lib/log";
+import { readJsonObject, isCleanString } from "@/lib/http";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
     const { password, resetToken } = body;
+
+    if (resetToken !== undefined && resetToken !== null && !isCleanString(resetToken, 200)) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+    if (password !== undefined && !isCleanString(password, 200)) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 400 });
+    }
 
     // Require CSRF token for session-based password changes
     if (!resetToken && !verifyCsrfToken(req, body)) {

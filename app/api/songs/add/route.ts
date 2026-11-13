@@ -7,6 +7,7 @@ import { fetchSongMetadataWithFallbacks } from "../../../../lib/musicbrainz";
 import { validateSongInput } from "../../../../lib/input-sanitization";
 import { sanitizeError, logError } from "../../../../lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject } from "@/lib/http";
 import { findSimilarSongs } from "@/lib/string-similarity";
 
 export async function POST(req: NextRequest) {
@@ -16,7 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {

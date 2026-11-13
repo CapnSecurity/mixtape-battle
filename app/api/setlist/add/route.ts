@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 import { userRef } from '@/lib/log';
+import { readJsonObject, isDbInt, cleanText } from '@/lib/http';
 
 // POST /api/setlist/add - Add a song to the setlist (admin only)
 export async function POST(req: NextRequest) {
@@ -16,7 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - Admin only' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -25,8 +27,12 @@ export async function POST(req: NextRequest) {
 
     const { songId, notes } = body;
 
-    if (!songId || typeof songId !== 'number') {
+    if (!isDbInt(songId)) {
       return NextResponse.json({ error: 'Invalid songId' }, { status: 400 });
+    }
+    const notesCheck = cleanText(notes, 500);
+    if (!notesCheck.ok) {
+      return NextResponse.json({ error: 'Invalid notes' }, { status: 400 });
     }
 
     // Check if song exists

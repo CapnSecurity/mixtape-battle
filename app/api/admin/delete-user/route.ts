@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isCleanString } from "@/lib/http";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +12,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { email } = body;
-    if (!email) {
+    if (!isCleanString(email, 254) || !email) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 

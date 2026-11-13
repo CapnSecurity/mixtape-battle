@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     const token = body?.token;
     const password = body?.password;
-    if (typeof token !== 'string' || typeof password !== 'string' || !token || !password) {
+    if (typeof token !== 'string' || typeof password !== 'string' || !token || !password || token.length > 200 || password.length > 200 || token.includes('\u0000')) {
       return NextResponse.json({ error: 'Invalid' }, { status: 400 });
     }
 

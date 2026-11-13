@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 import { sanitizeError, logError } from "@/lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject } from "@/lib/http";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +20,8 @@ export async function POST(req: NextRequest) {
       return rateLimitResult.response;
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -28,8 +30,8 @@ export async function POST(req: NextRequest) {
 
     const { username } = body;
 
-    // Validate username
-    if (username && typeof username !== 'string') {
+    // Validate username (an empty string clears it; the field itself is required)
+    if (typeof username !== 'string') {
       return NextResponse.json({ error: "Invalid username format" }, { status: 400 });
     }
 

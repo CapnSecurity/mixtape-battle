@@ -7,7 +7,9 @@ import nodemailer from 'nodemailer';
 import { rateLimiters } from '@/lib/rate-limit';
 import { sanitizeError, logError } from '@/lib/error-handler';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { readJsonObject } from '@/lib/http';
 import { userRef } from '@/lib/log';
+import { isValidEmail } from '@/lib/input-sanitization';
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -36,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     const { email } = body;
 
-    if (!email || typeof email !== 'string') {
+    if (!isValidEmail(email)) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
     }
 

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
+import { readJsonObject, parseIdParam } from '@/lib/http';
 
 // GET /api/songs/[id]/comments - Get all comments for a song
 export async function GET(
@@ -17,9 +18,9 @@ export async function GET(
     }
 
     const { id } = await params;
-    const songId = parseInt(id);
+    const songId = parseIdParam(id);
 
-    if (isNaN(songId)) {
+    if (songId === null) {
       return NextResponse.json(
         { error: 'Invalid song ID' },
         { status: 400 }
@@ -68,16 +69,17 @@ export async function POST(
     }
 
     const { id } = await params;
-    const songId = parseInt(id);
+    const songId = parseIdParam(id);
 
-    if (isNaN(songId)) {
+    if (songId === null) {
       return NextResponse.json(
         { error: 'Invalid song ID' },
         { status: 400 }
       );
     }
 
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (body instanceof NextResponse) return body;
 
     if (!verifyCsrfToken(request, body)) {
       return csrfErrorResponse();
@@ -85,7 +87,7 @@ export async function POST(
 
     const { content } = body;
 
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== 'string' || content.includes('\u0000')) {
       return NextResponse.json(
         { error: 'Comment content is required' },
         { status: 400 }

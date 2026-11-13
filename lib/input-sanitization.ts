@@ -23,6 +23,37 @@ export function sanitizeHTML(input: string | null | undefined): string {
 }
 
 /**
+ * Strict-enough email check for addresses we send mail to or store.
+ * Rejects control characters (CR/LF header injection), spaces, display names and over-long values.
+ */
+const EMAIL_RE =
+  /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+
+export function isValidEmail(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= 254 && EMAIL_RE.test(value);
+}
+
+/**
+ * Validate an optional http(s) URL supplied by a user.
+ * Empty/null/undefined clears the value; anything that is not an absolute http or https URL
+ * (javascript:, data:, relative, malformed, too long) is rejected.
+ */
+export function normalizeHttpUrl(value: unknown): { ok: boolean; url: string | null } {
+  if (value === undefined || value === null || value === '') return { ok: true, url: null };
+  if (typeof value !== 'string') return { ok: false, url: null };
+  const trimmed = value.trim();
+  if (trimmed === '') return { ok: true, url: null };
+  if (trimmed.length > 2048) return { ok: false, url: null };
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return { ok: false, url: null };
+    return { ok: true, url: trimmed };
+  } catch {
+    return { ok: false, url: null };
+  }
+}
+
+/**
  * Validate and sanitize song title
  * - Max 200 characters
  * - No HTML/scripts
@@ -33,6 +64,9 @@ export function validateSongTitle(title: string | null | undefined): {
   sanitized: string;
   error?: string;
 } {
+  if (title != null && typeof title !== 'string') {
+    return { isValid: false, sanitized: '', error: 'Song title must be text' };
+  }
   if (!title || title.trim().length === 0) {
     return {
       isValid: false,
@@ -76,6 +110,9 @@ export function validateArtistName(artist: string | null | undefined): {
   sanitized: string;
   error?: string;
 } {
+  if (artist != null && typeof artist !== 'string') {
+    return { isValid: false, sanitized: '', error: 'Artist name must be text' };
+  }
   if (!artist || artist.trim().length === 0) {
     return {
       isValid: false,
@@ -119,6 +156,9 @@ export function validateAlbumName(album: string | null | undefined): {
   sanitized: string;
   error?: string;
 } {
+  if (album != null && typeof album !== 'string') {
+    return { isValid: false, sanitized: '', error: 'Album name must be text' };
+  }
   // Album is optional
   if (!album || album.trim().length === 0) {
     return {

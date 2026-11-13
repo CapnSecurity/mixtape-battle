@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { rateLimiters } from "@/lib/rate-limit";
 import { sanitizeError, logError } from "@/lib/error-handler";
 import { verifyCsrfToken, csrfErrorResponse } from "@/lib/csrf";
+import { readJsonObject, isCleanString } from "@/lib/http";
 import { userRef } from "@/lib/log";
 
 export async function POST(req: NextRequest) {
@@ -39,7 +40,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse request body
-    const body = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
 
     // Verify CSRF token
     if (!verifyCsrfToken(req, body)) {
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
     const { email } = body;
 
-    if (!email) {
+    if (!isCleanString(email, 254) || !email) {
       console.log('[toggle-admin] Bad request - missing email');
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }

@@ -5,6 +5,8 @@ import { rateLimiters } from '@/lib/rate-limit';
 import { validatePassword } from '@/lib/password-validation';
 import { sanitizeError, logError, ErrorMessages } from '@/lib/error-handler';
 import { userRef } from '@/lib/log';
+import { isValidEmail } from '@/lib/input-sanitization';
+import { readJsonObject } from '@/lib/http';
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,10 +27,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = await req.json();
+    const body = await readJsonObject(req);
+    if (body instanceof NextResponse) return body;
+    const { email, password } = body;
 
-    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
+    if (!isValidEmail(email) || typeof password !== 'string' || !password) {
+      return NextResponse.json({ error: 'Valid email and password required' }, { status: 400 });
     }
 
     // Validate password strength
