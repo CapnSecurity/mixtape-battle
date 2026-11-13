@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
+import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 
 // DELETE /api/songs/[id]/comments/[commentId] - Delete a comment
 export async function DELETE(
@@ -16,6 +17,10 @@ export async function DELETE(
         { error: 'You must be signed in to delete comments' },
         { status: 401 }
       );
+    }
+
+    if (!verifyCsrfToken(request)) {
+      return csrfErrorResponse();
     }
 
     const { commentId } = await params;

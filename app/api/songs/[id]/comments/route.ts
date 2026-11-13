@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-with-credentials';
 import { prisma } from '@/lib/prisma';
+import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 
 // GET /api/songs/[id]/comments - Get all comments for a song
 export async function GET(
@@ -71,6 +72,11 @@ export async function POST(
     }
 
     const body = await request.json();
+
+    if (!verifyCsrfToken(request, body)) {
+      return csrfErrorResponse();
+    }
+
     const { content } = body;
 
     if (!content || typeof content !== 'string') {
