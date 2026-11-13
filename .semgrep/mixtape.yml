@@ -1,0 +1,114 @@
+rules:
+  - id: mixtape-mutating-route-missing-csrf
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Mutating route handler does not call verifyCsrfToken(). Authenticated state-changing routes must
+      verify the CSRF token (see lib/csrf.ts). If this route is intentionally unauthenticated, add it to
+      the exclude list in .semgrep/mixtape.yml and document why.
+    paths:
+      include:
+        - "app/api/**/route.ts"
+      exclude:
+        - "app/api/auth/signup/**"
+        - "app/api/invite/accept/**"
+        - "app/api/csp-report/**"
+    patterns:
+      - pattern-either:
+          - pattern: export async function POST(...) { ... }
+          - pattern: export async function PUT(...) { ... }
+          - pattern: export async function PATCH(...) { ... }
+          - pattern: export async function DELETE(...) { ... }
+      - pattern-not: |
+          export async function $F(...) {
+            ...
+            <... verifyCsrfToken(...) ...>
+            ...
+          }
+
+  - id: mixtape-route-without-session-check
+    languages: [typescript]
+    severity: WARNING
+    message: >-
+      Route handler does not call getServerSession(). Access currently depends on middleware alone;
+      prefer an explicit server-side check (defense in depth). Intentionally public routes are excluded.
+    paths:
+      include:
+        - "app/api/**/route.ts"
+      exclude:
+        - "app/api/health/**"
+        - "app/api/auth/**"
+        - "app/api/invite/**"
+        - "app/api/csp-report/**"
+    patterns:
+      - pattern-either:
+          - pattern: export async function GET(...) { ... }
+          - pattern: export async function POST(...) { ... }
+          - pattern: export async function PUT(...) { ... }
+          - pattern: export async function PATCH(...) { ... }
+          - pattern: export async function DELETE(...) { ... }
+      - pattern-not: |
+          export async function $F(...) {
+            ...
+            <... getServerSession(...) ...>
+            ...
+          }
+
+  - id: mixtape-no-dangerously-set-inner-html
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      dangerouslySetInnerHTML bypasses React escaping and the CSP currently allows inline scripts.
+      Render text through React instead, or sanitize with DOMPurify and get a security review.
+    pattern: <$EL dangerouslySetInnerHTML={...} />
+
+  - id: mixtape-sensitive-data-in-logs
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Do not log sessions, tokens, headers, cookies or credentials. Use lib/log.ts (userRef/debug).
+    pattern-either:
+      - patterns:
+          - pattern: console.$M(..., JSON.stringify($S), ...)
+          - metavariable-regex:
+              metavariable: $S
+              regex: (?i)^(.*session.*|.*token.*|.*jwt.*|.*headers.*|.*cookie.*|.*credential.*|user|account)$
+      - pattern: console.$M(..., $REQ.headers.entries(), ...)
+      - pattern: console.$M(..., Object.fromEntries($REQ.headers.entries()), ...)
+      - pattern: console.$M(..., process.env.$SECRET, ...)
+      - pattern: console.$M(..., $X.password, ...)
+      - pattern: console.$M(..., $X.csrfToken, ...)
+
+  - id: mixtape-hardcoded-credential
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Looks like a hardcoded credential. Read secrets from environment variables and rotate any value
+      that was committed.
+    patterns:
+      - pattern: const $NAME = "$VALUE";
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i).*(api_?key|secret|passw(or)?d|token).*
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: ^[A-Za-z0-9+/_\-=]{16,}$
+
+  - id: mixtape-raw-sql-unsafe
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Prisma $queryRawUnsafe/$executeRawUnsafe invite SQL injection. Use tagged templates or the query builder.
+    pattern-either:
+      - pattern: $DB.$queryRawUnsafe(...)
+      - pattern: $DB.$executeRawUnsafe(...)
+
+  - id: mixtape-trusts-leftmost-forwarded-for
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      The left-most X-Forwarded-For entry is client-controlled. Derive the client IP from the right using
+      lib/rate-limit.ts getClientId() and TRUSTED_PROXY_HOPS.
+    pattern-either:
+      - pattern: $H.get("x-forwarded-for").split(",")[0]
+      - pattern: $H.get('x-forwarded-for').split(',')[0]
+      - pattern: $H.headers.get("x-forwarded-for").split(",")[0]

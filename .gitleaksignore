@@ -1,0 +1,15 @@
+# Known findings in PRE-EXISTING git history (fingerprints only, no values).
+# They are reported in SECURITY-HARDENING.md and need credential rotation, not suppression;
+# they are listed here only so scans of new changes do not fail on old commits.
+# Rotate these, then they can stay here forever.
+#
+# Last.fm API key that used to be hardcoded in lib/lastfm.ts (rotated 2026-11-13)
+265f9843e7ad6e94ba96c20785525917bde2f8e8:lib/lastfm.ts:generic-api-key:5
+9323d673bc2316617eda9e844395d70370ed5a01:lib/lastfm.ts:generic-api-key:5
+# Old self-hosted Postgres password in docker-compose.production.yml (2026-02-05)
+6a45a9a61ceefb30783fe1428bf94d7833cfa7cd:docker-compose.production.yml:generic-api-key:12
+# NEXTAUTH_SECRET in a committed .env.local (initial commit, 2026-02-04) - ROTATE IN PRODUCTION
+51fa0636df5463dc27512ffbab4744fbca0c3fe4:.env.local:generic-api-key:10
+# Next.js dev-build artifacts committed in the initial commit (stale server-action encryption keys)
+51fa0636df5463dc27512ffbab4744fbca0c3fe4:.next/cache/.rscinfo:generic-api-key:1
+51fa0636df5463dc27512ffbab4744fbca0c3fe4:.next/server/server-reference-manifest.json:generic-api-key:4

@@ -20,6 +20,8 @@ const opt = (name, fallback) => {
 const db = opt('db');
 const container = opt('container', 'mixtape-dev-postgres');
 const mailhog = opt('mailhog', 'http://localhost:8025');
+// CI mode: talk to Postgres with the psql client instead of `docker exec`.
+const psqlUrl = process.env.SMOKE_PSQL_URL;
 
 if (!/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(base)) {
   console.error('Refusing to run: base URL must be http://localhost[:port] or 127.0.0.1.');
@@ -28,6 +30,13 @@ if (!/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(base)) {
 if (db && !db.startsWith('mixtape_validation_')) {
   console.error('Refusing to run: --db must start with "mixtape_validation_".');
   process.exit(2);
+}
+if (psqlUrl) {
+  const u = new URL(psqlUrl);
+  if (!['localhost', '127.0.0.1'].includes(u.hostname) || !u.pathname.slice(1).startsWith('mixtape_validation_')) {
+    console.error('Refusing to run: SMOKE_PSQL_URL must point at localhost and a mixtape_validation_* database.');
+    process.exit(2);
+  }
 }
 
 const results = [];
@@ -39,9 +48,10 @@ const info = (name, detail) => console.log(`INFO  ${name}  [${detail}]`);
 
 function psql(sql) {
   if (!db) throw new Error('--db is required for this step');
-  return execFileSync('docker', ['exec', container, 'psql', '-U', 'postgres', '-d', db, '-tAc', sql], {
-    encoding: 'utf8',
-  }).trim();
+  const [cmd, argv] = psqlUrl
+    ? ['psql', [psqlUrl, '-tAc', sql]]
+    : ['docker', ['exec', container, 'psql', '-U', 'postgres', '-d', db, '-tAc', sql]];
+  return execFileSync(cmd, argv, { encoding: 'utf8' }).trim();
 }
 
 class Jar {
