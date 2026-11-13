@@ -98,3 +98,11 @@ quick-*.js
 
 # Root-level database files
 /*.db
+*.sqlite
+
+# Local snapshots/archives (may embed old source, .env or dev databases) - never commit
+/auth-dump.txt
+/mixtape-battle-share.zip
+/cache-backup.*
+/*.zip
+/*.tar.gz
