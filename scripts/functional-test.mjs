@@ -212,48 +212,20 @@ record('admin can delete any comment', adminDelOther.status === 200, String(admi
 const delGone = await call('DELETE', `/api/songs/${s1}/comments/${cOk.data.id}`, { jar: admin.jar, headers: { 'x-csrf-token': adminCsrf } });
 record('deleting an already-deleted comment is 404', delGone.status === 404, String(delGone.status));
 
-// ------------------------------------------------------------------ battle
-section('battle');
-const next = await call('GET', '/api/battle/next', { jar: u1.jar });
-record('battle/next returns two different songs', next.status === 200 && next.data.a?.id !== next.data.b?.id && next.data.a && next.data.b, `${next.data?.a?.id} vs ${next.data?.b?.id}`);
-const [wId, lId] = [next.data.a.id, next.data.b.id];
-const eloBefore = psql(`SELECT elo FROM "Song" WHERE id=${wId}`);
-const vote = await call('POST', '/api/battle/submit', { jar: u1.jar, json: { winnerId: wId, loserId: lId, csrfToken: u1Csrf } });
-record('battle/submit records a vote', vote.status === 200 && vote.data.ok === true, String(vote.status));
-record('winner ELO went up, loser ELO went down', Number(psql(`SELECT elo FROM "Song" WHERE id=${wId}`)) > Number(eloBefore) && Number(psql(`SELECT elo FROM "Song" WHERE id=${lId}`)) < 1500);
-record('vote row stored with the voter id', psql(`SELECT count(*) FROM "BattleVote" WHERE "userId"='${u1Id}'`) === '1');
-const quick = await call('POST', '/api/battle/submit', { jar: u1.jar, json: { winnerId: wId, loserId: lId, csrfToken: u1Csrf } });
-record('voting again within 2 s is throttled (429)', quick.status === 429, String(quick.status));
-await new Promise((r) => setTimeout(r, 2200));
-const skip = await call('POST', '/api/battle/submit', { jar: u1.jar, json: { winnerId: s3, loserId: s4, skipped: true, csrfToken: u1Csrf } });
-record('skipping a pair works', skip.status === 200, String(skip.status));
-record('skipped songs are recorded', Number(psql(`SELECT count(*) FROM "BattleSkip" WHERE "userId"='${u1Id}'`)) >= 1);
-const nextAfterSkip = await call('GET', '/api/battle/next', { jar: u1.jar });
-record('skipped songs are excluded from the next pairing', nextAfterSkip.status === 204 || ![nextAfterSkip.data?.a?.id, nextAfterSkip.data?.b?.id].some((id) => id === s3 || id === s4));
-await new Promise((r) => setTimeout(r, 2200));
-const badIds = await call('POST', '/api/battle/submit', { jar: u1.jar, json: { winnerId: 999991, loserId: 999992, csrfToken: u1Csrf } });
-record('battle/submit with unknown song ids is a 4xx', badIds.status >= 400 && badIds.status < 500, String(badIds.status));
-await new Promise((r) => setTimeout(r, 2200));
-const badTypes = await call('POST', '/api/battle/submit', { jar: u1.jar, json: { winnerId: 'a', loserId: { x: 1 }, csrfToken: u1Csrf } });
-record('battle/submit with non-numeric ids is a 4xx (not 5xx)', badTypes.status >= 400 && badTypes.status < 500, String(badTypes.status));
-await new Promise((r) => setTimeout(r, 2200));
-const same = await call('POST', '/api/battle/submit', { jar: u1.jar, json: { winnerId: s5, loserId: s5, csrfToken: u1Csrf } });
-record('battle/submit with the same song on both sides is rejected', same.status >= 400 && same.status < 500, String(same.status));
-
-// ------------------------------------------------------------------ preferences
-section('preferences');
-const prefGet0 = await call('GET', '/api/preferences', { jar: u1.jar });
-record('preferences GET works before any save', prefGet0.status === 200, String(prefGet0.status));
-const prefOk = await call('POST', '/api/preferences', { jar: u1.jar, json: { genres: ['Rock'], decades: [1970, 1980], artists: ['Eagles'], csrfToken: u1Csrf } });
-record('preferences POST saves', prefOk.status === 200, String(prefOk.status));
-const prefGet = await call('GET', '/api/preferences', { jar: u1.jar });
-record('preferences round-trip', JSON.stringify(prefGet.data?.preferences?.genres ?? prefGet.data?.genres) === '["Rock"]', JSON.stringify(prefGet.data).slice(0, 80));
-const prefOther = await call('GET', '/api/preferences', { jar: u2.jar });
-record("another user does not see u1's preferences", !JSON.stringify(prefOther.data).includes('Eagles'));
-for (const [label, body] of [['non-array genres', { genres: 'Rock', decades: [], artists: [] }], ['decade out of range', { genres: [], decades: [1500], artists: [] }], ['decade not a number', { genres: [], decades: ['1970'], artists: [] }]]) {
-  const r = await call('POST', '/api/preferences', { jar: u1.jar, json: { ...body, csrfToken: u1Csrf } });
-  record(`preferences rejects ${label}`, r.status === 400, String(r.status));
+// ------------------------------------------------------------------ removed battle system
+section('removed battle system');
+for (const [m, p] of [['GET', '/api/battle/next'], ['POST', '/api/battle/submit'], ['GET', '/api/preferences'], ['POST', '/api/preferences']]) {
+  const r = await call(m, p, { jar: u1.jar, json: m === 'POST' ? { csrfToken: u1Csrf } : undefined });
+  record(`${m} ${p} is gone (404)`, r.status === 404, String(r.status));
 }
+for (const p of ['/battle', '/results']) {
+  const r = await call('GET', p, { jar: u1.jar });
+  record(`old page ${p} redirects to /songs`, r.status === 307 && (r.headers.get('location') || '').endsWith('/songs'), `${r.status} ${r.headers.get('location') ?? ''}`);
+}
+const songsNoElo = await call('GET', '/api/songs', { jar: u1.jar });
+record('GET /api/songs no longer exposes elo', songsNoElo.status === 200 && songsNoElo.data.length > 0 && songsNoElo.data.every((s) => !('elo' in s)));
+const confidence = await call('GET', '/setlist-confidence', { jar: u1.jar });
+record('setlist-confidence page renders without the battle score', confidence.status === 200, String(confidence.status));
 
 // ------------------------------------------------------------------ practice (woodshed)
 section('practice / woodshed');
@@ -413,10 +385,6 @@ const inviteBad = await call('POST', '/api/invite', { jar: admin.jar, json: { em
 record('invite: non-string email is 400', inviteBad.status === 400, String(inviteBad.status));
 const inviteMail = await call('POST', '/api/invite', { jar: admin.jar, json: { email: `crlf@example.test\r\nBcc: attacker@example.test`, csrfToken: adminCsrf } });
 record('invite: CRLF header-injection attempt in the address is not sent as a 2xx', inviteMail.status >= 400, String(inviteMail.status));
-
-const eloSet = psql(`UPDATE "Song" SET elo=1730 WHERE id=${s4}; SELECT 1`);
-const resetElo = await call('POST', '/api/admin/reset-elo', { jar: admin.jar, json: { csrfToken: adminCsrf } });
-record('reset-elo sets every song back to 1500', resetElo.status === 200 && psql(`SELECT count(*) FROM "Song" WHERE elo<>1500`) === '0', String(resetElo.status));
 
 const delSongAdmin = await call('DELETE', '/api/songs/delete', { jar: admin.jar, json: { songId: s8(), csrfToken: adminCsrf } });
 function s8() { return songIds[7]; }
