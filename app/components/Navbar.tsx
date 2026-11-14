@@ -26,18 +26,6 @@ export default function Navbar() {
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-6 lg:gap-8">
             <Link
-              href="/battle"
-              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
-            >
-              <span>⚔️</span> Battle
-            </Link>
-            <Link
-              href="/results"
-              className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
-            >
-              <span>🏆</span> Rankings
-            </Link>
-            <Link
               href="/setlist"
               className="text-[var(--muted)] hover:text-[var(--text)] transition font-medium flex items-center gap-2 min-h-[44px]"
             >
@@ -124,20 +112,6 @@ export default function Navbar() {
 
         {/* Mobile Nav */}
         <div className="md:hidden flex gap-2 pb-3 overflow-x-auto border-t border-[var(--ring)]/20 pt-3 -mx-4 px-4">
-          <Link 
-            href="/battle" 
-            className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"
-          >
-            <span className="text-lg">⚔️</span> 
-            <span className="text-sm font-medium">Battle</span>
-          </Link>
-          <Link 
-            href="/results" 
-            className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"
-          >
-            <span className="text-lg">🏆</span> 
-            <span className="text-sm font-medium">Rankings</span>
-          </Link>
           <Link 
             href="/setlist" 
             className="text-[var(--muted)] hover:text-[var(--text)] transition flex items-center gap-1.5 whitespace-nowrap px-3 py-2 rounded-lg hover:bg-[var(--surface)] min-h-[44px] flex-shrink-0"

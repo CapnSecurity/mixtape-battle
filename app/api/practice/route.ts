@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
             artist: true,
             album: true,
             albumArtUrl: true,
-            elo: true,
             spotify: true,
             youtube: true,
             songsterr: true,

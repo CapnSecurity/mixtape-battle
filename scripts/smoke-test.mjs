@@ -277,7 +277,7 @@ const csrfRes = await call('GET', '/api/csrf', { jar: user.jar });
 record('GET /api/csrf is private, no-store', noStore(csrfRes), csrfRes.headers.get('cache-control') ?? '(none)');
 const sessionRes = await call('GET', '/api/auth/session', { jar: user.jar });
 record('GET /api/auth/session is not publicly cacheable', /no-store|private|no-cache/.test(sessionRes.headers.get('cache-control') || ''), sessionRes.headers.get('cache-control') ?? '(none)');
-for (const p of ['/dashboard', '/admin', '/settings', '/woodshed', '/songs/1', '/results']) {
+for (const p of ['/dashboard', '/admin', '/settings', '/woodshed', '/songs/1', '/setlist-confidence']) {
   const r = await call('GET', p, { jar: user.jar });
   record(`authenticated page ${p} is private, no-store`, r.status === 200 && noStore(r), `${r.status} ${r.headers.get('cache-control') ?? '(none)'}`);
 }
@@ -294,7 +294,6 @@ record('admin user list does not expose password hashes', !/\$2[aby]\$/.test(lea
 const privileged = [
   ['POST', '/api/admin/toggle-admin', { email: userEmail }],
   ['POST', '/api/admin/delete-user', { email: otherEmail }],
-  ['POST', '/api/admin/reset-elo', {}],
   ['POST', '/api/admin/send-password-reset', { email: otherEmail }],
   ['POST', '/api/invite', { email: 'x@example.test' }],
   ['POST', '/api/setlist/add', { songId }],
@@ -310,12 +309,30 @@ const songAfter = db ? psql(`SELECT title FROM "Song" WHERE id=${songId}`) : 'Sm
 record('privileged attempts did not modify data', songAfter === 'Smoke Song', songAfter);
 
 // ---- Admin mutations require a CSRF token ----
-const noCsrf = await call('POST', '/api/admin/reset-elo', { jar: admin.jar, json: {} });
+const noCsrf = await call('POST', '/api/admin/send-password-reset', { jar: admin.jar, json: { email: otherEmail } });
 record('admin mutation without CSRF token is rejected', noCsrf.status === 403, String(noCsrf.status));
-const forged = await call('POST', '/api/admin/reset-elo', { jar: admin.jar, json: { csrfToken: 'a.b.c' } });
+const forged = await call('POST', '/api/admin/send-password-reset', { jar: admin.jar, json: { email: otherEmail, csrfToken: 'a.b.c' } });
 record('admin mutation with forged CSRF token is rejected', forged.status === 403, String(forged.status));
-const okAdmin = await call('POST', '/api/admin/reset-elo', { jar: admin.jar, json: { csrfToken: adminCsrf } });
+const okAdmin = await call('POST', '/api/admin/send-password-reset', { jar: admin.jar, json: { email: otherEmail, csrfToken: adminCsrf } });
 record('admin mutation with valid CSRF token succeeds', okAdmin.status === 200, String(okAdmin.status));
+
+// ---- The battle system has been removed ----
+for (const p of ['/api/battle/next', '/api/preferences']) {
+  const r = await call('GET', p, { jar: user.jar });
+  record(`removed endpoint GET ${p} is gone`, r.status === 404, String(r.status));
+}
+for (const p of ['/api/battle/submit', '/api/preferences']) {
+  const r = await call('POST', p, { jar: user.jar, json: { csrfToken: userCsrf } });
+  record(`removed endpoint POST ${p} is gone`, r.status === 404, String(r.status));
+}
+const eloGone = await call('POST', '/api/admin/reset-elo', { jar: admin.jar, json: { csrfToken: adminCsrf } });
+record('removed endpoint POST /api/admin/reset-elo is gone', eloGone.status === 404, String(eloGone.status));
+for (const p of ['/battle', '/results']) {
+  const r = await call('GET', p, { jar: user.jar });
+  record(`old page ${p} redirects to /songs`, r.status === 307 && (r.headers.get('location') || '').endsWith('/songs'), `${r.status} ${r.headers.get('location') ?? ''}`);
+}
+const songsList = await call('GET', '/api/songs', { jar: user.jar });
+record('song API no longer exposes the battle score', Array.isArray(songsList.data) && songsList.data.length > 0 && !('elo' in songsList.data[0]));
 
 // ---- Object-level authorization (IDOR) on practice items ----
 const created = await call('POST', '/api/practice', { jar: user.jar, json: { songId, csrfToken: userCsrf } });

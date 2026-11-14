@@ -54,10 +54,8 @@ const protectedPages = [
   '/woodshed',
   '/setlist',
   '/setlist-confidence',
-  '/battle',
   '/songs',
   '/songs/:id',
-  '/results',
   '/add-song',
   '/add-resource',
 ]
@@ -80,6 +78,13 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  async redirects() {
+    // The battle system was removed; keep old bookmarks working (temporary, so they can be reused later)
+    return [
+      { source: '/battle', destination: '/songs', permanent: false },
+      { source: '/results', destination: '/songs', permanent: false },
+    ]
   },
   async headers() {
     const noStore = [{ key: 'Cache-Control', value: 'private, no-store' }]

@@ -109,15 +109,9 @@ export default function AddSongResourcePage() {
         <div className="space-y-3">
           <a 
             href="/songs" 
-            className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
-          >
-            🎸 Browse Songs
-          </a>
-          <a 
-            href="/battle" 
             className="block w-full py-3 px-4 rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-semibold text-center hover:opacity-90 transition-opacity"
           >
-            🎵 Go to Battle Page
+            🎸 Browse Songs
           </a>
         </div>
       </div>

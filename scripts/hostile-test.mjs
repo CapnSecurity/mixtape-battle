@@ -103,8 +103,6 @@ record('setup: admin, member, songs, practice item and setlist entry ready', !!p
 
 // ------------------------------------------------------------------ fuzz tables
 const endpoints = [
-  { m: 'POST', p: '/api/battle/submit', who: 'member', body: { winnerId: sA, loserId: sB } },
-  { m: 'POST', p: '/api/preferences', who: 'member', body: { genres: ['Rock'], decades: [1990], artists: ['A'] } },
   { m: 'POST', p: '/api/practice', who: 'member', body: { songId: sB, priority: 3, notes: 'n' } },
   { m: 'PATCH', p: `/api/practice/${practiceId}`, who: 'member', body: { status: 'LEARNING', priority: 3, notes: 'n' } },
   { m: 'POST', p: `/api/songs/${sA}/readiness`, who: 'member', body: { status: 'SOLID' } },
@@ -123,7 +121,6 @@ const endpoints = [
   { m: 'POST', p: '/api/admin/toggle-admin', who: 'admin', body: { email: adminEmail }, destructive: true },
   { m: 'POST', p: '/api/admin/delete-user', who: 'admin', body: { email: adminEmail }, destructive: true },
   { m: 'POST', p: '/api/admin/send-password-reset', who: 'admin', body: { email: 'nobody@example.test' } },
-  { m: 'POST', p: '/api/admin/reset-elo', who: 'admin', body: {} },
   { m: 'POST', p: '/api/csp-report', who: 'none', body: { 'csp-report': { 'blocked-uri': 'x' } }, noCsrf: true },
 ];
 const big = 'x'.repeat(100_000);

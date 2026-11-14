@@ -102,13 +102,6 @@ export default async function SongPage({ params }: { params: Params }) {
               )}
             </div>
           )}
-
-          <div className="bg-[var(--bg)]/20 rounded-xl p-6 text-center">
-            <div className="text-sm text-[var(--bg)]/80 mb-2">Battle Score</div>
-            <div className="text-5xl font-bold text-[var(--bg)]">
-              {Math.round(song.elo)}
-            </div>
-          </div>
         </div>
 
         {/* Admin Controls */}
@@ -256,13 +249,6 @@ export default async function SongPage({ params }: { params: Params }) {
         {/* Comments Section */}
         <div className="mt-8">
           <Comments songId={songId} />
-        </div>
-
-        {/* Battle Button */}
-        <div className="mt-8 text-center">
-          <Button asChild>
-            <Link href="/battle">Battle This Song ⚔️</Link>
-          </Button>
         </div>
       </div>
     </div>
