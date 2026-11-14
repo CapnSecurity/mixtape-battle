@@ -419,6 +419,10 @@ export async function fetchSongMetadataWithFallbacks(artist: string, title: stri
       }
     }
     
+    // MusicBrainz tags are sparse; fall back to iTunes' own genre for the song
+    if (!result.genre && itunesData.genre) {
+      result.genre = itunesData.genre;
+    }
     // Cache the combined result
     saveCache(artist, title, result);
     return result;
