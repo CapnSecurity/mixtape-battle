@@ -3,8 +3,8 @@ import RootLayoutContent from './layout-content'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Mixtape Battle',
-  description: 'Head-to-head song ranking for your band',
+  title: 'The Mixtape',
+  description: 'Band management: song library, setlists and practice tracking',
   icons: {
     icon: '/icon.svg',
   },

@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
       lyrics: lyrics(sanitizedArtist, sanitizedTitle),
     };
 
-    // Create the song with default ELO of 1500
+    // Create the song (the unused elo column keeps its schema default)
     const song = await prisma.song.create({
       data: {
         artist: sanitizedArtist,
@@ -137,7 +137,6 @@ export async function POST(req: NextRequest) {
         albumArtUrl: albumArtUrl,
         genre: genre,
         durationMs: durationMs,
-        elo: 1500,
         // Store the generated resource URLs
         songsterr: generatedUrls.songsterr,
         ultimateGuitar: generatedUrls.ultimateGuitar,

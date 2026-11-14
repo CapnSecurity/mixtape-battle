@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
         id: true,
         title: true,
         artist: true,
-        elo: true,
         album: true,
         releaseDate: true,
         albumArtUrl: true,

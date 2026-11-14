@@ -25,8 +25,6 @@ export default function AdminPage() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [resetStatus, setResetStatus] = useState<{ [email: string]: 'idle'|'sending'|'sent'|'error' }>({});
   const [adminToggleStatus, setAdminToggleStatus] = useState<{ [email: string]: 'idle'|'toggling'|'success'|'error' }>({});
-  const [eloResetStatus, setEloResetStatus] = useState<'idle'|'resetting'|'success'|'error'>('idle');
-  const [eloResetMessage, setEloResetMessage] = useState('');
   const { token: csrfToken } = useCsrfToken();
 
   useEffect(() => {
@@ -64,22 +62,16 @@ export default function AdminPage() {
         
         <div className="space-y-3">
           <a 
-            href="/battle" 
-            className="block w-full py-3 px-4 rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-semibold text-center hover:opacity-90 transition-opacity"
-          >
-            🎵 Go to Battle Page
-          </a>
-          <a 
             href="/songs" 
-            className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
+            className="block w-full py-3 px-4 rounded-lg bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-semibold text-center hover:opacity-90 transition-opacity"
           >
             🎸 Browse Songs
           </a>
           <a 
-            href="/results" 
+            href="/setlist" 
             className="block w-full py-3 px-4 rounded-lg border border-[var(--ring)]/30 text-[var(--text)] font-semibold text-center hover:bg-[var(--surface)] transition-colors"
           >
-            🏆 View Results
+            📋 Setlist
           </a>
           <a 
             href="/settings" 
@@ -232,54 +224,6 @@ export default function AdminPage() {
     }
   }
 
-  async function handleResetElo() {
-    if (!confirm('⚠️ WARNING: This will reset ALL songs to default ELO (1500).\n\nThis action cannot be undone. Continue?')) {
-      return;
-    }
-    
-    if (!confirm('Are you ABSOLUTELY SURE? All battle rankings will be lost.')) {
-      return;
-    }
-
-    setEloResetStatus('resetting');
-    setEloResetMessage('');
-    
-    try {
-      if (!csrfToken) {
-        setEloResetMessage('Security token not ready. Please try again.');
-        setEloResetStatus('error');
-        return;
-      }
-
-      const res = await fetch(
-        '/api/admin/reset-elo',
-        withCsrfToken(csrfToken, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        })
-      );
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        setEloResetStatus('success');
-        setEloResetMessage(data.message || 'ELO ratings reset successfully!');
-        setTimeout(() => {
-          setEloResetStatus('idle');
-          setEloResetMessage('');
-        }, 5000);
-      } else {
-        setEloResetMessage(data.error || 'Failed to reset ELO ratings');
-        setEloResetStatus('error');
-      }
-    } catch (error) {
-      console.error('Failed to reset ELO:', error);
-      setEloResetMessage('Network error occurred');
-      setEloResetStatus('error');
-    }
-  }
-
   return (
     <div className="max-w-lg mx-auto p-8 mt-12 space-y-8">
       <div className="text-center mb-8">
@@ -393,33 +337,6 @@ export default function AdminPage() {
         )}
         {deleteStatus === 'error' && (
           <div className="text-red-400 mt-4">{deleteError}</div>
-        )}
-      </div>
-
-      {/* Reset ELO Section */}
-      <div className="rounded-2xl border border-orange-500/20 bg-[var(--surface)]/80 shadow-[var(--shadow)] p-8">
-        <h2 className="text-2xl font-bold mb-2 text-orange-500">Reset ELO Rankings</h2>
-        <p className="text-[var(--muted)] text-sm mb-6">
-          Reset all song ELO ratings back to default (1500). This will clear all battle rankings but preserve vote history.
-        </p>
-        
-        <Button 
-          onClick={handleResetElo}
-          className="w-full bg-orange-500 hover:bg-orange-600" 
-          disabled={eloResetStatus === 'resetting'}
-        >
-          {eloResetStatus === 'resetting' ? '🔄 Resetting...' : '♻️ Reset All ELO Ratings'}
-        </Button>
-        
-        {eloResetStatus === 'success' && (
-          <div className="text-[var(--gold)] mt-4 p-3 rounded bg-[var(--gold)]/10 border border-[var(--gold)]/20">
-            ✓ {eloResetMessage}
-          </div>
-        )}
-        {eloResetStatus === 'error' && (
-          <div className="text-orange-400 mt-4 p-3 rounded bg-orange-500/10 border border-orange-500/20">
-            ✗ {eloResetMessage}
-          </div>
         )}
       </div>
     </div>

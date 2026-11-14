@@ -1,6 +1,6 @@
-# Mixtape Battle
+# The Mixtape
 
-A collaborative band song voting and rehearsal management system.
+A band management system: song library, setlists, practice tracking and readiness.
 
 **🌐 Live Production:** https://themixtape.me
 
@@ -18,10 +18,9 @@ The app is hosted on [Render](https://render.com) with:
 
 ## Features
 
-### 🎵 Song Battle System
-- Head-to-head song voting with ELO ranking
-- Dynamic song recommendations based on voting history
-- Comprehensive song rankings and statistics
+### 🎸 Song Library
+- Browse, search and edit songs with automatic album, year, genre and art lookup
+- Tabs, lyrics and video links for every song
 
 ### 🎯 Song Readiness Tracking
 - Personal readiness status (Solid ✅ / Needs Work ⚠️ / Not Ready ❌)
@@ -30,7 +29,7 @@ The app is hosted on [Render](https://render.com) with:
 - Real-time readiness indicators on song pages
 
 ### 📋 Setlist Confidence View
-- Top 20 songs by ELO ranking
+- Top 20 songs by band readiness
 - Band readiness status at-a-glance
 - Last practice date tracking
 - Key signature and tuning notes
@@ -94,10 +93,6 @@ npm run dev
 
 ## API Endpoints
 
-### Battle System
-- `GET /api/battle/next` — Returns two songs to vote on
-- `POST /api/battle/submit` — Submit vote: `{ "winnerId": <id>, "loserId": <id> }`
-
 ### Song Readiness
 - `GET /api/songs/[id]/readiness` — Get user and aggregate readiness for a song
 - `POST /api/songs/[id]/readiness` — Set personal readiness status (requires auth)
@@ -107,12 +102,17 @@ npm run dev
 
 ## Pages
 
-- `/` — Home page with battle interface
-- `/battle` — Song battle voting
-- `/results` — Song rankings with readiness indicators
+- `/` — Public home page
+- `/songs` — Song library
 - `/songs/[id]` — Song detail with readiness controls and practice info
-- `/setlist-confidence` — Top 20 songs with band readiness overview
+- `/setlist` — Band setlist
+- `/woodshed` — Personal practice list
+- `/setlist-confidence` — Top 20 songs by band readiness
 - `/login` — Authentication
+
+The former battle system (`/battle`, `/results`, ELO scores, voting) was removed. `/battle` and `/results`
+redirect to `/songs`. The `BattleVote`, `BattlePairingHistory`, `BattleSkip` and `UserPreference` tables and
+`Song.elo` remain in the database, unused, so the removal is reversible without a migration.
 
 Notes
 - This repo intentionally excludes local secrets and build artifacts via `.gitignore`.

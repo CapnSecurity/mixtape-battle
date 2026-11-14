@@ -1,18 +1,17 @@
 /**
  * Setlist Confidence Page
  * 
- * Displays the top 20 songs ranked by a composite score combining ELO and readiness.
+ * Displays the top 20 songs ranked by band readiness.
  * 
- * Composite Score = ELO + (Average Readiness × 200)
- * This keeps popular songs ranked high while significantly boosting well-practiced songs.
+ * Ranking: average readiness (Solid = 2, Needs Work = 1, Not Ready = 0), then number of
+ * readiness votes, then most recently practiced.
  * 
  * Features:
- * - Top-ranked songs sorted by battle performance and practice readiness
  * - Aggregate band readiness for each song
  * - Last practice date with visual indicators (red if >30 days old)
  * - Key signature and tuning notes for quick reference
  * 
- * Helps bands prepare for gigs by showing which songs are both popular and ready to perform.
+ * Helps bands prepare for gigs by showing which songs are ready to perform.
  * 
  * Requires authentication.
  */
@@ -66,11 +65,8 @@ function formatPracticeDate(date: Date | null): string {
 }
 
 export default async function SetlistConfidencePage() {
-  // Get top songs with readiness and practice data
-  // We'll sort by a composite score of ELO + readiness
+  // The library is small, so rank in memory by readiness
   const songs = await prisma.song.findMany({
-    orderBy: { elo: "desc" },
-    take: 50, // Get more songs to ensure good selection after composite sorting
     include: {
       readiness: {
         select: {
@@ -80,20 +76,17 @@ export default async function SetlistConfidencePage() {
     },
   });
 
-  // Calculate composite score for each song and sort
-  // Composite = ELO + (avgReadiness * 200)
-  // This weights readiness significantly while keeping popular songs ranked high
-  const songsWithScore = songs.map(song => ({
-    ...song,
-    avgReadiness: calculateAvgReadiness(song.readiness),
-  })).map(song => ({
-    ...song,
-    compositeScore: song.elo + (song.avgReadiness * 200),
-  }));
-
-  // Sort by composite score and take top 20
-  const topSongs = songsWithScore
-    .sort((a, b) => b.compositeScore - a.compositeScore)
+  const topSongs = songs
+    .map(song => ({
+      ...song,
+      avgReadiness: calculateAvgReadiness(song.readiness),
+    }))
+    .sort((a, b) =>
+      b.avgReadiness - a.avgReadiness ||
+      b.readiness.length - a.readiness.length ||
+      (b.lastPracticedAt?.getTime() ?? 0) - (a.lastPracticedAt?.getTime() ?? 0) ||
+      a.title.localeCompare(b.title)
+    )
     .slice(0, 20);
 
   return (
@@ -114,7 +107,7 @@ export default async function SetlistConfidencePage() {
             </div>
           </div>
           <p className="text-xl text-[var(--muted)]">
-            Top 20 songs ranked by popularity and practice readiness
+            Top 20 songs ranked by band readiness
           </p>
         </div>
 
@@ -137,9 +130,11 @@ export default async function SetlistConfidencePage() {
                     <span className="text-2xl font-bold text-[var(--gold)]">#{index + 1}</span>
                     <ReadinessIcon status={aggregateStatus} size="sm" />
                   </div>
-                  <span className="bg-[var(--surface2)] text-[var(--text)] font-bold px-4 py-2 rounded-lg">
-                    {Math.round(song.elo)}
-                  </span>
+                  {song.readiness.length > 0 && (
+                    <span className="bg-[var(--surface2)] text-[var(--text)] font-bold px-4 py-2 rounded-lg">
+                      {song.avgReadiness.toFixed(1)}/2
+                    </span>
+                  )}
                 </div>
 
                 {/* Song Info */}
@@ -215,14 +210,13 @@ export default async function SetlistConfidencePage() {
                       Key
                     </th>
                     <th className="px-4 py-4 text-right text-[var(--bg)] font-bold text-sm lg:text-base">
-                      Score
+                      Readiness Score
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--ring)]/20">
                   {topSongs.map((song, index) => {
                     const aggregateStatus = calculateAggregateStatus(song.readiness);
-                    const avgScore = calculateAvgReadiness(song.readiness);
                     const practiceDate = formatPracticeDate(song.lastPracticedAt);
                     const isPracticeOld = song.lastPracticedAt && 
                       (new Date().getTime() - song.lastPracticedAt.getTime()) > (30 * 24 * 60 * 60 * 1000);
@@ -283,9 +277,11 @@ export default async function SetlistConfidencePage() {
                         <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end gap-3">
                             <AddToWoodshed songId={song.id} variant="compact" />
-                            <span className="inline-block bg-[var(--surface2)] text-[var(--text)] font-bold px-3 py-1 lg:px-4 lg:py-2 rounded-lg text-sm lg:text-base">
-                              {Math.round(song.elo)}
-                            </span>
+                            {song.readiness.length > 0 && (
+                              <span className="inline-block bg-[var(--surface2)] text-[var(--text)] font-bold px-3 py-1 lg:px-4 lg:py-2 rounded-lg text-sm lg:text-base">
+                                {song.avgReadiness.toFixed(1)}/2
+                              </span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -302,7 +298,7 @@ export default async function SetlistConfidencePage() {
               No Songs Yet
             </h2>
             <p className="text-[var(--muted)] text-lg">
-              Add some songs and start battling to build your setlist!
+              Add some songs and start tracking readiness to build your setlist!
             </p>
           </div>
         )}
@@ -340,22 +336,16 @@ export default async function SetlistConfidencePage() {
         {/* Quick Actions */}
         <div className="mt-8 flex flex-wrap gap-4 justify-center">
           <Link
-            href="/results"
-            className="px-6 py-3 bg-[var(--surface)] hover:bg-[var(--surface2)] border border-[var(--ring)]/20 rounded-xl text-[var(--text)] font-semibold transition"
-          >
-            🏆 Full Rankings
-          </Link>
-          <Link
             href="/songs"
             className="px-6 py-3 bg-[var(--surface)] hover:bg-[var(--surface2)] border border-[var(--ring)]/20 rounded-xl text-[var(--text)] font-semibold transition"
           >
             🎵 Browse Songs
           </Link>
           <Link
-            href="/battle"
+            href="/setlist"
             className="px-6 py-3 bg-[linear-gradient(135deg,var(--gold),var(--pink))] hover:opacity-90 rounded-xl text-[var(--bg)] font-semibold transition"
           >
-            ⚔️ Battle Songs
+            📋 Setlist
           </Link>
         </div>
       </div>

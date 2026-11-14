@@ -21,7 +21,6 @@ type PracticeItem = {
     artist: string;
     album: string | null;
     albumArtUrl: string | null;
-    elo: number;
     spotify: string | null;
     youtube: string | null;
     songsterr: string | null;

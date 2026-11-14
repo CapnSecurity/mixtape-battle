@@ -15,7 +15,6 @@ type Song = {
   id: number;
   title: string;
   artist: string;
-  elo: number;
   genre: string | null;
   releaseDate: number | null;
   album: string | null;
@@ -35,7 +34,7 @@ export default function SongBrowser() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"all" | "artist" | "song" | "genre" | "year">("all");
-  const [sortBy, setSortBy] = useState<"title" | "artist" | "elo" | "year">("artist");
+  const [sortBy, setSortBy] = useState<"title" | "artist" | "year">("artist");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const songDetailsRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -135,10 +134,6 @@ export default function SongBrowser() {
         case "artist":
           aVal = a.artist.toLowerCase();
           bVal = b.artist.toLowerCase();
-          break;
-        case "elo":
-          aVal = a.elo;
-          bVal = b.elo;
           break;
         case "year":
           aVal = a.releaseDate ?? 0;
@@ -347,12 +342,6 @@ export default function SongBrowser() {
                           >
                             Year {getSortIcon("year")}
                           </th>
-                          <th
-                            className="text-center px-6 py-4 font-semibold text-[var(--text)] cursor-pointer hover:bg-[var(--surface)] transition-colors"
-                            onClick={() => handleSort("elo")}
-                          >
-                            ELO {getSortIcon("elo")}
-                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -375,11 +364,6 @@ export default function SongBrowser() {
                             </td>
                             <td className="px-6 py-4 text-[var(--muted)]">
                               {song.releaseDate || "-"}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="inline-block px-3 py-1 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] font-semibold">
-                                {Math.round(song.elo)}
-                              </span>
                             </td>
                           </tr>
                         ))}
@@ -455,13 +439,6 @@ export default function SongBrowser() {
                       )}
                     </div>
                   )}
-
-                  <div className="bg-[var(--bg)]/20 rounded-xl p-6 text-center">
-                    <div className="text-sm text-[var(--bg)]/80 mb-2">Battle Score</div>
-                    <div className="text-5xl font-bold text-[var(--bg)]">
-                      {Math.round(selectedSong.elo)}
-                    </div>
-                  </div>
                 </div>
 
                 {/* Admin Controls */}
@@ -615,16 +592,6 @@ export default function SongBrowser() {
                 </div>
               </div>
             )}
-
-            {/* Footer */}
-            <div className="mt-8 text-center">
-              <Link
-                href="/battle"
-                className="inline-block px-8 py-4 rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] text-white font-bold hover:opacity-90 transition-opacity"
-              >
-                Start Battle ⚔️
-              </Link>
-            </div>
           </div>
         </div>
       </div>
