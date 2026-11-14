@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyCsrfToken, csrfErrorResponse } from '@/lib/csrf';
 import { readJsonObject, parseIdParam, isCleanString, cleanText } from '@/lib/http';
 import { userRef } from '@/lib/log';
+import { parseArtUpdate } from '@/lib/art-url';
 
 type Params = Promise<{ id: string }>;
 
@@ -46,6 +47,13 @@ export async function PATCH(
     if (!albumCheck.ok || !genreCheck.ok) {
       return NextResponse.json({ error: 'Invalid album or genre' }, { status: 400 });
     }
+    const art = parseArtUpdate(body.albumArtUrl);
+    if (!art.ok) {
+      return NextResponse.json(
+        { error: 'Album art must be an https link to iTunes (mzstatic.com), Cover Art Archive or Last.fm' },
+        { status: 400 }
+      );
+    }
     let year: number | null = null;
     if (releaseDate !== undefined && releaseDate !== null && releaseDate !== '') {
       year = Number(releaseDate);
@@ -65,6 +73,8 @@ export async function PATCH(
         // year, leave any existing decade untouched
         ...(year !== null ? { decade: Math.floor(year / 10) * 10 } : {}),
         genre: genreCheck.value?.trim() || null,
+        // only touched when explicitly sent, so ordinary edits never clear the art
+        ...(art.change ? { albumArtUrl: art.value } : {}),
       },
     });
 

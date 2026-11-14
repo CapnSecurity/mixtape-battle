@@ -114,6 +114,7 @@ export default async function SongPage({ params }: { params: Params }) {
               album: song.album,
               releaseDate: song.releaseDate,
               genre: song.genre,
+              albumArtUrl: song.albumArtUrl,
             }}
           />
           <DeleteSongButton

@@ -445,6 +445,7 @@ export default function SongBrowser() {
                 <div className="bg-[var(--surface)] border border-[var(--ring)]/20 rounded-2xl p-6 shadow-[var(--shadow)]">
                   <div className="flex flex-wrap items-center gap-3">
                     <EditSongButton 
+                      key={selectedSong.id}
                       song={{
                         id: selectedSong.id,
                         title: selectedSong.title,
@@ -452,6 +453,7 @@ export default function SongBrowser() {
                         album: selectedSong.album,
                         releaseDate: selectedSong.releaseDate,
                         genre: selectedSong.genre,
+                        albumArtUrl: selectedSong.albumArtUrl,
                       }}
                       onUpdate={fetchSongs}
                     />
