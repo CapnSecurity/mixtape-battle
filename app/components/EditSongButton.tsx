@@ -13,6 +13,7 @@ interface EditSongButtonProps {
     album?: string | null;
     releaseDate?: number | null;
     genre?: string | null;
+    albumArtUrl?: string | null;
   };
   onUpdate?: () => void;
 }
@@ -28,9 +29,8 @@ export function EditSongButton({ song, onUpdate }: EditSongButtonProps) {
     album: song.album || '',
     releaseDate: song.releaseDate?.toString() || '',
     genre: song.genre || '',
+    albumArtUrl: song.albumArtUrl || '',
   });
-
-  // Only show for admins
   if (!(session?.user as any)?.isAdmin) {
     return null;
   }
@@ -52,6 +52,8 @@ export function EditSongButton({ song, onUpdate }: EditSongButtonProps) {
           album: formData.album || null,
           releaseDate: formData.releaseDate || null,
           genre: formData.genre || null,
+          // sent only when changed so that saving other fields can never clear the art
+          ...(formData.albumArtUrl !== (song.albumArtUrl || '') ? { albumArtUrl: formData.albumArtUrl } : {}),
         }),
       });
 
@@ -158,6 +160,28 @@ export function EditSongButton({ song, onUpdate }: EditSongButtonProps) {
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-[var(--text)] mb-1">
+            Album art URL
+          </label>
+          <div className="flex items-center gap-3">
+            {formData.albumArtUrl && (
+              <img
+                src={formData.albumArtUrl}
+                alt="Album art preview"
+                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+              />
+            )}
+            <input
+              type="url"
+              value={formData.albumArtUrl}
+              onChange={(e) => setFormData({ ...formData, albumArtUrl: e.target.value })}
+              className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--ring)]/20 rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]"
+              placeholder="https:// link from iTunes, Cover Art Archive or Last.fm; empty to remove"
+            />
+          </div>
+        </div>
+
         <div className="flex gap-3 pt-2">
           <Button
             onClick={handleSave}
@@ -176,6 +200,7 @@ export function EditSongButton({ song, onUpdate }: EditSongButtonProps) {
                 album: song.album || '',
                 releaseDate: song.releaseDate?.toString() || '',
                 genre: song.genre || '',
+                albumArtUrl: song.albumArtUrl || '',
               });
             }}
             variant="ghost"

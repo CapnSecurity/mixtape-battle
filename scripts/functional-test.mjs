@@ -174,6 +174,17 @@ record('edit persisted', psql(`SELECT title FROM "Song" WHERE id=${s1}`) === 'Ye
 record('edit keeps decade in step with the year', psql(`SELECT decade FROM "Song" WHERE id=${s1}`) === '2000', psql(`SELECT decade FROM "Song" WHERE id=${s1}`));
 const editNoYear = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: 'Yellow (Edited)', artist: 'Coldplay', album: 'Parachutes', genre: 'Rock', csrfToken: adminCsrf } });
 record('edit without a year succeeds and leaves the stored decade alone', editNoYear.status === 200 && psql(`SELECT decade FROM "Song" WHERE id=${s1}`) === '2000', `${editNoYear.status}`);
+const artUrl = 'https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/aa/bb/cc/art.jpg/600x600bb.jpg';
+const editArt = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: 'Yellow (Edited)', artist: 'Coldplay', albumArtUrl: artUrl, csrfToken: adminCsrf } });
+record('edit can set album art from an allowed host', editArt.status === 200 && psql(`SELECT "albumArtUrl" FROM "Song" WHERE id=${s1}`) === artUrl, String(editArt.status));
+const editKeepsArt = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: 'Yellow (Edited)', artist: 'Coldplay', genre: 'Rock', csrfToken: adminCsrf } });
+record('edit without the art field leaves the art alone', editKeepsArt.status === 200 && psql(`SELECT "albumArtUrl" FROM "Song" WHERE id=${s1}`) === artUrl, String(editKeepsArt.status));
+for (const [label, bad] of [['a non-allowed host', 'https://evil.example/a.jpg'], ['an http link', 'http://is1-ssl.mzstatic.com/a.jpg'], ['a javascript: URL', 'javascript:alert(1)'], ['a data: URL', 'data:image/png;base64,AAAA'], ['a non-string', { x: 1 }]]) {
+  const r = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: 'Yellow (Edited)', artist: 'Coldplay', albumArtUrl: bad, csrfToken: adminCsrf } });
+  record(`edit rejects album art that is ${label}`, r.status === 400 && psql(`SELECT "albumArtUrl" FROM "Song" WHERE id=${s1}`) === artUrl, String(r.status));
+}
+const editClearArt = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: 'Yellow (Edited)', artist: 'Coldplay', albumArtUrl: '', csrfToken: adminCsrf } });
+record('an empty album art value clears it', editClearArt.status === 200 && psql(`SELECT coalesce("albumArtUrl",'NULL') FROM "Song" WHERE id=${s1}`) === 'NULL', String(editClearArt.status));
 const editBad = await call('PATCH', `/api/songs/${s1}/edit`, { jar: admin.jar, json: { title: '', artist: '', csrfToken: adminCsrf } });
 record('edit rejects empty title/artist', editBad.status === 400, String(editBad.status));
 const editMissing = await call('PATCH', '/api/songs/999999/edit', { jar: admin.jar, json: { title: 'a', artist: 'b', csrfToken: adminCsrf } });
