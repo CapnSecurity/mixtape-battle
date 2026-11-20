@@ -1,27 +1,34 @@
 # Keeps dependencies and CI actions current with small, reviewable PRs. Free, built into GitHub.
 version: 2
+
+# All ecosystems are rolled into ONE pull request per month, so there is a single review request
+# instead of a stream of them. Security updates are not affected by this: GitHub still opens those
+# immediately and separately.
+multi-ecosystem-groups:
+  monthly-updates:
+    schedule:
+      interval: monthly
+    labels: ["dependencies"]
+
 updates:
   - package-ecosystem: npm
     directory: /
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    groups:
-      minor-and-patch:
-        update-types: [minor, patch]
+    patterns: ["*"]
+    multi-ecosystem-group: monthly-updates
     ignore:
-      # Major upgrades are deliberate projects (Next.js 16, Prisma 5+, React); do them by hand.
-      - dependency-name: next
-        update-types: ["version-update:semver-major"]
-      - dependency-name: prisma
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@prisma/client"
+      # Major upgrades are deliberate projects (ESLint 10 + eslint-config-next 16, Next.js 16,
+      # Prisma 5+, React, DOMPurify); do them by hand.
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
+    patterns: ["*"]
+    multi-ecosystem-group: monthly-updates
   - package-ecosystem: docker
     directory: /
-    schedule:
-      interval: weekly
+    patterns: ["*"]
+    multi-ecosystem-group: monthly-updates
+    ignore:
+      # Changing the Node.js major is a deliberate decision; keep CI's NODE_VERSION in step with it.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
