@@ -1,8 +1,5 @@
-import { FlatCompat } from '@eslint/eslintrc'
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
-
-const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta.url)) })
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
 
 const config = [
   {
@@ -24,7 +21,8 @@ const config = [
       'next-env.d.ts',
     ],
   },
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...nextVitals,
+  ...nextTs,
   {
     rules: {
       // The codebase predates linting; these style findings are reported as warnings so the gate
@@ -32,6 +30,10 @@ const config = [
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn',
       'react/no-unescaped-entities': 'warn',
+      // React Compiler advisory rules added in eslint-plugin-react-hooks 7 (eslint-config-next 16).
+      // The app does not use the React Compiler, so these are reported rather than blocking.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/immutability': 'warn',
       '@next/next/no-html-link-for-pages': 'warn',
       // Crashes with ESLint 9.39 + typescript-eslint 8.72 (default-options incompatibility). Style rule only.
       '@typescript-eslint/no-unused-expressions': 'off',
