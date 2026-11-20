@@ -22,7 +22,8 @@ no secrets, actions pinned to commit SHAs, `pull_request` trigger only).
 | npm audit (all deps), Semgrep warnings | | No (job summary only) | Dev-tool advisories, defence-in-depth hints |
 | AI review (`pr-agent.yml`) | PR-Agent | **Never** (advisory) | Logic, security, tests, Next.js concerns |
 
-Also added: `dependabot.yml` (weekly update PRs for npm, Actions, Docker; majors for Next/Prisma ignored),
+Also added: `dependabot.yml` (one combined monthly PR covering npm, Actions and Docker; npm and Node major bumps ignored,
+security updates still arrive separately),
 `CODEOWNERS`, and `.github/REVIEW_RULES.md` (the written rules both humans and the AI reviewer follow).
 
 Not chosen, on purpose: **OSV-Scanner** (npm-only repo; `npm audit` and Dependency Review already use the
